@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Log;
 use App\Models\User;
+use App\Models\Karyawan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +24,7 @@ class AuthController extends Controller
 
     public function prosesLogin(Request $request)
     {
-        dd(env('SALT_FRONT').$request->input('password').env('SALT_BACK'));
+        // dd(env('SALT_FRONT').$request->input('password').env('SALT_BACK'));
 
         if (!$this->verifyCloudflareCaptcha($request)) {
             Session::flash('error', 'Username atau password salah!');
@@ -129,26 +130,26 @@ class AuthController extends Controller
     public function changeData(Request $request){
         // dd($request->all());
         $validation = $request->validate([
-            'Nama' => 'required',
-            'No_Hp' => [
+            'HP' => [
                 'required',
-                'min:12',
-                'regex:/^(?:\+62|62|0)8[1-9][0-9]{6,9}$/'
+                'min:12', // Minimal 12 digit (628 + 9 digit)
+                'max:14', // Maksimal 14 digit (misal 628xxxxxxxxxx) - sesuaikan jika ada kemungkinan lebih panjang
+                'regex:/^628[0-9]{8,11}$/' // Dimulai dengan 628, lalu 8 hingga 11 digit angka
             ]
         ]);
         DB::beginTransaction();
         try {
-            $user = User::findOrFail($request->Id_Users);
+            $user = Karyawan::where('UserID_Web', $request->Id_Users)->first();
 
-            $isNamaChange = $validation['Nama'] !== $user->Nama;
-            $isNo_HPChange = $validation['No_Hp'] !== $user->No_Hp;
+            // $isNamaChange = $validation['Nama'] !== $user->Nama;
+            $isNo_HPChange = $validation['HP'] !== $user->No_Hp;
 
-            if(!$isNamaChange && !$isNo_HPChange){
+            if(!$isNo_HPChange){
                 Alert::Error('error', 'Tidak ada perubahan pada data anda!');
                 DB::rollBack();
                 return back();
             }else{
-                User::where('Id_Users', $request->Id_Users)->update($validation);
+                Karyawan::where('UserID_Web', $request->Id_Users)->update($validation);
                 Alert::Success('Success', 'Case Berhasil Disimpan');
                 DB::commit();
                 return back();

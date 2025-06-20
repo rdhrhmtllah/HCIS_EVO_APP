@@ -332,7 +332,9 @@ class OvertimeController extends Controller
                 INNER JOIN Karyawan e ON d.Kode_Karyawan = e.Kode_Karyawan
                                     AND d.Kode_Perusahaan = e.Kode_Perusahaan
                 INNER JOIN View_Divisi_Sub_Divisi f ON e.ID_Divisi_Sub_Divisi = f.ID_DIVISI_SUB_DIVISI
+                INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan g ON e.ID_Level_Jabatan = g.ID_Level_Jabatan
                 WHERE e.Kode_Perusahaan = ?
+				AND g.ID_Level  IN (1,2,3)
                 AND b.Hari = ?
                 AND f.ID_Divisi = ?
                 AND d.Periode <= ?
@@ -377,7 +379,9 @@ class OvertimeController extends Controller
                 INNER JOIN Karyawan e ON d.Kode_Perusahaan = e.Kode_Perusahaan
                                     AND d.Kode_Karyawan = e.Kode_Karyawan
                 INNER JOIN View_Divisi_Sub_Divisi f ON e.ID_Divisi_Sub_Divisi = f.ID_DIVISI_SUB_DIVISI
+                INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan g ON e.ID_Level_Jabatan = g.ID_Level_Jabatan
                 WHERE e.Kode_Perusahaan = ?
+				AND g.ID_Level  IN (1,2,3)
                 AND b.Hari = ?
                 AND f.ID_Divisi = ?
                 AND d.Tanggal = ?
@@ -386,9 +390,24 @@ class OvertimeController extends Controller
             )
             SELECT
                 CASE
-				WHEN ? BETWEEN DATEADD(HOUR, 1, CONVERT(TIME, COALESCE(ss.Jam_Keluar, sp.Jam_Keluar))) AND CONVERT(TIME, COALESCE(ss.Jam_selesai_absen, sp.Jam_selesai_absen)) THEN 'TRUE'
-				ELSE 'FALSE'
-				END AS JamComparison,
+                    -- Kondisi untuk Shift Lintas Hari (Jam Keluar > Jam Selesai Absen)
+                    WHEN DATEADD(HOUR, 1, CONVERT(TIME, COALESCE(ss.Jam_Keluar, sp.Jam_Keluar))) > CONVERT(TIME, COALESCE(ss.Jam_selesai_absen, sp.Jam_selesai_absen))
+                    THEN
+                        CASE
+                            -- Jika '16:20:00' lebih besar dari jam mulai (misal > 15:30) ATAU lebih kecil dari jam selesai (misal < 03:00)
+                            WHEN ? >= DATEADD(HOUR, 1, CONVERT(TIME, COALESCE(ss.Jam_Keluar, sp.Jam_Keluar))) OR ? <= CONVERT(TIME, COALESCE(ss.Jam_selesai_absen, sp.Jam_selesai_absen))
+                            THEN 'TRUE'
+                            ELSE 'FALSE'
+                        END
+                    -- Kondisi untuk Shift Normal (Jam Keluar <= Jam Selesai Absen)
+                    ELSE
+                        CASE
+                            -- Cukup gunakan BETWEEN biasa
+                            WHEN ? BETWEEN DATEADD(HOUR, 1, CONVERT(TIME, COALESCE(ss.Jam_Keluar, sp.Jam_Keluar))) AND CONVERT(TIME, COALESCE(ss.Jam_selesai_absen, sp.Jam_selesai_absen))
+                            THEN 'TRUE'
+                            ELSE 'FALSE'
+                        END
+                END AS JamComparison,
                 CASE
 				WHEN EXISTS (
 					SELECT 1
@@ -431,6 +450,8 @@ class OvertimeController extends Controller
                 $divisi,           // Parameter 7: ShiftSementara.ID_Divisi
                 $Tanggal,
                 $time,
+                $time,
+                $time,
                 $Tanggal,
                 $karyawan,           // Parameter 8: ShiftSementara.Tanggal
 
@@ -439,7 +460,7 @@ class OvertimeController extends Controller
         // dd($result);
          if (empty($result)) {
             return response()->json([
-                'status' => 'error',
+                'status' => 404,
                 'message' => 'Data tidak ditemukan',
             ], 404);
         }
@@ -562,7 +583,7 @@ class OvertimeController extends Controller
         // ]);
 
         return response()->json([
-            'status' => 'success',
+            'status' => 200,
             'data' => $result
         ]);
 
@@ -631,9 +652,7 @@ class OvertimeController extends Controller
                     }
                     // dd($tanggalMasukLembur.' - ' .$tanggalKeluarLembur);
                     $alasan = $user['reason'];
-                    $userInsert = User::whereHas('karyawan', function($query) use ($Kode_Karyawan) {
-                    $query->where('Kode_Karyawan', $Kode_Karyawan);
-                    })->first() ?? null;
+                    $userInsert = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first() ?? null;
                     // dd($userInsert->No_Hp);
                     $dataDet =  LemburDetail::insertGetId([
                         'Kode_Perusahaan' => $Kode_Perusahaan,
@@ -743,6 +762,8 @@ class OvertimeController extends Controller
                         //  LemburDetail::where('No_Transaksi', $request['params']['No_Transaksi'])->update(['Status' => 'Y']);
 
                         DB::commit();
+                        Alert::success('Success', 'Lembur Berhasil Dihapus!');
+
                         return response()->json([
                             'status' => 200,
                             'message' => "Berhasi Mengahpus data!"
@@ -763,11 +784,11 @@ class OvertimeController extends Controller
              LemburDetail::where('Urut_Oto', $request['params']['urut_Oto'])->delete();
             //  LemburDet::where('No_Transaksi', $request['params']['No_Transaksi'])->update(['Status' => 'Y']);
             //  LemburDetail::where('No_Transaksi', $request['params']['No_Transaksi'])->update(['Status' => 'Y']);
-
             DB::commit();
+            Alert::success('Success', 'User Berhasil DiHapus dari Transaksi!');
             return response()->json([
                 'status' => 200,
-                'message' => "Berhasi Mengahpus data!"
+                'message' => "Berhasi Menghapus data!"
             ]);
         }catch(\throwable $e){
             DB::rollBack();

@@ -847,7 +847,8 @@
                                 <div
                                     :class="
                                         employee.JamComparison == 'TRUE' &&
-                                        employee.lemburPernah == 'FALSE'
+                                        employee.lemburPernah == 'FALSE' &&
+                                        isTimeAfter(employee.Jam_Keluar)
                                             ? ' '
                                             : 'disabled-card'
                                     "
@@ -1516,10 +1517,7 @@
                                                 <div class="employee-name">
                                                     {{ item.name }}
                                                 </div>
-                                                <div class="employee-id">
-                                                    ID:
-                                                    {{ item.userId }}
-                                                </div>
+                                                <div class="employee-id"></div>
                                             </div>
                                         </div>
                                     </td>
@@ -1879,7 +1877,7 @@ export default {
         //             message: "Waktu dipilih: " + newValue, // Menampilkan waktu yang dipilih
         //             type: "success", // Perbaiki typo 'succeess' menjadi 'success'
         //             customStyle: {
-        //                 "z-index": "9999",
+        //                 "z-index": "999",
         //             },
         //         });
         //     } else {
@@ -1888,7 +1886,7 @@ export default {
         //             message: `Tidak Boleh Pilih ${newValue}. Pilih antara ${this.startTimeShift} - ${this.endTimeShift}.`,
         //             type: "error",
         //             customStyle: {
-        //                 "z-index": "9999",
+        //                 "z-index": "999",
         //             },
         //         });
         //     }
@@ -2087,6 +2085,22 @@ export default {
         window.removeEventListener("resize", this.checkScreenSize);
     },
     methods: {
+        isTimeAfter(timeString) {
+            const today = new Date();
+            const selectedDate = new Date(this.selectedAssignDates);
+
+            // Cek apakah selectedAssignDates adalah hari ini
+            if (selectedDate.toDateString() === today.toDateString()) {
+                const currentTimeString = today.toTimeString().slice(0, 8); // HH:MM:SS
+                return timeString > currentTimeString;
+            }
+
+            return true;
+        },
+
+        getCurrentTime() {
+            return new Date();
+        },
         formatDateTime(item) {
             if (!item) {
                 // Jika item kosong atau undefined, kembalikan nilai default
@@ -2137,7 +2151,7 @@ export default {
                         .join(":")}.`,
                     type: "error",
                     customStyle: {
-                        "z-index": "9999",
+                        "z-index": "999",
                     },
                 });
             }
@@ -2333,7 +2347,7 @@ export default {
                         "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                     type: "error",
                     customStyle: {
-                        "z-index": "9999",
+                        "z-index": "999",
                     },
                 });
                 this.closeDetailsMethod();
@@ -2521,7 +2535,7 @@ export default {
                     message: "Congrats, Berhasil Mengunduh File.",
                     type: "success",
                     customStyle: {
-                        "z-index": "9999",
+                        "z-index": "999",
                     },
                 });
             } catch (error) {
@@ -2532,7 +2546,7 @@ export default {
                         "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                     type: "error",
                     customStyle: {
-                        "z-index": "9999",
+                        "z-index": "999",
                     },
                 });
             } finally {
@@ -2571,7 +2585,7 @@ export default {
                         "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                     type: "error",
                     customStyle: {
-                        "z-index": "9999",
+                        "z-index": "999",
                     },
                 });
                 this.closeDetailsMethod();
@@ -2622,7 +2636,7 @@ export default {
                     message: `Ada beberapa jam user tidak valid!, Perbaiki dulu. `,
                     type: "error",
                     customStyle: {
-                        "z-index": "9999",
+                        "z-index": "999",
                     },
                 });
             }
@@ -2723,7 +2737,7 @@ export default {
                         "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                     type: "error",
                     customStyle: {
-                        "z-index": "9999",
+                        "z-index": "999",
                     },
                 });
                 this.closeAlertModal();
@@ -2779,6 +2793,7 @@ export default {
                     return false;
                 }
                 this.userChoose = [];
+                this.selectedAssignEmployees = [];
                 this.getUser();
                 this.assignStep++;
             } else if (this.assignStep > 2 && this.assignStep < 3) {
@@ -2804,36 +2819,34 @@ export default {
         },
 
         selectAllEmployees() {
-            // Loop melalui semua user yang tersedia
-            this.userChoose.forEach((user) => {
-                // Cek apakah user sudah terpilih
-                const index = this.selectedAssignEmployees.findIndex(
-                    (emp) => emp.id === user.userId
+            const validUsersToAdd = this.userChoose.filter(
+                (user) =>
+                    user.JamComparison === "TRUE" &&
+                    user.lemburPernah === "FALSE" &&
+                    this.isTimeAfter(user.Jam_Keluar)
+            );
+
+            validUsersToAdd.forEach((user) => {
+                const isAlreadySelected = this.selectedAssignEmployees.some(
+                    (selectedEmp) => selectedEmp.id === user.userId
                 );
 
-                if (index === -1) {
-                    const userData = this.userChoose.find(
-                        (emp) =>
-                            emp.userId === user.userId &&
-                            emp.JamComparison == "TRUE" &&
-                            emp.lemburPernah == "FALSE"
-                    );
+                if (!isAlreadySelected) {
                     this.selectedAssignEmployees.push({
                         id: user.userId,
                         tanggal: this.selectedAssignDates,
                         reason: this.assignReason,
                         waktu: this.assignTime,
-                        masuk: userData.Jam_Keluar,
-                        Jam_MasukShift: userData.Jam_Masuk,
-                        Jam_selesai_absen: userData.Jam_selesai_absen,
-                        nama: userData.name,
+                        masuk: user.Jam_Keluar,
+                        Jam_MasukShift: user.Jam_Masuk,
+                        Jam_selesai_absen: user.Jam_selesai_absen,
+                        nama: user.name,
                         isSelected: true,
                         isValid: true,
                     });
                 }
             });
         },
-
         clearEmployeeSelection() {
             this.selectedAssignEmployees = [];
         },
@@ -3074,7 +3087,7 @@ export default {
                 message: "Congrats, data berhasil diedit.",
                 type: "success",
                 customStyle: {
-                    "z-index": "9999",
+                    "z-index": "999",
                 },
             });
 
@@ -3094,7 +3107,7 @@ export default {
                         message: "Congrats, Data Berhasil di hapus.",
                         type: "success",
                         customStyle: {
-                            "z-index": "9999",
+                            "z-index": "999",
                         },
                     });
 
@@ -3108,7 +3121,7 @@ export default {
                         "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                     type: "error",
                     customStyle: {
-                        "z-index": "9999",
+                        "z-index": "999",
                     },
                 });
                 this.closeAlertModal();
@@ -3130,7 +3143,7 @@ export default {
                         message: "Congrats, Data Berhasil di hapus.",
                         type: "success",
                         customStyle: {
-                            "z-index": "9999",
+                            "z-index": "999",
                         },
                     });
 
@@ -3144,7 +3157,7 @@ export default {
                         "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                     type: "error",
                     customStyle: {
-                        "z-index": "9999",
+                        "z-index": "999",
                     },
                 });
                 this.closeAlertModal();
@@ -3182,31 +3195,66 @@ export default {
         async getUser() {
             this.loading = true;
             try {
-                const response = await axios.get("/getUserActive", {
-                    params: {
-                        // shift: this.selectedAssignShift,
-                        date: this.selectedAssignDates,
-                        time: this.assignTime,
-                        // shift: this.assignSelectedShift,
-                    },
-                });
+                const params = {
+                    date: this.selectedAssignDates,
+                    time: this.assignTime,
+                };
+
+                const response = await axios.get("/getUserActive", { params });
+
                 this.userChoose = response.data.data;
-                // console.log(response);
             } catch (error) {
-                console.error("Error Fetching Time :", error);
-                ElMessage({
-                    showClose: true,
-                    message:
-                        "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
-                    type: "error",
-                    customStyle: {
-                        "z-index": "9999",
-                    },
-                });
+                if (error.response) {
+                    // Jika statusnya 404 (Not Found)
+                    if (error.response.status === 404) {
+                        this.userChoose = [];
+                        ElMessage({
+                            showClose: true,
+                            message: `Maaf, tidak ada jadwal karyawan yang tersedia pada tanggal ${this.formatDate(
+                                this.selectedAssignDates
+                            )}`,
+                            type: "warning",
+                            customStyle: {
+                                "z-index": "999",
+                            },
+                        });
+                    } else {
+                        ElMessage({
+                            showClose: true,
+                            message:
+                                "Terjadi kesalahan pada server. Silakan coba lagi.",
+                            type: "error",
+                            customStyle: {
+                                "z-index": "999",
+                            },
+                        });
+                    }
+                } else if (error.request) {
+                    // console.error("Network Error:", error.request);
+                    ElMessage({
+                        showClose: true,
+                        message:
+                            "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.",
+                        type: "error",
+                        customStyle: {
+                            "z-index": "999",
+                        },
+                    });
+                } else {
+                    // console.error("Error Fetching Data:", error.message);
+                    ElMessage({
+                        showClose: true,
+                        message:
+                            "Terjadi kesalahan, silakan coba lagi beberapa saat.",
+                        type: "error",
+                        customStyle: {
+                            "z-index": "999",
+                        },
+                    });
+                }
             } finally {
                 this.loading = false;
             }
-            // console.log(this.selectedAssignShift, this.selectedAssignDates);
         },
         async storeOvertime() {
             if (this.selectedAssignEmployees.length > 0) {
@@ -3226,7 +3274,7 @@ export default {
                                 "Congrats, Berhasil Menambahkan Data Lembur.",
                             type: "success",
                             customStyle: {
-                                "z-index": "9999",
+                                "z-index": "999",
                             },
                         });
                         location.reload();
@@ -3239,7 +3287,7 @@ export default {
                             "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                         type: "error",
                         customStyle: {
-                            "z-index": "9999",
+                            "z-index": "999",
                         },
                     });
                     this.closeAlertModal();
@@ -3253,7 +3301,7 @@ export default {
                     message: "Silahkan pilih user minimal 1 .",
                     type: "error",
                     customStyle: {
-                        "z-index": "9999",
+                        "z-index": "999",
                     },
                 });
                 return false;
@@ -3897,6 +3945,7 @@ element.style {
 }
 
 .employee-id {
+    width: fit-content;
     font-size: 0.8rem;
     color: var(--text-muted);
 }

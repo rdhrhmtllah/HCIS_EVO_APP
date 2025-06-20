@@ -205,10 +205,10 @@
                                 @endif
                                 <form class="d-grid gap-4" method="POST" action="{{route('change.data')}}">
                                     @csrf
-                                    <input type="hidden" name="Id_Users" value="{{Auth()->user()->Id_Users}}">
+                                    <input  type="hidden" name="Id_Users" value="{{Auth()->user()->Id_Users}}">
                                     <div class="w-full">
                                         <label for="Nama">Nama</label>
-                                        <input id="Nama" type="text" name="Nama"
+                                        <input disabled id="Nama" type="text" name="Nama"
                                             class="form-control @error('Nama') is-invalid @enderror"
                                             placeholder="Masukan Nama" value="{{ auth()->user()->Nama ?? old('Nama') }}">
                                         @error('Nama')
@@ -225,11 +225,11 @@
                                         @enderror
                                     </div>
                                     <div class="w-full">
-                                        <label for="No_Hp">Nomor Telepon</label>
-                                        <input id="No_Hp" type="text" name="No_Hp"
-                                            class="form-control @error('No_Hp') is-invalid @enderror"
-                                            placeholder="Masukan Nomor Telepon" value="{{ auth()->user()->No_Hp ?? old('No_Hp') }}">
-                                        @error('No_Hp')
+                                        <label for="HP">Nomor Telepon</label>
+                                        <input id="HP" type="text" name="HP"
+                                            class="form-control @error('HP') is-invalid @enderror"
+                                            placeholder="Contoh: 6285269805413" value="{{ auth()->user()->Karyawan->HP ?? old('HP') }}">
+                                        @error('HP')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>

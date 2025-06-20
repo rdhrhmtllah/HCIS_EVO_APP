@@ -7,7 +7,7 @@
                 <div class="header-background"></div>
                 <div class="header-content">
                     <div class="row align-items-center">
-                        <div class="col-md-8">
+                        <div class="col-sm-8">
                             <div class="header-info">
                                 <div
                                     class="icon-container d-flex align-items-center justify-content-center"
@@ -28,17 +28,22 @@
                             </div>
                         </div>
                         <!-- Button & Dates -->
-                        <div class="col-md-4">
+                        <div class="col-sm-4">
                             <div
-                                class="header-actions d-flex gap-2 flex-nowrap flex-md-column justify-content-center justify-content-md-start justify-content-md-center align-items-md-end"
+                                class="header-actions d-flex gap-2 flex-nowrap flex-sm-column justify-content-center justify-content-md-start justify-content-md-center align-items-md-end"
                             >
                                 <div
                                     @click="log()"
-                                    class="date-range px-2 px-md-3 py-md-2 gap-2 gap-md-3"
+                                    class="date-range px-2 px-md-3 py-1 gap-2 gap-md-3"
                                 >
                                     <div class="date-item">
                                         <i
-                                            class="bi bi-cloud-sun-fill me-2 fs-md-5"
+                                            v-if="dayNight == 'Siang'"
+                                            class="bi bi-cloud-sun-fill me-2 fs-4 fade-in"
+                                        ></i>
+                                        <i
+                                            v-else
+                                            class="bi bi-cloud-moon-fill me-2 fs-4 fade-in"
                                         ></i>
                                         <span class="fs-md-6 text-header"
                                             >{{
@@ -246,7 +251,7 @@
                                     :class="{ highlight: employee.hasConflict }"
                                 >
                                     <td class="sticky-column employee-cell">
-                                        <div class="employee-info">
+                                        <div class="employee-info px-2">
                                             <div class="employee-avatar">
                                                 {{ getInitials(employee.name) }}
                                             </div>
@@ -357,7 +362,9 @@
                                 <div class="employee-avatar large">
                                     {{ getInitials(employee.name) }}
                                 </div>
-                                <div class="employee-info">
+                                <div
+                                    class="employee-info d-flex flex-column align-items-start gap-0 justify-content-center"
+                                >
                                     <h4>{{ employee.name }}</h4>
                                     <p>{{ divisi }}</p>
                                 </div>
@@ -456,11 +463,11 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div class="form-group border-0 px-0">
+                <div class="form-group border-0 px-2 mb-2">
                     <label>Karyawan:</label>
                     <p class="employee-name">{{ selectedEmployee?.name }}</p>
                 </div>
-                <div class="form-group border-0 px-0">
+                <div class="form-group border-0 px-2">
                     <label>Tanggal:</label>
                     <p class="shift-date">{{ formatDate(selectedDate) }}</p>
                 </div>
@@ -507,7 +514,7 @@
                             <div class="d-block">
                                 <div
                                     class="shift-badge large"
-                                    :class="getShiftClass(shift.ID_Shift)"
+                                    :class="getShiftClass(shift.Shift)"
                                 >
                                     {{ shift.Shift }}
                                 </div>
@@ -979,9 +986,7 @@
                                     <div class="d-block">
                                         <div
                                             class="shift-badge large"
-                                            :class="
-                                                getShiftClass(shift.ID_Shift)
-                                            "
+                                            :class="getShiftClass(shift.Shift)"
                                         >
                                             {{ shift.Shift }}
                                         </div>
@@ -1339,6 +1344,20 @@ export default {
         window.removeEventListener("resize", this.checkScreenSize);
     },
     methods: {
+        dayNight() {
+            const sekarang = new Date();
+            const jam = sekarang.getHours();
+
+            let keteranganWaktu;
+
+            if (jam >= 6 && jam < 18) {
+                keteranganWaktu = "Siang";
+            } else {
+                keteranganWaktu = "Malam";
+            }
+
+            return keteranganWaktu;
+        },
         getShiftTime(shift, date) {
             const Hari = date + 1;
 
@@ -1454,7 +1473,7 @@ export default {
                         params: {
                             employee: this.selectedEmployee,
                             date: this.selectedDate,
-                            shift: this.selectedShiftValue,
+                            shift: this.assignSelectedShift,
                             shift_lama: this.shiftLama,
                         },
                     });
@@ -1521,6 +1540,8 @@ export default {
 
                     if (this.isLemburData.length === 0) {
                         if (type === "assign") {
+                            this.assignStep++;
+
                             this.jenisShift = [];
 
                             const dateParam =
@@ -1529,7 +1550,6 @@ export default {
                                     : this.assignStartDate;
 
                             this.getShift(dateParam);
-                            this.assignStep++;
                         } else {
                             this.saveShift();
                         }
@@ -1543,7 +1563,9 @@ export default {
                             this.closeAlertModal();
                             ElMessage({
                                 showClose: true,
-                                message: `${e.Nama} pada tanggal ${dateMessage}, Silahkan Hapus Dulu Transaksi Lembur Pada ${e.No_Transaksi}`,
+                                message: `${e.Nama?.toLowerCase()} ada Lembur pada tanggal ${dateMessage}, Silahkan Hapus pada ${
+                                    e.No_Transaksi
+                                }`,
                                 type: "error",
                                 customStyle: {
                                     "z-index": "999",
@@ -2026,7 +2048,25 @@ export default {
                 SIANG: "shift-afternoon",
                 MALAM: "shift-night",
             };
-            return classes[shift] || "shift-default";
+
+            const lastChar = shift.slice(-1);
+
+            switch (lastChar) {
+                case "P":
+                    return "shift-morning";
+                case "M":
+                    return "shift-night";
+                case "T":
+                    return "shift-noshift";
+                case "1":
+                    return "shift-morning";
+                case "2":
+                    return "shift-afternoon";
+                case "3":
+                    return "shift-night";
+                default:
+                    return "shift-default";
+            }
         },
 
         getShiftDescription(shift) {
@@ -3008,6 +3048,7 @@ body {
     left: 0;
     background: var(--surface) !important;
     z-index: 11;
+    max-width: 14rem;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
@@ -3090,8 +3131,11 @@ body {
 }
 
 .employee-avatar {
-    width: 50px;
-    height: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    min-height: 35px;
+
+    max-height: 40px;
     border-radius: 30%;
     background: var(--gradient-primary);
     display: flex;
@@ -3522,6 +3566,7 @@ body {
 
 .shift-badge {
     border-radius: 8px;
+    text-align: center;
     font-weight: 600;
     font-size: 0.9rem;
 }
@@ -3786,7 +3831,7 @@ body {
 
 .date-picker-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(4rem, 1fr));
     gap: 0.75rem;
 }
 
@@ -3794,8 +3839,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
-    padding: 1rem;
+    gap: 0.3rem;
+    padding: 1rem 0;
     border: 2px solid var(--border);
     border-radius: 12px;
     cursor: pointer;
@@ -4484,7 +4529,7 @@ body {
         min-width: 150px;
         position: relative;
         left: auto;
-        z-index: 2000;
+        z-index: 100;
         box-shadow: none;
     }
 

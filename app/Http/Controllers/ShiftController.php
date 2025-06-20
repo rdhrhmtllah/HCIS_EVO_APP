@@ -466,7 +466,7 @@ public function submit(Request $request){
     DB::beginTransaction();
     try{
         // checking Lembur
-
+        // dd($request->all());
         if($data['params']['AssignShift']['shiftType'] == 'permanent'){
 
             $Tanggal = date('Y-m-d H:i:s',strtotime($data['params']['AssignShift']['dates']['start']));
@@ -488,15 +488,12 @@ public function submit(Request $request){
                     'Periode' => $Tanggal
                 ]);
                 // whatsapp message to user
-                  $userInsert = User::whereHas('karyawan', function($query) use ($Kode_Karyawan) {
-                    $query->where('Kode_Karyawan', $Kode_Karyawan);
-                })->first() ?? null;
-                // dd($userInsert);
+                  $userInsert = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first() ?? null;
                 $userInsertNoHp = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first()->HP ?? null;
 
                 if($userInsert && $finalInsert && $userInsertNoHp){
 
-                    $TanggalKirim = date('D, d M Y ',strtotime($request->params['date']));
+                    $TanggalKirim = date('D, d M Y ',strtotime($data['params']['AssignShift']['dates']['start']));
 
                     $pesan = [
                                 "messaging_product" => "whatsapp",
@@ -564,16 +561,14 @@ public function submit(Request $request){
                 foreach($Dates as $date){
                    $finalInsert =   DB::table('HRIS_Shift_Sementara')->insert([
                                         'Kode_Perusahaan' => $Kode_Perusahaan,
-                                        'Kode_Karyawan' => Karyawan::select('Kode_Karyawan')->where('UserID_Absen', $item)->first()->Kode_Karyawan,
+                                        'Kode_Karyawan' => $item,
                                         'ID_Shift' => $Id_Shift,
                                         'Tanggal' => $date
                                     ]);
                 }
                 // whatsapp message to user
                 $Kode_Karyawan = $item;
-                $userInsert = User::whereHas('karyawan', function($query) use ($Kode_Karyawan) {
-                $query->where('Kode_Karyawan', $Kode_Karyawan);
-                })->first() ?? null;
+                $userInsert = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first() ?? null;
                 $shiftKerja = Shift_Kerja::select('Nama')->Where('ID_Shift', $Id_Shift)->first()->Nama;
                 $userInsertNoHp = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first()->HP ?? null;
                 // dd($userInsertNoHp);
@@ -675,20 +670,19 @@ public function update(Request $request){
     DB::BeginTransaction();
 
     try{
-        $employees = $request->params['employee']['userId'];
+        $employees = $request->params['employee']['Kode_Karyawan'];
+        // dd($request->all());
         $Tanggal = date('Y-m-d H:i:s',strtotime($request->params['date']));
         $finalInsert = DB::table('HRIS_Shift_Sementara')->insert([
                 'Kode_Perusahaan' => '001',
-                'Kode_Karyawan' => Karyawan::select('Kode_Karyawan')->where('UserID_Absen', $employees)->first()->Kode_Karyawan,
+                'Kode_Karyawan' => $employees,
                 'ID_Shift' => $request->params['shift'],
                 'Tanggal' => $Tanggal
             ]);
 
         // wa
-        $Kode_Karyawan = Karyawan::select('Kode_Karyawan')->where('UserID_Absen', $employees)->first()->Kode_Karyawan;
-        $userInsert = User::whereHas('karyawan', function($query) use ($Kode_Karyawan) {
-        $query->where('Kode_Karyawan', $Kode_Karyawan);
-        })->first() ?? null;
+        $Kode_Karyawan = $employees;
+        $userInsert = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first() ?? null;
         $shiftKerja = Shift_Kerja::select('Nama')->Where('ID_Shift', $request->params['shift'])->first()->Nama;
         $userInsertNoHp = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first()->HP ?? null;
 
