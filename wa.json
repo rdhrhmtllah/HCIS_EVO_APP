@@ -1,0 +1,176 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wa-incoming"
+      },
+      "id": "WebhookEntry",
+      "name": "Webhook WA",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [100, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "return [{
+  json: {
+    no_hp: $json.body.sender || $json.sender,
+    pesan: $json.body.message || $json.message
+  }
+}];"
+      },
+      "id": "ExtractData",
+      "name": "Ekstrak Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM users WHERE no_hp = '{{ $json.no_hp }}';"
+      },
+      "id": "CheckUser",
+      "name": "Cek User (users)",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.length}}",
+              "operation": "equal",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "id": "IfNotFound",
+      "name": "Jika Tidak Terdaftar",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM user_temp WHERE no_hp = '{{ $json.no_hp }}';"
+      },
+      "id": "CheckUserTemp",
+      "name": "Cek User Temp",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO user_temp (no_hp, session) VALUES ('{{ $json.no_hp }}', 'inAskName');"
+      },
+      "id": "InsertUserTemp",
+      "name": "Insert ke user_temp",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2,
+      "position": [1100, 100]
+    },
+    {
+      "parameters": {
+        "text": "Anda belum terdaftar. Silakan ketik nama Anda untuk mendaftar."
+      },
+      "id": "AskName",
+      "name": "Tanya Nama",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1300, 100]
+    },
+    {
+      "parameters": {
+        "text": "Halo {{ $json[0].Name }}! Silakan pilih layanan:\n1. Cek Kode Undian\n2. Cek Poin"
+      },
+      "id": "ReplyIfFound",
+      "name": "Balas Jika Terdaftar",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 400]
+    }
+  ],
+  "connections": {
+    "Webhook WA": {
+      "main": [
+        [
+          {
+            "node": "Ekstrak Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ekstrak Data": {
+      "main": [
+        [
+          {
+            "node": "Cek User (users)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cek User (users)": {
+      "main": [
+        [
+          {
+            "node": "Jika Tidak Terdaftar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jika Tidak Terdaftar": {
+      "main": [
+        [
+          {
+            "node": "Cek User Temp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Balas Jika Terdaftar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cek User Temp": {
+      "main": [
+        [
+          {
+            "node": "Insert ke user_temp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert ke user_temp": {
+      "main": [
+        [
+          {
+            "node": "Tanya Nama",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
