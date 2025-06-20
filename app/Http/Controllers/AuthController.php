@@ -23,6 +23,7 @@ class AuthController extends Controller
 
     public function prosesLogin(Request $request)
     {
+        dd(env('SALT_FRONT').$request->input('password').env('SALT_BACK'));
 
         if (!$this->verifyCloudflareCaptcha($request)) {
             Session::flash('error', 'Username atau password salah!');
@@ -32,13 +33,13 @@ class AuthController extends Controller
                 ->withInput($request->except('password'));
         }
 
-        $user = User::where('Username', $request->username)->first();
-        if($user && Hash::check(env('SALT_FRONT').$request->password.env('SALT_BACK'), $user->Password)){
-            $request->session()->regenerate();
-
-            // Get authenticated user
-            $user = Auth::user();
-
+        $userLogin = User::where('Username', $request->username)->first();
+       if ($userLogin && Hash::check(env('SALT_FRONT').$request->password.env('SALT_BACK'), $userLogin->Password)) {
+            Auth::login($userLogin); // Login ke session
+            $request->session()->regenerate(); // Regenerasi session
+            $user = Auth::user(); // Ini sekarang harus ada
+            // dd($user);
+            // dd($user);
             // Check user role and redirect accordingly
             switch ($user->Role) {
                 case 'superuser':
