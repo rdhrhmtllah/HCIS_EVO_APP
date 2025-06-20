@@ -24,13 +24,13 @@ class AuthController extends Controller
     public function prosesLogin(Request $request)
     {
 
-        // if (!$this->verifyCloudflareCaptcha($request)) {
-            // Session::flash('error', 'Username atau password salah!');
-        //
-        // return back()
-        //         ->withErrors(['captcha' => 'Please complete the security check'])
-        //         ->withInput($request->except('password'));
-        // }
+        if (!$this->verifyCloudflareCaptcha($request)) {
+            Session::flash('error', 'Username atau password salah!');
+
+        return back()
+                ->withErrors(['captcha' => 'Please complete the security check'])
+                ->withInput($request->except('password'));
+        }
 
         $user = User::where('Username', $request->username)->first();
         if($user && Hash::check(env('SALT_FRONT').$request->password.env('SALT_BACK'), $user->Password)){
