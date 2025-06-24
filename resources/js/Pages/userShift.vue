@@ -1489,7 +1489,7 @@ export default {
                             },
                         });
                         this.closeAlertModal();
-
+                        this.closeShiftModal();
                         location.reload();
                     }
                 } catch (error) {
@@ -1958,10 +1958,14 @@ export default {
                 this.processEmployeesData();
             } catch (error) {
                 console.error("Error fetching week dates:", error);
-                this.showNotification(
-                    "error",
-                    "Terjadi kesalahan saat memuat data"
-                );
+                ElMessage({
+                    showClose: true,
+                    message: "Tidak Menemukan User yang mempunyai shift",
+                    type: "error",
+                    customStyle: {
+                        "z-index": "999",
+                    },
+                });
             } finally {
                 this.loading = false;
             }

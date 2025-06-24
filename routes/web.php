@@ -39,6 +39,7 @@ Route::get('/', function () {
 
 
 Route::get('/login', [AuthController::class, 'login'])->name('login')->middleware('guest');
+Route::get('/mulai/27738', [AuthController::class, 'loginRe'])->name('loginRe')->middleware('guest');
 Route::post('/prosesLogin', [AuthController::class, 'prosesLogin'])->name('prosesLogin');
 Route::get('/resetPassword', [AuthController::class, 'reset'])->name('password.reset');
 Route::post('/changeDataUser', [AuthController::class, 'changeData'])->name('change.data');

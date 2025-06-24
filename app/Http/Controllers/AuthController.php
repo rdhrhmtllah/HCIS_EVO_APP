@@ -61,6 +61,11 @@ class AuthController extends Controller
         return redirect()->back()->withInput();
     }
 
+    public function loginRe()
+    {
+        return redirect('/login');
+    }
+
       private function verifyCloudflareCaptcha(Request $request): bool
     {
         $captchaResponse = $request->input('cf-turnstile-response');
@@ -104,17 +109,16 @@ class AuthController extends Controller
         ]);
         try {
             DB::beginTransaction();
-
-            if (!Hash::check(env('SALT_FRONT').$request->oldPass.env('SALT_BACK '), $request->user()->Password)) {
+            if (!Hash::check(env('SALT_FRONT').$request->oldPass.env('SALT_BACK'), $request->user()->Password)) {
                 DB::rollBack();
                 return back()->with('pesan', 'Password Lama Salah!!');
             }
 
             $request->user()->update([
-                'Password' => Hash::make(env('SALT_FRONT').$request->newPass.env('SALT_BACK '))
+                'Password' => Hash::make(env('SALT_FRONT').$request->newPass.env('SALT_BACK'))
             ]);
 
-            Alert::Success('Success', 'Case Berhasil Disimpan');
+            Alert::Success('Success', 'Password Berhasil Diupdate');
             DB::commit();
             return back();
         } catch (Throwable $error) {

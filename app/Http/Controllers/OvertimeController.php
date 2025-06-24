@@ -20,7 +20,7 @@ class OvertimeController extends Controller
     public function index(){
         $title = "INI LEMBUR";
         $divisi =  Auth()->user()->divisionKaryawan->ID_Divisi;
-
+        $karyawanAuth = Auth()->user()->karyawan->Kode_Karyawan;
 
         $date = date('Y-m-d');
         $week = [];
@@ -135,11 +135,10 @@ class OvertimeController extends Controller
             where
             a.UserID = b.Kode_Karyawan
             and b.ID_Divisi_Sub_Divisi = c.ID_DIVISI_SUB_DIVISI
-            and c.ID_Divisi = ?
+            and a.UserID = ?
             and a.status is null
             order by a.Tanggal desc, a.jam desc";
-        $resultNo_Result = DB::select($queryNoTransaksi, [$divisi]);
-        // dd($resultNo_Result);
+        $resultNo_Result = DB::select($queryNoTransaksi, [$karyawanAuth]);
         $queryUser = "SELECT a.Nama as name, a.UserID_Absen as userId FROM Karyawan a, HRIS_Shift_Per_Karyawan b
                   WHERE a.Kode_Karyawan = b.Kode_Karyawan AND a.UserID_Absen IS NOT NULL group by a.Nama, a.UserID_Absen ";
         $users = DB::select($queryUser);
@@ -331,12 +330,13 @@ class OvertimeController extends Controller
                 INNER JOIN HRIS_Shift_Per_Karyawan d ON a.ID_Shift = d.ID_Shift
                 INNER JOIN Karyawan e ON d.Kode_Karyawan = e.Kode_Karyawan
                                     AND d.Kode_Perusahaan = e.Kode_Perusahaan
+                INNER JOIN HRIS_Karyawan_Team h ON h.Kode_Karyawan = e.Kode_Karyawan
                 INNER JOIN View_Divisi_Sub_Divisi f ON e.ID_Divisi_Sub_Divisi = f.ID_DIVISI_SUB_DIVISI
                 INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan g ON e.ID_Level_Jabatan = g.ID_Level_Jabatan
                 WHERE e.Kode_Perusahaan = ?
 				AND g.ID_Level  IN (1,2,3)
                 AND b.Hari = ?
-                AND f.ID_Divisi = ?
+                AND h.Kode_Karyawan_Team = ?
                 AND d.Periode <= ?
 
             ),
@@ -378,12 +378,13 @@ class OvertimeController extends Controller
                 INNER JOIN HRIS_Shift_Sementara d ON a.ID_Shift = d.ID_Shift
                 INNER JOIN Karyawan e ON d.Kode_Perusahaan = e.Kode_Perusahaan
                                     AND d.Kode_Karyawan = e.Kode_Karyawan
+                INNER JOIN HRIS_Karyawan_Team h ON h.Kode_Karyawan = e.Kode_Karyawan
                 INNER JOIN View_Divisi_Sub_Divisi f ON e.ID_Divisi_Sub_Divisi = f.ID_DIVISI_SUB_DIVISI
                 INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan g ON e.ID_Level_Jabatan = g.ID_Level_Jabatan
                 WHERE e.Kode_Perusahaan = ?
 				AND g.ID_Level  IN (1,2,3)
                 AND b.Hari = ?
-                AND f.ID_Divisi = ?
+                AND h.Kode_Karyawan_Team = ?
                 AND d.Tanggal = ?
 
 				ORDER BY d.Urut DESC, d.Tanggal DESC
@@ -442,12 +443,12 @@ class OvertimeController extends Controller
             $result = DB::select($query, [
                 $Kode_Perusahaan,  // Parameter 1: KaryawanShiftPermanen.Kode_Perusahaan
                 $Hari,             // Parameter 2: KaryawanShiftPermanen.Hari
-                $divisi,           // Parameter 3: KaryawanShiftPermanen.ID_Divisi
+                $karyawan,
                 $Tanggal,
-                 // Parameter 4: KaryawanShiftPermanen.Periode
+
                 $Kode_Perusahaan,  // Parameter 5: ShiftSementara.Kode_Perusahaan
                 $Hari,             // Parameter 6: ShiftSementara.Hari
-                $divisi,           // Parameter 7: ShiftSementara.ID_Divisi
+                $karyawan,
                 $Tanggal,
                 $time,
                 $time,
@@ -919,8 +920,9 @@ class OvertimeController extends Controller
 
     public function getExport(Request $request){
         $start = $request->input('start');
-        $end   = $request->input('end' );
+        $end   = $request->input('end');
         $divisi =  Auth()->user()->divisionKaryawan->ID_Divisi;
+        $karyawanAuth = Auth()->user()->karyawan->Kode_Karyawan;
 
         $queryMaster = "
             SELECT
@@ -930,13 +932,13 @@ class OvertimeController extends Controller
             WHERE
                 a.UserID = b.Kode_Karyawan
                 AND b.ID_Divisi_Sub_Divisi = c.ID_DIVISI_SUB_DIVISI
-                AND c.ID_Divisi = ?
+                AND a.UserID = ?
                 AND a.status IS NULL
                 AND CAST(a.Tanggal AS DATE) BETWEEN ? AND ?
             ORDER BY
                 a.Tanggal DESC, a.Jam DESC
         ";
-        $transaksiMaster = DB::select($queryMaster, [$divisi, $start, $end]);
+        $transaksiMaster = DB::select($queryMaster, [$karyawanAuth, $start, $end]);
         if (empty($transaksiMaster)) {
             return response()->json([
                 'status' => 200,

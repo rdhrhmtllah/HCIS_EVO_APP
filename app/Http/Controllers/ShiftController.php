@@ -12,18 +12,20 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\Whatsapp;
 use Illuminate\Database\Eloquent\Builder;
+use App\Jobs\SendWhatsappMessage;
+
 
 class ShiftController extends Controller
 {
     //
 
-    public function index(){
-        $title = "Change User Shift";
-        $query = "select a.Kode_Karyawan as NAMA_KARYAWAN, b.Nama as SHIFT_PERMANEN ,
-        isnull((select TOP 1 y.Nama + '(SHIFT SEMENTARA)' from HRIS_Shift_Sementara x, HRIS_Shift_Kerja y where x.ID_Shift = y.ID_Shift and x.Kode_Karyawan = a.Kode_karyawan and x.ID_Shift <> a.ID_Shift),b.Nama) as SHIFT_SEMENTARA
-        from HRIS_Shift_Per_Karyawan a JOIN HRIS_Shift_Kerja b ON a.ID_Shift = b.ID_Shift   group by Kode_Karyawan, b.Nama, a.ID_Shift
-        ";
-        $result = DB::select($query);
+public function index(){
+    $title = "Change User Shift";
+    $query = "select a.Kode_Karyawan as NAMA_KARYAWAN, b.Nama as SHIFT_PERMANEN ,
+    isnull((select TOP 1 y.Nama + '(SHIFT SEMENTARA)' from HRIS_Shift_Sementara x, HRIS_Shift_Kerja y where x.ID_Shift = y.ID_Shift and x.Kode_Karyawan = a.Kode_karyawan and x.ID_Shift <> a.ID_Shift),b.Nama) as SHIFT_SEMENTARA
+    from HRIS_Shift_Per_Karyawan a JOIN HRIS_Shift_Kerja b ON a.ID_Shift = b.ID_Shift   group by Kode_Karyawan, b.Nama, a.ID_Shift
+    ";
+    $result = DB::select($query);
 
     $divisi =  Auth()->user()->divisionKaryawan->nama_divisi;
     // dd($divisi);
@@ -69,103 +71,103 @@ class ShiftController extends Controller
 
 
 
-        return inertia('userShift', ['title' => $title, 'semuaShift' => $jenisShift, 'divisi' => $divisi, 'tanggalLoop' => $weekDates]);
-    }
+    return inertia('userShift', ['title' => $title, 'semuaShift' => $jenisShift, 'divisi' => $divisi, 'tanggalLoop' => $weekDates]);
+}
 
-   public function getShift(Request $request){
-        try{
-            if($request['type'] === 'temporary'){
-                $tanggal = $request['tanggal'][0];
-            }else{
-                $tanggal = $request['tanggal'];
-            }
-            // dd($tanggal);
-            // dd(date('Y-m-d',strtotime($tanggal)) <= date('Y-m-d'));
-            if(date('Y-m-d',strtotime($tanggal)) == date('Y-m-d')){
-            $Hari = date('N', strtotime($tanggal));
-             if ($Hari <= 6 ) {
-            $Hari += 1 ;
-            $time = date('H:i:s');
-              $query = "
-            select
-            a.ID_Shift,
-            a.Nama as Shift,
-            b.Hari,
-            c.Jam_Masuk,
-            c.Jam_Keluar,
-            COALESCE(
-                NULLIF(c.Jam_Selesai_Lintas_Hari, ''),
-                NULLIF(c.Jam_Selesai_Absen_Keluar, '')
-            ) AS Jam_selesai_absen
-            from
-            HRIS_Shift_Kerja a,
-            HRIS_Shift_Kerja_Detail b,
-            HRIS_Waktu_Kerja c
-            where
-            a.ID_Shift = b.ID_Shift
-            and b.ID_Waktu_Kerja = c.ID_Waktu_Kerja
-            and b.Hari = ?
-            and a.Non_Shift = 'T'
-            AND c.Jam_Keluar >= ?
-
-            ";
-            $result =  DB::select($query, [$Hari, $time]);
-
-
-            } elseif ($Hari == 7) {
-                $Hari = 1;
-            }
-
-            }else{
-
-                // dd($tanggal);
-            $Hari = date('N', strtotime($tanggal));
-             if ($Hari <= 6 ) {
-            $Hari += 1 ;
-            } elseif ($Hari == 7) {
-                $Hari = 1;
-            }
-
-            // $TanggalSekarang = date();
-            // dd($Hari);
+public function getShift(Request $request){
+    try{
+        if($request['type'] === 'temporary'){
+            $tanggal = $request['tanggal'][0];
+        }else{
+            $tanggal = $request['tanggal'];
+        }
+        // dd($tanggal);
+        // dd(date('Y-m-d',strtotime($tanggal)) <= date('Y-m-d'));
+        if(date('Y-m-d',strtotime($tanggal)) == date('Y-m-d')){
+        $Hari = date('N', strtotime($tanggal));
+            if ($Hari <= 6 ) {
+        $Hari += 1 ;
+        $time = date('H:i:s');
             $query = "
-            select
-            a.ID_Shift,
-            a.Nama as Shift,
-            b.Hari,
-            c.Jam_Masuk,
-            c.Jam_Keluar,
-            COALESCE(
-                NULLIF(c.Jam_Selesai_Lintas_Hari, ''),
-                NULLIF(c.Jam_Selesai_Absen_Keluar, '')
-            ) AS Jam_selesai_absen
-            from
-            HRIS_Shift_Kerja a,
-            HRIS_Shift_Kerja_Detail b,
-            HRIS_Waktu_Kerja c
-            where
-            a.ID_Shift = b.ID_Shift
-            and b.ID_Waktu_Kerja = c.ID_Waktu_Kerja
-            and b.Hari = ?
-            and a.Non_Shift = 'T'
-            ";
-        $result =  DB::select($query, [$Hari]);
-        }
+        select
+        a.ID_Shift,
+        a.Nama as Shift,
+        b.Hari,
+        c.Jam_Masuk,
+        c.Jam_Keluar,
+        COALESCE(
+            NULLIF(c.Jam_Selesai_Lintas_Hari, ''),
+            NULLIF(c.Jam_Selesai_Absen_Keluar, '')
+        ) AS Jam_selesai_absen
+        from
+        HRIS_Shift_Kerja a,
+        HRIS_Shift_Kerja_Detail b,
+        HRIS_Waktu_Kerja c
+        where
+        a.ID_Shift = b.ID_Shift
+        and b.ID_Waktu_Kerja = c.ID_Waktu_Kerja
+        and b.Hari = ?
+        and a.Non_Shift = 'T'
+        AND c.Jam_Keluar >= ?
+
+        ";
+        $result =  DB::select($query, [$Hari, $time]);
 
 
-        // dd($result);
-        return response()->json([
-                'status' => 200,
-                'data' => $result
-            ]);
-        }catch(\Throwable $e){
-            Log::error('Gagal Mengambil data'. $e->getMessage());
-            return response()->json([
-                'status' => 404,
-                'error' => "Tidak bisa mengambil data". $e->getMessage()
-            ]);
+        } elseif ($Hari == 7) {
+            $Hari = 1;
         }
+
+        }else{
+
+            // dd($tanggal);
+        $Hari = date('N', strtotime($tanggal));
+            if ($Hari <= 6 ) {
+        $Hari += 1 ;
+        } elseif ($Hari == 7) {
+            $Hari = 1;
+        }
+
+        // $TanggalSekarang = date();
+        // dd($Hari);
+        $query = "
+        select
+        a.ID_Shift,
+        a.Nama as Shift,
+        b.Hari,
+        c.Jam_Masuk,
+        c.Jam_Keluar,
+        COALESCE(
+            NULLIF(c.Jam_Selesai_Lintas_Hari, ''),
+            NULLIF(c.Jam_Selesai_Absen_Keluar, '')
+        ) AS Jam_selesai_absen
+        from
+        HRIS_Shift_Kerja a,
+        HRIS_Shift_Kerja_Detail b,
+        HRIS_Waktu_Kerja c
+        where
+        a.ID_Shift = b.ID_Shift
+        and b.ID_Waktu_Kerja = c.ID_Waktu_Kerja
+        and b.Hari = ?
+        and a.Non_Shift = 'T'
+        ";
+    $result =  DB::select($query, [$Hari]);
     }
+
+
+    // dd($result);
+    return response()->json([
+            'status' => 200,
+            'data' => $result
+        ]);
+    }catch(\Throwable $e){
+        Log::error('Gagal Mengambil data'. $e->getMessage());
+        return response()->json([
+            'status' => 404,
+            'error' => "Tidak bisa mengambil data". $e->getMessage()
+        ]);
+    }
+}
 
 public function getWeek(Request $request)
 {
@@ -175,30 +177,67 @@ public function getWeek(Request $request)
     $endOfWeek = date('Y-m-d', strtotime('Saturday', strtotime($startOfWeek)));
     $divisi =  Auth()->user()->divisionKaryawan->ID_Divisi;
     $karyawan_Auth =Auth()->user()->karyawan->Kode_Karyawan;
-
     $queryUser = "
-                    SELECT
+                 SELECT
+					e.Kode_Karyawan,
                     a.Nama,
                     a.UserID_Absen,
                     c.ID_Divisi
                     FROM
+					HRIS_Karyawan_Team e,
                     Karyawan a,
                     HRIS_Shift_Per_Karyawan b,
-                    View_Divisi_Sub_Divisi c
+                    View_Divisi_Sub_Divisi c,
+                    View_Golongan_Sub_Golongan_Level_Jabatan d
+
                     WHERE
                     a.Kode_Karyawan = b.Kode_Karyawan
+                    AND a.ID_Level_Jabatan = d.ID_Level_Jabatan
                     AND a.UserID_Absen IS NOT NULL
                     AND a.ID_Divisi_Sub_Divisi = c.ID_DIVISI_SUB_DIVISI
-                    AND c.ID_Divisi = ?
-                    AND a.Kode_Karyawan <> ?
+					AND a.Kode_Karyawan = e.Kode_Karyawan
+                    AND e.Kode_Karyawan_Team = ?
+                    AND d.ID_Level IN (1,2,3,4)
                     group by
                     a.Nama,
                     a.UserID_Absen,
-                    c.ID_Divisi
+                    c.ID_Divisi,
+					e.Kode_Karyawan
 
-                    ";
-    $users = DB::select($queryUser,[$divisi, $karyawan_Auth]);
+    ";
 
+    // $queryUser = "
+    //                 SELECT
+    //                 a.Nama,
+    //                 a.UserID_Absen,
+    //                 c.ID_Divisi
+    //                 FROM
+    //                 Karyawan a,
+    //                 HRIS_Shift_Per_Karyawan b,
+    //                 View_Divisi_Sub_Divisi c,
+    //                 View_Golongan_Sub_Golongan_Level_Jabatan d
+    //                 WHERE
+    //                 a.Kode_Karyawan = b.Kode_Karyawan
+    //                 AND a.ID_Level_Jabatan = d.ID_Level_Jabatan
+    //                 AND a.UserID_Absen IS NOT NULL
+    //                 AND a.ID_Divisi_Sub_Divisi = c.ID_DIVISI_SUB_DIVISI
+    //                 AND c.ID_Divisi = ?
+    //                 AND a.Kode_Karyawan <> ?
+    //                 AND d.ID_Level IN (1,2,3,4)
+    //                 group by
+    //                 a.Nama,
+    //                 a.UserID_Absen,
+    //                 c.ID_Divisi
+
+    //                 ";
+    $users = DB::select($queryUser,[$karyawan_Auth]);
+    if(!$users){
+        return response()->json([
+            'status' => 404,
+            'message' => 'Tidak Menemukan User yang mempunyai shift'
+        ]);
+
+    }
     // Buat array tanggal minggu
     $userData = [];
     $weekDates = [];
@@ -379,12 +418,13 @@ public function getExport(Request $request)
         FROM Karyawan a
         JOIN HRIS_Shift_Per_Karyawan b ON a.Kode_Karyawan = b.Kode_Karyawan
         JOIN View_Divisi_Sub_Divisi c ON a.ID_Divisi_Sub_Divisi = c.ID_DIVISI_SUB_DIVISI
+        JOIN HRIS_Karyawan_Team d ON a.Kode_Karyawan = d.Kode_Karyawan
         WHERE a.UserID_Absen IS NOT NULL
-          AND c.ID_Divisi = ?
           AND a.Kode_Karyawan <> ?
+          AND d.Kode_Karyawan_Team = ?
         GROUP BY a.Nama, a.UserID_Absen, c.ID_Divisi
     ";
-    $users = DB::select($queryUser, [$divisi, $karyawan_Auth]);
+    $users = DB::select($queryUser, [$karyawan_Auth, $karyawan_Auth]);
 
     if (empty($users)) {
         return response()->json(['status' => 200, 'data' => []]);
@@ -540,11 +580,15 @@ public function submit(Request $request){
                                 ]
                             ];
 
-
-                        $response = Whatsapp::send_message($pesan);
-                        Log::channel('whatsapp_error')->warning('Pesan Error', [
-                            "pesan" => $response
-                        ]);
+                        //    SendWhatsappMessage::dispatch($item, $pesan)->onQueue('default')->delay(now()->addSeconds(30));
+                          SendWhatsappMessage::dispatch($item, $pesan)
+                                ->onConnection('database')
+                                ->onQueue('default')
+                                ->delay(now()->addSeconds(10));
+                        // $response = Whatsapp::send_message($pesan);
+                        // Log::channel('whatsapp_error')->warning('Pesan Error', [
+                        //     "pesan" => $response
+                        // ]);
 
 
                 }
