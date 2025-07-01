@@ -36,6 +36,9 @@ Route::get('/', function () {
     return view('login');
 })->middleware('guest');
 
+// Route::get('/absensiSales', function () {
+//     return inertia('absensiSales');
+// });
 
 
 Route::get('/login', [AuthController::class, 'login'])->name('login')->middleware('guest');
@@ -180,10 +183,19 @@ Route::middleware(['auth'])->group(function () {
 
     // Absensi
     Route::get('/lembur',[AbsensiController::class, 'indexLembur'])->name('absensi.lembur');
+    Route::middleware(['auth','check.jabatan:absensiPage'])->group(function(){
+        Route::get('/absensiSales',[AbsensiController::class, 'indexAbsensi'])->name('absensi.absensi');
+        Route::get('/absensi/getUserShift',[AbsensiController::class, 'getUserShift'])->name('absensi.shift');
+        Route::get('/absensi/getDataToday',[AbsensiController::class, 'getDataToday'])->name('absensi.today');
+        Route::post('/submitAbsen',[AbsensiController::class, 'submitAbsen'])->name('absensi.submit');
+    });
     Route::post('/addLembur',[AbsensiController::class, 'addLembur'])->name('absensi.lembur.add');
+
     Route::get('/parseResume',[parseResume::class, 'index'])->name('parseResume');
     Route::post('/parseResume/preview',[parseResume::class, 'preview'])->name('parseResume.preview');
     Route::post('/parseResume/submit',[parseResume::class, 'submit'])->name('parseResume.submi');
+
+
     // user dashboard
     Route::get('/uDash',[uDashController::class, 'index'])->name('Udash.index');
 

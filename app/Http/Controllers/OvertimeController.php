@@ -12,6 +12,9 @@ use App\Models\Lembur;
 use App\Models\LemburDet;
 use App\Models\LemburDetail;
 use App\Helpers\Whatsapp;
+use Vinkla\Hashids\Facades\Hashids;
+use Illuminate\Support\Facades\Crypt;
+
 
 
 
@@ -21,6 +24,8 @@ class OvertimeController extends Controller
         $title = "INI LEMBUR";
         $divisi =  Auth()->user()->divisionKaryawan->ID_Divisi;
         $karyawanAuth = Auth()->user()->karyawan->Kode_Karyawan;
+        // $karyawanID = Auth()->user()->Id_Users;
+        $karyawanID = Auth()->user()->karyawan->Kode_Karyawan;
 
         $date = date('Y-m-d');
         $week = [];
@@ -131,18 +136,55 @@ class OvertimeController extends Controller
             from
             Transaksi_Lembur a,
             Karyawan b,
-            View_Divisi_Sub_Divisi c
+            View_Divisi_Sub_Divisi c,
+            KPI_Users d
             where
             a.UserID = b.Kode_Karyawan
+            and b.UserID_Web = d.Id_Users
             and b.ID_Divisi_Sub_Divisi = c.ID_DIVISI_SUB_DIVISI
             and a.UserID = ?
             and a.status is null
             order by a.Tanggal desc, a.jam desc";
-        $resultNo_Result = DB::select($queryNoTransaksi, [$karyawanAuth]);
+        $resultNo_Result = DB::select($queryNoTransaksi, [$karyawanID]);
         $queryUser = "SELECT a.Nama as name, a.UserID_Absen as userId FROM Karyawan a, HRIS_Shift_Per_Karyawan b
                   WHERE a.Kode_Karyawan = b.Kode_Karyawan AND a.UserID_Absen IS NOT NULL group by a.Nama, a.UserID_Absen ";
         $users = DB::select($queryUser);
-        // dd($users);
+
+
+        // dd($resultNo_Result);
+
+
+        //    $test = "
+        //         select Nama, UserID_Web from karyawan where nama like '%ridho%'
+        //     ";
+
+        //     $rsTest = DB::select($test);
+        //     $collection = collect($rsTest);
+
+        //     $hashedData = $collection->map(function ($item) {
+        //         if (isset($item->UserID_Web)) {
+        //             $item->UserID_Web = Hashids::connection('custom')->encode($item->UserID_Web);
+        //         }
+        //         if (isset($item->Nama)) {
+        //             $item->Nama = Crypt::encryptString($item->Nama);
+        //         }
+        //         return $item;
+        //     });
+
+
+        //     $unhashedData = $hashedData->map(function ($item){
+        //        if (isset($item->UserID_Web)) {
+        //             $item->UserID_Web = Hashids::connection('custom')->decode($item->UserID_Web);
+        //         }
+        //         if (isset($item->Nama)) {
+        //             $item->Nama = Crypt::decryptString($item->Nama);
+        //         }
+        //         return $item;
+        //     });
+
+        //     dd($hashedData);
+
+
 
         return inertia('Overtime', ['title'=>$title, 'data' => $resultNo_Result, 'dataUser' => $resultPerUser, 'tanggal' => $week, 'userChoose' =>$users, 'shiftList' => $shiftList]);
     }
@@ -153,11 +195,16 @@ class OvertimeController extends Controller
         $Hari = date('N',strtotime($request->date));
 
 
-        if ($Hari == 6) {
-            $Hari = 7;
-        } elseif ($Hari == 7) {
-            $Hari = 1;
-        }
+        // if ($Hari == 6) {
+        //     $Hari = 7;
+        // } elseif ($Hari == 7) {
+        //     $Hari = 1;
+        // }
+          if ($Hari <= 6 ) {
+            $Hari += 1 ;
+            } elseif ($Hari == 7) {
+                $Hari = 1;
+            }
 
 
         // dd($Hari);
@@ -416,7 +463,7 @@ class OvertimeController extends Controller
 					WHERE
 						a.No_Transaksi = b.No_Transaksi
 						AND Kode_Karyawan = COALESCE(ss.Kode_Karyawan, sp.Kode_Karyawan)
-						AND ? BETWEEN CAST(Tanggal_Lembur_Dari AS DATE) AND CAST(Tanggal_Lembur_Sampai AS DATE)
+						AND ? = CAST(Tanggal_Lembur_Dari AS DATE)
                         AND b.Status is null
 				)
 				THEN 'TRUE'
@@ -465,6 +512,16 @@ class OvertimeController extends Controller
                 'message' => 'Data tidak ditemukan',
             ], 404);
         }
+
+        $resultCollect = collect($result);
+        $hashResult = $resultCollect->map(function ($item) {
+                if (isset($item->userId)) {
+                    $item->userId = Crypt::encryptString($item->userId);
+                }
+                return $item;
+        });
+
+        // dd(Crypt::decryptString('eyJpdiI6ImdzVUFLb0RnK0NNazQ2V0diWnpGL3c9PSIsInZhbHVlIjoiQWpsb2JYNlFyTFg3cFhNekNQUURpZz09IiwibWFjIjoiZTVhZjk4YzFmZTMyNThmZjFjODZhYzZjNzFlMDYyYmVhODNkNTE0NDM0MDliZDkyYWJmMDg2ZTVmNzM2NjU3OCIsInRhZyI6IiJ9'));
 
         // $query = "
         //         WITH
@@ -583,9 +640,11 @@ class OvertimeController extends Controller
         //     $time
         // ]);
 
+        // dd($hashResult);
+
         return response()->json([
             'status' => 200,
-            'data' => $result
+            'data' => $hashResult
         ]);
 
     }
@@ -605,7 +664,7 @@ class OvertimeController extends Controller
 
                 $userSPV= Auth()->user()->karyawan->Kode_Karyawan;
                 $namaSPV = Auth()->user()->karyawan->Nama;
-                // dd($namaSPV);
+                // dd($userSPV);
                 $Kode_Perusahaan = '001';
                 $Tanggal_Sekarang = date('Y-m-d');
                 $Jam_Sekarang = date('H:i:s');
@@ -638,7 +697,8 @@ class OvertimeController extends Controller
                     //
                     $jenis = 'LEMBUR';
                     $Tanggal_lembur_saja = date('Y-m-d H:i:s',strtotime($user['tanggal']));
-                    $Kode_Karyawan = $user['id'];
+                    $Kode_Karyawan = Crypt::decryptString($user['id']);
+                    // dd($Kode_Karyawan);
 
                     if(strtotime($user['waktu']) <= strtotime($user['Jam_MasukShift'])){
                         $tanggalKeluarLembur = date('Y-m-d H:i:s', strtotime('+1 day', strtotime($user['tanggal'] . ' ' . $user['waktu'])));
@@ -652,7 +712,7 @@ class OvertimeController extends Controller
                         $tanggalMasukLembur = date('Y-m-d H:i:s', strtotime($user['tanggal'] . ' ' . $user['masuk']));
                     }
                     // dd($tanggalMasukLembur.' - ' .$tanggalKeluarLembur);
-                    $alasan = $user['reason'];
+                    $alasan = str_replace(["\n", "\t"], ' ', $user['reason']);
                     $userInsert = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first() ?? null;
                     // dd($userInsert->No_Hp);
                     $dataDet =  LemburDetail::insertGetId([
@@ -677,7 +737,7 @@ class OvertimeController extends Controller
                     ]);
 
                     $userInsertNoHp = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first()->HP ?? null;
-                    if($userInsert && $finalInsert && $userInsertNoHp){
+                    if($userInsert && $finalInsert && $userInsertNoHp && $userInsertNoHp != '-'){
                     $userInsertNama =  $userInsert->Nama;
 
                     $tangalMasukUser = date('H:i d M Y', strtotime($tanggalMasukLembur));

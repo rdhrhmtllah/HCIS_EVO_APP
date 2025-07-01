@@ -63,6 +63,15 @@
                     </a>
                 </li>
             @endcan
+            @can('akses-spesial', 'absensiPage')
+
+                <li class="submenu-item">
+                    <a href="/absensiSales" class="submenu-link">
+                        <i class="bi bi-person-badge"></i> Absensi
+                    </a>
+                </li>
+            @endcan
+
             @can('open-kpi')
 
                         <li class="submenu-item">

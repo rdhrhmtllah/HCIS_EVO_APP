@@ -17,14 +17,15 @@ class Users extends Seeder
     public function run()
     {
         $usernames = [
-            'LISKA', 'TANHAR', 'MIEKI', 'TEGUH', 'ALFAN', 'AKONG', 'MANSYUR','WILSON'
+            'ADI SUCIPTO','NUR ADILAH','AGUNG NUGRAHA','AGUNG SETIYAWAN','AHMAD RAFEI','HIOE RAKMAN GUNAWAN','ALFAN','ALFI RAHMAWATI, SE','ALFI AHMAD MAULANA','ALFIAN EKO PRASTYO','MUHAMMAD ALFIAN KURNIA','ALFIN FIRDAUS','ALI ABAS','ALI','MUHAMMAD ALIFLARIK BILNADZARI JAMALUDDIN, SH','AN NAUFAL','ANANDA PUTRI ETHELVIST','ANGGA SURYA DANA','ANGGITA APRILIANTI','RINI RAHAYU ANISA','ARIYANTO','ARJUN SYAHPUTRA','ASTRID RIANDIFA','CHRISTOPHER AMOS HASIAN NAPITUPULU','CIPTO','DADI ISWARA','DANI RAMDANI','DAWUD PRASETYO','DEDI RIYANTO','DELI SAHRITO','DENIS PRIMA CAHYANI','DORIS SANDARA','EDI SUPARDI','EFRIZAL','ENDRIEF MUZAKY S.E','ERICK CANTONA','FADHILAH','FAJAR KURNIAWAN','FANDY WIRANATA','AHMAD FARID MUMTAZ','FARIZAL','FAUZAN HERLIANSYAH','FERY','HANSEN GUNAWAN','HARDILESA ABDUL AZIZ','HARGO MARSALIMIN','HENDRY HALIM MURDANI','HERU SAPUTRA','HIFDI','IGIT SOLIHIN'
+
         ];
 
         // Kode Karyawan yang sesuai dengan urutan usernames.
         // Penting: Pastikan urutan dan jumlah elemen di sini cocok dengan $usernames
         $karyawanCodes = [
+            'ADI SUCIPTO','ADILAH','AGUNG NUGRAHA','AGUNG SETIYAWAN','AHMAD RAFEI','AKONG','ALFAN','ALFI','ALFI AHMAD','ALFIAN EKO','ALFIAN KURNIA','ALFIN FIRDAUS','ALI ABAS','ALI SULAWESI','ALIFLARIK','AN NAUFAL','ANANDA PUTRI','ANGGA SURYA','ANGGITA APRILIA','ANISA','ARIYANTO','ARJUN','ASTRID','CHRISTOPHER','CIPTO','DADI ISWARA','DANI RAMDANI','DAWUD','DEDI RIYANTO','DELI S','DENIS','DORIS','EDI SUPARDI','EFRIZAL','ENDRIEF','ERICK','FADHILAH','FAJAR','FANDY','FARID','FARIZAL','FAUZAN','FERY','HANSEN','HARDILESA','HARGO','HENDRY.H','HERU','HIDFI','IGIT SOLIHIN'
 
-            'LISKA', 'TANHAR MAHARSI', 'MIEKI', 'TEGUH', 'ALFAN', 'AKONG', 'MANSYUR M','WILSON'
         ];
 
         // Ambil data karyawan berdasarkan $karyawanCodes dan urutkan hasilnya agar sesuai dengan urutan $karyawanCodes.
@@ -111,32 +112,42 @@ class Users extends Seeder
                             'Raw_Password' => $rawPassword,
                         ];
 
-                        if($karyawan->ID_Perusahaan == 'PT EVO MANUFACTURING INDONESIA') //<---- If EMI
-                        {
-                            DB::table('HRIS_Page_Access')->Insert([
+                        DB::table('HRIS_Page_Access')->Insert([
                                 'Kode_Perusahaan' => '001',
                                 'ID_Level' => $levelId,
                                 'ID_Divisi' => $divisionId,
-                                'Jenis_Page' => 'OvertimeManagement',
+                                'Jenis_Page' => 'absensiPage',
                                 'UserID_Web' => $kpiUserId
                             ]);
-                            DB::table('HRIS_Page_Access')->Insert([
-                                'Kode_Perusahaan' => '001',
-                                'ID_Level' => $levelId,
-                                'ID_Divisi' => $divisionId,
-                                'Jenis_Page' => 'ShiftManagement',
-                                'UserID_Web' => $kpiUserId
-                            ]);
-                        }else //<---- If ENB & GMN
-                        {
-                             DB::table('HRIS_Page_Access')->Insert([
-                                'Kode_Perusahaan' => '001',
-                                'ID_Level' => $levelId,
-                                'ID_Divisi' => $divisionId,
-                                'Jenis_Page' => 'OvertimeManagement',
-                                'UserID_Web' => $kpiUserId
-                            ]);
-                        }
+
+
+
+                        // if($karyawan->ID_Perusahaan == 'PT EVO MANUFACTURING INDONESIA') //<---- If EMI
+                        // {
+                        //     DB::table('HRIS_Page_Access')->Insert([
+                        //         'Kode_Perusahaan' => '001',
+                        //         'ID_Level' => $levelId,
+                        //         'ID_Divisi' => $divisionId,
+                        //         'Jenis_Page' => 'OvertimeManagement',
+                        //         'UserID_Web' => $kpiUserId
+                        //     ]);
+                        //     DB::table('HRIS_Page_Access')->Insert([
+                        //         'Kode_Perusahaan' => '001',
+                        //         'ID_Level' => $levelId,
+                        //         'ID_Divisi' => $divisionId,
+                        //         'Jenis_Page' => 'ShiftManagement',
+                        //         'UserID_Web' => $kpiUserId
+                        //     ]);
+                        // }else //<---- If ENB & GMN
+                        // {
+                        //      DB::table('HRIS_Page_Access')->Insert([
+                        //         'Kode_Perusahaan' => '001',
+                        //         'ID_Level' => $levelId,
+                        //         'ID_Divisi' => $divisionId,
+                        //         'Jenis_Page' => 'OvertimeManagement',
+                        //         'UserID_Web' => $kpiUserId
+                        //     ]);
+                        // }
 
                      $pesan = [ "messaging_product" => "whatsapp",
                                         "to" => $karyawan->HP,
