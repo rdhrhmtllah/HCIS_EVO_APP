@@ -55,6 +55,18 @@ return [
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => false,
         ],
+        'gcs' => [
+            'driver' => 'gcs',
+            'key_file_path' => env('GOOGLE_CLOUD_KEY_FILE_PATH', null), // Menggunakan path file untuk lokal
+            // 'key_file' => env('GOOGLE_CLOUD_KEY_FILE', null), // Ini untuk Cloud Run (string JSON)
+            'project_id' => env('GOOGLE_CLOUD_PROJECT_ID', 'your-project-id'),
+            'bucket' => env('GOOGLE_CLOUD_STORAGE_BUCKET', 'absensiSales'),
+            'path_prefix' => env('GOOGLE_CLOUD_STORAGE_PATH_PREFIX', null),
+            'visibility' => 'private',
+            'metadata' => ['cacheControl' => 'public,max-age=86400'], // Opsional: Contoh metadata
+            'visibility_handler' => \League\Flysystem\GoogleCloudStorage\UniformBucketLevelAccessVisibility::class, // Penting jika UBLA aktif
+        ],
+
 
     ],
 

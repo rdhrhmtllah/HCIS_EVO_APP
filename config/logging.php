@@ -106,6 +106,42 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 30,
         ],
+        'absensi_error' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/absensi_error.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+        'Wa_absensi_error' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/Wa_absensi_error.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+        'shift_error' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/Wa_absensi_error.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+        'wa_shift_error' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/Wa_absensi_error.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+        'lembur_erro' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/Wa_absensi_error.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+        'wa_lembur_error' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/Wa_absensi_error.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
         'openaiError' => [
             'driver' => 'daily',
             'path' => storage_path('logs/openaiError.log'),

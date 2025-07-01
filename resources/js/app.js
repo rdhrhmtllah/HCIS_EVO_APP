@@ -16,7 +16,7 @@ createInertiaApp({
         createApp({ render: () => h(App, props) })
             .use(inertiaPlugin)
             .use(FloatingVue)
-            .use(plugin, defaultConfig) // ✅ PERBAIKAN DI SINI
+            .use(plugin, defaultConfig)
             .mount(el);
     },
 });

@@ -17,14 +17,14 @@ class Users extends Seeder
     public function run()
     {
         $usernames = [
-            'LISKA', 'TANHAR', 'MIEKI', 'TEGUH', 'ALFAN', 'AKONG', 'MANSYUR','WILSON'
+
         ];
 
         // Kode Karyawan yang sesuai dengan urutan usernames.
         // Penting: Pastikan urutan dan jumlah elemen di sini cocok dengan $usernames
         $karyawanCodes = [
+            'AKONG','ALFAN','ALFIAN KURNIA','ALFIN FIRDAUS','ALIFLARIK','AN NAUFAL','ANGGA SURYA','ARIYANTO','ASTRID','DADI ISWARA','DANI RAMDANI','FADHILAH','FAJAR','FARID','FARIZAL','FAUZAN','HANSEN','ILHAM ADITYA','ISMAIL','KAMALLUDIN','LINGGAR','LISKA','M LUTHFI','M. IRWANSYAH','MANSYUR M','MARDIAN','MUNADHIL','NAFIUR','PUTU WIRA','REKA SETIAWAN','RIFAATUL','RINI NOOR','SYAIFUL','TANHAR MAHARSI','TAUFIK SAPUTRA','TEGUH','WILI NANDA','WILSON','YOGA ADHITIA','YUSA','ZAINAL'
 
-            'LISKA', 'TANHAR MAHARSI', 'MIEKI', 'TEGUH', 'ALFAN', 'AKONG', 'MANSYUR M','WILSON'
         ];
 
         // Ambil data karyawan berdasarkan $karyawanCodes dan urutkan hasilnya agar sesuai dengan urutan $karyawanCodes.
@@ -111,32 +111,42 @@ class Users extends Seeder
                             'Raw_Password' => $rawPassword,
                         ];
 
-                        if($karyawan->ID_Perusahaan == 'PT EVO MANUFACTURING INDONESIA') //<---- If EMI
-                        {
-                            DB::table('HRIS_Page_Access')->Insert([
+                        DB::table('HRIS_Page_Access')->Insert([
                                 'Kode_Perusahaan' => '001',
                                 'ID_Level' => $levelId,
                                 'ID_Divisi' => $divisionId,
-                                'Jenis_Page' => 'OvertimeManagement',
+                                'Jenis_Page' => 'absensiPage',
                                 'UserID_Web' => $kpiUserId
                             ]);
-                            DB::table('HRIS_Page_Access')->Insert([
-                                'Kode_Perusahaan' => '001',
-                                'ID_Level' => $levelId,
-                                'ID_Divisi' => $divisionId,
-                                'Jenis_Page' => 'ShiftManagement',
-                                'UserID_Web' => $kpiUserId
-                            ]);
-                        }else //<---- If ENB & GMN
-                        {
-                             DB::table('HRIS_Page_Access')->Insert([
-                                'Kode_Perusahaan' => '001',
-                                'ID_Level' => $levelId,
-                                'ID_Divisi' => $divisionId,
-                                'Jenis_Page' => 'OvertimeManagement',
-                                'UserID_Web' => $kpiUserId
-                            ]);
-                        }
+
+
+
+                        // if($karyawan->ID_Perusahaan == 'PT EVO MANUFACTURING INDONESIA') //<---- If EMI
+                        // {
+                        //     DB::table('HRIS_Page_Access')->Insert([
+                        //         'Kode_Perusahaan' => '001',
+                        //         'ID_Level' => $levelId,
+                        //         'ID_Divisi' => $divisionId,
+                        //         'Jenis_Page' => 'OvertimeManagement',
+                        //         'UserID_Web' => $kpiUserId
+                        //     ]);
+                        //     DB::table('HRIS_Page_Access')->Insert([
+                        //         'Kode_Perusahaan' => '001',
+                        //         'ID_Level' => $levelId,
+                        //         'ID_Divisi' => $divisionId,
+                        //         'Jenis_Page' => 'ShiftManagement',
+                        //         'UserID_Web' => $kpiUserId
+                        //     ]);
+                        // }else //<---- If ENB & GMN
+                        // {
+                        //      DB::table('HRIS_Page_Access')->Insert([
+                        //         'Kode_Perusahaan' => '001',
+                        //         'ID_Level' => $levelId,
+                        //         'ID_Divisi' => $divisionId,
+                        //         'Jenis_Page' => 'OvertimeManagement',
+                        //         'UserID_Web' => $kpiUserId
+                        //     ]);
+                        // }
 
                      $pesan = [ "messaging_product" => "whatsapp",
                                         "to" => $karyawan->HP,

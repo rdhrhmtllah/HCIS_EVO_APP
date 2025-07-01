@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use App\Helpers\Whatsapp;
 use Illuminate\Database\Eloquent\Builder;
 use App\Jobs\SendWhatsappMessage;
+use RealRashid\SweetAlert\Facades\Alert;
 
 
 class ShiftController extends Controller
@@ -531,7 +532,7 @@ public function submit(Request $request){
                   $userInsert = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first() ?? null;
                 $userInsertNoHp = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first()->HP ?? null;
 
-                if($userInsert && $finalInsert && $userInsertNoHp){
+                if($userInsert && $finalInsert && $userInsertNoHp && $userInsertNoHp != '-'){
 
                     $TanggalKirim = date('D, d M Y ',strtotime($data['params']['AssignShift']['dates']['start']));
 
@@ -581,14 +582,14 @@ public function submit(Request $request){
                             ];
 
                         //    SendWhatsappMessage::dispatch($item, $pesan)->onQueue('default')->delay(now()->addSeconds(30));
-                          SendWhatsappMessage::dispatch($item, $pesan)
-                                ->onConnection('database')
-                                ->onQueue('default')
-                                ->delay(now()->addSeconds(10));
-                        // $response = Whatsapp::send_message($pesan);
-                        // Log::channel('whatsapp_error')->warning('Pesan Error', [
-                        //     "pesan" => $response
-                        // ]);
+                        //   SendWhatsappMessage::dispatch($item, $pesan)
+                        //         ->onConnection('database')
+                        //         ->onQueue('default')
+                        //         ->delay(now()->addSeconds(10));
+                        $response = Whatsapp::send_message($pesan);
+                        Log::channel('whatsapp_error')->warning('Pesan Error', [
+                            "pesan" => $response
+                        ]);
 
 
                 }
@@ -617,7 +618,7 @@ public function submit(Request $request){
                 $userInsertNoHp = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first()->HP ?? null;
                 // dd($userInsertNoHp);
                 // dd($userInsert);
-                if($userInsert && $finalInsert && $userInsertNoHp){
+                if($userInsert && $finalInsert && $userInsertNoHp && $userInsertNoHp != '-'){
 
                         if(count($Dates) > 1){
                             $temp = [];
@@ -689,7 +690,7 @@ public function submit(Request $request){
 
         }
          DB::commit();
-
+        Alert::success('Success', 'Shift Berhasil Disimpan!');
         return response()->json([
             'status' => 200,
             'Message' => 'Berhasil Menyimpan Pergantian Shift!'
@@ -697,6 +698,7 @@ public function submit(Request $request){
 
     }catch(\Throwable $e){
         DB::rollback();
+
         Log::error('Error simpan Lembur'. $e->getMessage());
         return response()->json([
             'status' => 500,
@@ -730,7 +732,7 @@ public function update(Request $request){
         $shiftKerja = Shift_Kerja::select('Nama')->Where('ID_Shift', $request->params['shift'])->first()->Nama;
         $userInsertNoHp = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first()->HP ?? null;
 
-        if($userInsert && $finalInsert && $userInsertNoHp){
+        if($userInsert && $finalInsert && $userInsertNoHp && $userInsertNoHp != '-'){
         $TanggalKirim = date('D, d M Y ',strtotime($request->params['date']));
 
 
@@ -788,6 +790,11 @@ public function update(Request $request){
             }
 
         DB::commit();
+        Alert::success('Success', 'Shift Berhasil Disimpan!');
+        return response()->json([
+        'status' => 200,
+        'Message' => 'Berhasil Menyimpan Shift'
+        ]);
     }catch(\Throwable $e){
         DB::rollback();
         Log::error('Error simpan Shift'. $e->getMessage());
@@ -799,10 +806,7 @@ public function update(Request $request){
     }
 
 
-    return response()->json([
-        'status' => 200,
-        'Message' => $request->All()
-    ]);
+
 }
 
 }

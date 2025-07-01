@@ -17,7 +17,7 @@
                                     ></i>
                                 </div>
                                 <div class="text-content">
-                                    <h2 class="title">
+                                    <h2 class="title text-white">
                                         Manajemen Penugasan Shift
                                     </h2>
                                     <p class="subtitle">
@@ -553,6 +553,7 @@
                     Batal
                 </button>
                 <button
+                    :disabled="!assignSelectedShift"
                     class="btn-modern btn-primary"
                     @click="
                         updateAlertButton(
@@ -1074,7 +1075,7 @@
     <!-- alert Modal -->
     <div
         class="modal-overlay"
-        style="z-index: 2010"
+        style="z-index: 1049 !important"
         :class="{ show: showAlertModal }"
         @click="() => closeAlertModal()"
     >
@@ -1413,7 +1414,7 @@ export default {
                         message: "Terjadi Kesalahan response dari server",
                         type: "error",
                         customStyle: {
-                            "z-index": "999",
+                            "z-index": "1050",
                         },
                     });
                     this.jenisShift = [];
@@ -1426,7 +1427,7 @@ export default {
                         "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                     type: "error",
                     customStyle: {
-                        "z-index": "999",
+                        "z-index": "1050",
                     },
                 });
                 this.jenisShift = [];
@@ -1485,7 +1486,7 @@ export default {
                                 "Congrats, Berhasil Menambahkan Data Lembur.",
                             type: "success",
                             customStyle: {
-                                "z-index": "999",
+                                "z-index": "1050",
                             },
                         });
                         this.closeAlertModal();
@@ -1500,7 +1501,7 @@ export default {
                             "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                         type: "error",
                         customStyle: {
-                            "z-index": "999",
+                            "z-index": "1050",
                         },
                     });
                     this.closeAlertModal();
@@ -1568,7 +1569,7 @@ export default {
                                 }`,
                                 type: "error",
                                 customStyle: {
-                                    "z-index": "999",
+                                    "z-index": "1050",
                                 },
                             });
                         });
@@ -1580,7 +1581,7 @@ export default {
                         message: "Gagal memuat data lembur",
                         type: "error",
                         customStyle: {
-                            "z-index": "999",
+                            "z-index": "1050",
                         },
                     });
                 }
@@ -1592,7 +1593,7 @@ export default {
                         "Terjadi kesalahan, silahkan coba lagi beberapa saat",
                     type: "error",
                     customStyle: {
-                        "z-index": "999",
+                        "z-index": "1050",
                     },
                 });
             } finally {
@@ -1741,7 +1742,7 @@ export default {
                         "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                     type: "error",
                     customStyle: {
-                        "z-index": "999",
+                        "z-index": "1050",
                     },
                 });
                 this.closeAlertModal();
@@ -1889,7 +1890,7 @@ export default {
                     message: "Congrats, Berhasil Mengunduh File.",
                     type: "success",
                     customStyle: {
-                        "z-index": "999",
+                        "z-index": "1050",
                     },
                 });
             } catch (error) {
@@ -1900,7 +1901,7 @@ export default {
                         "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                     type: "error",
                     customStyle: {
-                        "z-index": "999",
+                        "z-index": "1050",
                     },
                 });
             } finally {
@@ -1963,7 +1964,7 @@ export default {
                     message: "Tidak Menemukan User yang mempunyai shift",
                     type: "error",
                     customStyle: {
-                        "z-index": "999",
+                        "z-index": "1050",
                     },
                 });
             } finally {
@@ -2069,7 +2070,7 @@ export default {
                 case "3":
                     return "shift-night";
                 default:
-                    return "shift-default";
+                    return "shift-afternoon";
             }
         },
 
@@ -2206,6 +2207,7 @@ export default {
         openShiftModal(userId, dayIndex, date) {
             if (this.isClickable(date)) {
                 // alert(this.isClickable(date));
+                this.assignSelectedShift = null;
                 this.jenisShift = [];
                 const tanggalShift = [date];
                 // console.log(date);
@@ -2228,7 +2230,7 @@ export default {
                         "Tidak Bisa Edit, Hanya Bisa Minimal H+2 Untuk Mengajukan.",
                     type: "error",
                     customStyle: {
-                        "z-index": "999",
+                        "z-index": "1050",
                     },
                 });
             }
@@ -2329,7 +2331,7 @@ export default {
                         message: "Congrats, Berhasil Menambahkan Data Lembur.",
                         type: "success",
                         customStyle: {
-                            "z-index": "999",
+                            "z-index": "1050",
                         },
                     });
                     this.closeAlertModal();
@@ -2347,7 +2349,7 @@ export default {
                         "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                     type: "error",
                     customStyle: {
-                        "z-index": "999",
+                        "z-index": "1050",
                     },
                 });
                 this.closeAlertModal();
@@ -2365,7 +2367,7 @@ export default {
 <style>
 /* Modal Calendar */
 .el-overlay {
-    z-index: 999;
+    z-index: 1050;
 }
 .dialog-footer {
     text-align: right;
@@ -2882,7 +2884,7 @@ body {
     border: 1px solid var(--border);
     border-radius: 12px;
     box-shadow: var(--shadow-lg);
-    z-index: 1000;
+    z-index: 1047;
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
@@ -3058,7 +3060,7 @@ body {
 
 .employee-header {
     /* min-width: 200px; */
-    /* z-index: 999; */
+    /* z-index: 1050; */
     position: relative;
     /* background-color: rgba(239, 68, 68, 0.05); */
     border-right: 1px solid var(--border);
@@ -3180,6 +3182,8 @@ body {
 }
 
 .shift-container {
+    min-height: 5rem;
+    max-height: 5rem;
     min-width: 5rem;
     padding: 0.75rem;
     border-radius: 12px;
@@ -3419,7 +3423,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1001;
+    z-index: 1048;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
@@ -4125,7 +4129,7 @@ body {
     color: white;
     font-weight: 500;
     box-shadow: var(--shadow-lg);
-    z-index: 10000;
+    z-index: 1048;
     animation: slideIn 0.3s ease-out;
     min-width: 300px;
     display: flex;
@@ -4192,7 +4196,7 @@ body {
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
-    z-index: 1000;
+    z-index: 1048;
 }
 
 .tooltip::after {

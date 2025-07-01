@@ -1319,7 +1319,7 @@
     <!-- alert Modal -->
     <div
         class="modal-overlay"
-        style="z-index: 2010"
+        style="z-index: 1049 !important"
         :class="{ show: showAlertModal }"
         @click="() => closeAlertModal()"
     >
@@ -1877,7 +1877,7 @@ export default {
         //             message: "Waktu dipilih: " + newValue, // Menampilkan waktu yang dipilih
         //             type: "success", // Perbaiki typo 'succeess' menjadi 'success'
         //             customStyle: {
-        //                 "z-index": "999",
+        //                 "z-index": "1050",
         //             },
         //         });
         //     } else {
@@ -1886,7 +1886,7 @@ export default {
         //             message: `Tidak Boleh Pilih ${newValue}. Pilih antara ${this.startTimeShift} - ${this.endTimeShift}.`,
         //             type: "error",
         //             customStyle: {
-        //                 "z-index": "999",
+        //                 "z-index": "1050",
         //             },
         //         });
         //     }
@@ -2151,7 +2151,7 @@ export default {
                         .join(":")}.`,
                     type: "error",
                     customStyle: {
-                        "z-index": "999",
+                        "z-index": "1050",
                     },
                 });
             }
@@ -2166,7 +2166,7 @@ export default {
             return timeInput.validity.valid;
         },
         log() {
-            console.log(this.selectedAssignEmployees);
+            // console.log(this.selectedAssignEmployees);
         },
         checkScreenSize() {
             if (window.innerWidth >= 768) {
@@ -2314,7 +2314,7 @@ export default {
                 this.formatDateToString(this.tempEndDate),
             ];
             this.dialogVisible = false;
-            console.log(this.selectedDate);
+            // console.log(this.selectedDate);
             this.getExportData(
                 this.formatDateToString(this.tempStartDate),
                 this.formatDateToString(this.tempEndDate)
@@ -2334,7 +2334,7 @@ export default {
                 if (response.status == 200) {
                     this.dataExport = Object.entries(response.data.data);
                     this.exportCustomExcel();
-                    console.log(response.data.data);
+                    // console.log(response.data.data);
                 } else {
                     // console.log(response);
                     console.log("Terjadi Error saat mengambil data!");
@@ -2347,7 +2347,7 @@ export default {
                         "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                     type: "error",
                     customStyle: {
-                        "z-index": "999",
+                        "z-index": "1050",
                     },
                 });
                 this.closeDetailsMethod();
@@ -2360,7 +2360,7 @@ export default {
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet("Assign Overtime");
             try {
-                console.log("di export");
+                // console.log("di export");
                 const headerStyle = {
                     fill: {
                         type: "pattern",
@@ -2535,7 +2535,7 @@ export default {
                     message: "Congrats, Berhasil Mengunduh File.",
                     type: "success",
                     customStyle: {
-                        "z-index": "999",
+                        "z-index": "1050",
                     },
                 });
             } catch (error) {
@@ -2546,7 +2546,7 @@ export default {
                         "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                     type: "error",
                     customStyle: {
-                        "z-index": "999",
+                        "z-index": "1050",
                     },
                 });
             } finally {
@@ -2585,7 +2585,7 @@ export default {
                         "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                     type: "error",
                     customStyle: {
-                        "z-index": "999",
+                        "z-index": "1050",
                     },
                 });
                 this.closeDetailsMethod();
@@ -2636,7 +2636,7 @@ export default {
                     message: `Ada beberapa jam user tidak valid!, Perbaiki dulu. `,
                     type: "error",
                     customStyle: {
-                        "z-index": "999",
+                        "z-index": "1050",
                     },
                 });
             }
@@ -2666,7 +2666,7 @@ export default {
         },
 
         getShiftTime(shift) {
-            console.log(shift);
+            // console.log(shift);
             const times = {
                 PAGI: "06:00 - 14:00",
                 SIANG: "14:00 - 22:00",
@@ -2690,12 +2690,12 @@ export default {
         },
         closeAssignModal() {
             this.AssignOvertime = false;
-            console.log(this.AssignOvertime);
+            // console.log(this.AssignOvertime);
             // console.log(this.tanggal);
         },
         toggleDateSelection(date) {
             const index = this.selectedAssignDates.indexOf(date);
-            console.log(index);
+            // console.log(index);
             if (index === -1) {
                 this.selectedAssignDates.push(date);
             } else {
@@ -2725,7 +2725,7 @@ export default {
                 });
 
                 if (response.status == 200) {
-                    console.log(response);
+                    // console.log(response);
                     this.shiftList = response.data.data;
                     // console.log(response.data.data[0].Jam_Masuk);
                 }
@@ -2737,7 +2737,7 @@ export default {
                         "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                     type: "error",
                     customStyle: {
-                        "z-index": "999",
+                        "z-index": "1050",
                     },
                 });
                 this.closeAlertModal();
@@ -2755,7 +2755,7 @@ export default {
                         message: "Silahkan pilih tanggal terlebih dahulu.",
                         type: "error",
                         customStyle: {
-                            "z-index": "2009",
+                            "z-index": "1050",
                         },
                     });
                     return false; // Mengembalikan false agar tidak melanjutkan ke langkah berikutnya
@@ -2771,7 +2771,7 @@ export default {
                 //             message: "Silahkan Pilih Salah satu shift .",
                 //             type: "error",
                 //             customStyle: {
-                //                 "z-index": "2009",
+                //                 "z-index": "1050",
                 //             },
                 //         });
                 //         return false; // Mengembalikan false agar tidak melanjutkan ke langkah berikutnya
@@ -2787,7 +2787,7 @@ export default {
                         message: `Silahkan masukan alasan dan waktu.`,
                         type: "error",
                         customStyle: {
-                            "z-index": "2009",
+                            "z-index": "1050",
                         },
                     });
                     return false;
@@ -2803,7 +2803,7 @@ export default {
                         message: "Silahkan pilih user minimal 1 .",
                         type: "error",
                         customStyle: {
-                            "z-index": "2009",
+                            "z-index": "1050",
                         },
                     });
                     return false;
@@ -2869,7 +2869,7 @@ export default {
 
             // 3. Buat formatter dan format tanggalnya
             const formatter = new Intl.DateTimeFormat("id-ID", opsiFormat);
-            console.log(formatter.format(tanggal));
+            // console.log(formatter.format(tanggal));
             return formatter.format(tanggal);
         },
         formatDate(dateString) {
@@ -2910,7 +2910,7 @@ export default {
                     isSelected: true,
                     isValid: true,
                 });
-                this.log();
+                // this.log();
             } else {
                 // Jika ditemukan, hapus
                 this.selectedAssignEmployees.splice(index, 1);
@@ -3050,7 +3050,7 @@ export default {
             this.selectedTransaction = this.data.find(
                 (one) => one.No_Transaksi === item
             );
-            console.log(this.selectedTransaction);
+            // console.log(this.selectedTransaction);
             this.minTime = this.selectedTransaction.end_time
                 .split(" ")
                 .slice(1, 2)
@@ -3080,14 +3080,14 @@ export default {
             this.minTime = "";
         },
         saveEditModal() {
-            console.log(this.selectedAssignEmployees);
+            // console.log(this.selectedAssignEmployees);
             this.showEditOvertime = false;
             ElMessage({
                 showClose: true,
                 message: "Congrats, data berhasil diedit.",
                 type: "success",
                 customStyle: {
-                    "z-index": "999",
+                    "z-index": "1050",
                 },
             });
 
@@ -3107,7 +3107,7 @@ export default {
                         message: "Congrats, Data Berhasil di hapus.",
                         type: "success",
                         customStyle: {
-                            "z-index": "999",
+                            "z-index": "1050",
                         },
                     });
 
@@ -3121,7 +3121,7 @@ export default {
                         "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                     type: "error",
                     customStyle: {
-                        "z-index": "999",
+                        "z-index": "1050",
                     },
                 });
                 this.closeAlertModal();
@@ -3143,7 +3143,7 @@ export default {
                         message: "Congrats, Data Berhasil di hapus.",
                         type: "success",
                         customStyle: {
-                            "z-index": "999",
+                            "z-index": "1050",
                         },
                     });
 
@@ -3157,7 +3157,7 @@ export default {
                         "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                     type: "error",
                     customStyle: {
-                        "z-index": "999",
+                        "z-index": "1050",
                     },
                 });
                 this.closeAlertModal();
@@ -3215,7 +3215,7 @@ export default {
                             )}`,
                             type: "warning",
                             customStyle: {
-                                "z-index": "999",
+                                "z-index": "1050",
                             },
                         });
                     } else {
@@ -3225,7 +3225,7 @@ export default {
                                 "Terjadi kesalahan pada server. Silakan coba lagi.",
                             type: "error",
                             customStyle: {
-                                "z-index": "999",
+                                "z-index": "1050",
                             },
                         });
                     }
@@ -3237,7 +3237,7 @@ export default {
                             "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.",
                         type: "error",
                         customStyle: {
-                            "z-index": "999",
+                            "z-index": "1050",
                         },
                     });
                 } else {
@@ -3248,7 +3248,7 @@ export default {
                             "Terjadi kesalahan, silakan coba lagi beberapa saat.",
                         type: "error",
                         customStyle: {
-                            "z-index": "999",
+                            "z-index": "1050",
                         },
                     });
                 }
@@ -3274,7 +3274,7 @@ export default {
                                 "Congrats, Berhasil Menambahkan Data Lembur.",
                             type: "success",
                             customStyle: {
-                                "z-index": "999",
+                                "z-index": "1050",
                             },
                         });
                         location.reload();
@@ -3287,7 +3287,7 @@ export default {
                             "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                         type: "error",
                         customStyle: {
-                            "z-index": "999",
+                            "z-index": "1050",
                         },
                     });
                     this.closeAlertModal();
@@ -3301,7 +3301,7 @@ export default {
                     message: "Silahkan pilih user minimal 1 .",
                     type: "error",
                     customStyle: {
-                        "z-index": "999",
+                        "z-index": "1050",
                     },
                 });
                 return false;
@@ -3348,10 +3348,10 @@ element.style {
 }
 /* calendar */
 .element.style {
-    z-index: 1500;
+    z-index: 1048;
 }
 .el-overlay {
-    z-index: 999;
+    z-index: 1048;
 }
 .dialog-footer {
     text-align: right;
@@ -3828,7 +3828,7 @@ element.style {
 
 .employee-header {
     min-width: 200px;
-    z-index: 2050;
+    z-index: 1050;
     position: relative;
     /* background-color: rgba(239, 68, 68, 0.05); */
     border-right: 1px solid var(--border);
@@ -4195,7 +4195,7 @@ element.style {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1001;
+    z-index: 1048;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
