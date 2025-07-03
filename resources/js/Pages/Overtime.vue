@@ -1624,7 +1624,7 @@
             </div>
             <div class="modal-footer">
                 <!-- Pagination -->
-                <div class="pagination-container" v-if="totalPageUser > 1">
+                <!-- <div class="pagination-container" v-if="totalPageUser > 1">
                     <button
                         class="page-btn"
                         @click="prevUser"
@@ -1646,7 +1646,7 @@
                             class="bi bi-chevron-right d-flex justify-content-center align-items-center"
                         ></i>
                     </button>
-                </div>
+                </div> -->
                 <button
                     class="btn-modern btn-secondary"
                     @click="() => closeDetailsMethod()"
@@ -2060,9 +2060,7 @@ export default {
             return filteredData;
         },
         paginatedUserTransaksi() {
-            const start = (this.currentPage - 1) * this.itemsPerPageUser;
-            const end = start + this.itemsPerPageUser;
-            return this.filteredUserTransaksi.slice(start, end);
+            return this.filteredUserTransaksi;
         },
         totalPageUser() {
             return Math.ceil(

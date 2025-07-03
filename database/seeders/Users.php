@@ -17,14 +17,13 @@ class Users extends Seeder
     public function run()
     {
         $usernames = [
-
+            'MUSLIYA'
         ];
 
         // Kode Karyawan yang sesuai dengan urutan usernames.
         // Penting: Pastikan urutan dan jumlah elemen di sini cocok dengan $usernames
         $karyawanCodes = [
-            'AKONG','ALFAN','ALFIAN KURNIA','ALFIN FIRDAUS','ALIFLARIK','AN NAUFAL','ANGGA SURYA','ARIYANTO','ASTRID','DADI ISWARA','DANI RAMDANI','FADHILAH','FAJAR','FARID','FARIZAL','FAUZAN','HANSEN','ILHAM ADITYA','ISMAIL','KAMALLUDIN','LINGGAR','LISKA','M LUTHFI','M. IRWANSYAH','MANSYUR M','MARDIAN','MUNADHIL','NAFIUR','PUTU WIRA','REKA SETIAWAN','RIFAATUL','RINI NOOR','SYAIFUL','TANHAR MAHARSI','TAUFIK SAPUTRA','TEGUH','WILI NANDA','WILSON','YOGA ADHITIA','YUSA','ZAINAL'
-
+            'MUSLIYA WIJAYA'
         ];
 
         // Ambil data karyawan berdasarkan $karyawanCodes dan urutkan hasilnya agar sesuai dengan urutan $karyawanCodes.
@@ -115,7 +114,7 @@ class Users extends Seeder
                                 'Kode_Perusahaan' => '001',
                                 'ID_Level' => $levelId,
                                 'ID_Divisi' => $divisionId,
-                                'Jenis_Page' => 'absensiPage',
+                                'Jenis_Page' => 'OvertimeManagement',
                                 'UserID_Web' => $kpiUserId
                             ]);
 

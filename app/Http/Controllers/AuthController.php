@@ -26,13 +26,13 @@ class AuthController extends Controller
     {
         // dd(env('SALT_FRONT').$request->input('password').env('SALT_BACK'));
 
-        // if (!$this->verifyCloudflareCaptcha($request)) {
-        //     Session::flash('error', 'Username atau password salah!');
+        if (!$this->verifyCloudflareCaptcha($request)) {
+            Session::flash('error', 'Username atau password salah!');
 
-        // return back()
-        //         ->withErrors(['captcha' => 'Please complete the security check'])
-        //         ->withInput($request->except('password'));
-        // }
+        return back()
+                ->withErrors(['captcha' => 'Please complete the security check'])
+                ->withInput($request->except('password'));
+        }
 
         $userLogin = User::where('Username', $request->username)->first();
        if ($userLogin && Hash::check(env('SALT_FRONT').$request->password.env('SALT_BACK'), $userLogin->Password)) {
@@ -45,7 +45,7 @@ class AuthController extends Controller
             switch ($user->Role) {
                 case 'superuser':
                     Session::flash('success', 'Welcome back, Admin!');
-                    return redirect()->intended('/overtime');
+                    return redirect()->intended('/resetPassword');
                 case 'user':
                     Session::flash('success', 'Welcome back, Manager!');
                     return redirect()->intended('/resetPassword');

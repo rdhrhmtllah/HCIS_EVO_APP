@@ -29,7 +29,7 @@ class AbsensiController extends Controller
       $hashedUser = (object) [
         'Kode_Karyawan' => isset($user->Kode_Users) ? Crypt::encryptString($user->Kode_Users) : null,
         'Id_Users'   => isset($user->Id_Users) ? Hashids::connection('custom')->encode($user->Id_Users) : null,
-        'UserID_Absen'   => isset($karyawan->UserID_Absen) ? Hashids::connection('custom')->encode($karyawan->UserID_Absen) : null,
+        'UserID_Absen'   => isset($karyawan->UserID_Absen) ? Crypt::encryptString($karyawan->UserID_Absen) : null,
         'nama'       => $karyawan->Nama ?? null,
         'email'      => $user->email ?? null,
         'HP' => $karyawan->HP ?? null,
@@ -57,22 +57,24 @@ class AbsensiController extends Controller
         $data = DB::select($query, [
             $Tanggal, $karyawan->Kode_Karyawan, $Kode_Perusahaan, $Hari
         ]);
-
         $dataFinal =  collect($data)->map(function ($item) {
             if (!empty($item->Kode_Karyawan)) {
                 $item->Kode_Karyawan = Crypt::encryptString($item->Kode_Karyawan);
             }
             if (!empty($item->UserID_Absen)) {
-                $item->UserID_Absen = Hashids::connection('custom')->encode($item->UserID_Absen);
+                $item->UserID_Absen = Crypt::encryptString($item->UserID_Absen);
             }
             return $item;
         })->first();
-        return inertia('absensiSales', ['userLogin' => $hashedUser, 'DataDayNow' => $dataFinal]);
+
+        return inertia('absensiSales', ['userLogin' => $hashedUser, 'TodayData' => $dataFinal]);
     }
 
     public function getDataToday(){
         try{
-             $Tanggal = date('Y-m-d');
+            $Kode_Perusahaan = '001';
+            $Tanggal = date('Y-m-d');
+            $karyawan = Auth::user()->karyawan;
             $query = "exec sp_getShiftAbsen ?, ?, ?, ?";
             $Hari = date('N', strtotime($Tanggal));
                 if ($Hari <= 6 ) {
@@ -89,7 +91,7 @@ class AbsensiController extends Controller
                     $item->Kode_Karyawan = Crypt::encryptString($item->Kode_Karyawan);
                 }
                 if (!empty($item->UserID_Absen)) {
-                    $item->UserID_Absen = Hashids::connection('custom')->encode($item->UserID_Absen);
+                    $item->UserID_Absen = Crypt::encryptString($item->UserID_Absen);
                 }
                 return $item;
             })->first();
@@ -104,7 +106,7 @@ class AbsensiController extends Controller
                 'data' => $dataFinal
             ]);
         }catch(\Throwable $e){
-            Log::absensi_error('Gagal Menambil data'.$e->getMessage());;
+            Log::channel('absensi_error')->error('Gagal Menambil data'.$e->getMessage());
             return response()->json([
                 'status' => 404,
                 'message' => 'Terjadi kesalahan coba lagi beberapa saat..'
@@ -170,7 +172,7 @@ class AbsensiController extends Controller
                     $item->Kode_Karyawan = Crypt::encryptString($item->Kode_Karyawan);
                 }
                 if (!empty($item->UserID_Absen)) {
-                    $item->UserID_Absen = Hashids::connection('custom')->encode($item->UserID_Absen);
+                    $item->UserID_Absen = Crypt::encryptString($item->UserID_Absen);
                 }
                 if (!empty($item->filePath_Masuk)) {
                     $item->filePath_Masuk = Storage::disk('gcs')->temporaryUrl($item->filePath_Masuk, now()->addMinutes(10)) ??  null;
@@ -259,7 +261,15 @@ class AbsensiController extends Controller
                 'message' => 'Tidak ada foto yang diupload.'
             ], 400);
         }
-
+        $lang = $request->input('location_longitude');
+        $lat = $request->input('location_latitude');
+        $accuracy = $request->input('accuracy');
+        if(!$lang || !$lat || !$accuracy){
+            return response()->json([
+                'status' => 400,
+                'message' => 'Harap Nyalakan Lokasi Anda!'
+            ], 400);
+        }
         $file = $request->file('photo');
         $photoPath = null; // Inisialisasi variabel untuk path foto di GCS
 
@@ -300,13 +310,13 @@ class AbsensiController extends Controller
                 $Jam = date('H:i:s');
 
                 $UserID = Hashids::connection('custom')->decode($request->UserID);
-                $UserID_Absen = Hashids::connection('custom')->decode($request->UserID_Absen);
+                $UserID_Absen = (int) Crypt::decryptString($request->UserID_Absen);
                 $Kode_Karyawan = Crypt::decryptString($request->Kode_Karyawan);
 
-                if(!$UserID && !$UserID_Absen && !$Kode_Karyawan){
+                if(!$UserID || !$UserID_Absen || !$Kode_Karyawan){
                     return response()->json([
                     'status' => 500,
-                    'message' => 'Terjadi kesalahan saat menyimpan data absensi. Silakan coba lagi.'. $dbException->getMessage()
+                    'message' => 'Todal ada Data User'
                     ], 400);
                 }
                 $tanggal_absen = $request->frontend_timestamp;
@@ -324,14 +334,17 @@ class AbsensiController extends Controller
                     'Kode_Karyawan' => $Kode_Karyawan,
                     'Jenis' => $request->Jenis,
                     'Tanggal_Absensi' => $tanggal_absen,
-                    'Alasan' => $request->alasan,
+                    'Alasan' => preg_replace('/\s+/', ' ', $request->alasan),
                     'filePath' => $photoPath,
                     'image_hash' => $imageHash,
                     'watermark_hash' => $randomHash,
+                    'lat' => $lat,
+                    'lang' => $lang,
+                    'accuracy' => $accuracy
                 ]);
 
                 DB::table('CHECKINOUT ')->insert([
-                    'USERID' => $UserID_Absen[0],
+                    'USERID' => $UserID_Absen,
                     'CHECKTIME' => $tanggal_absen,
                     'VERIFYCODE' => '255',
                     'SENSORID' => '180',
