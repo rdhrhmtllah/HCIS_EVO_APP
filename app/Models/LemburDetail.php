@@ -9,7 +9,7 @@ class LemburDetail extends Model
 {
      use HasFactory;
     protected $table = 'Transaksi_Lembur_Detail';
-    // protected $primaryKey = 'Id_Cross_Review'
+    protected $primaryKey = 'Urut_Oto';
     protected $guarded =[];
     public $timestamps = false;
 }

@@ -2,6 +2,7 @@
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\karyawanTeamController;
 use App\Http\Controllers\CaseController;
 use App\Http\Controllers\CrossDivisionReviewController;
 use App\Http\Controllers\LevelController;
@@ -20,7 +21,10 @@ use App\Http\Controllers\MasterPeriodeController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\uDashController;
-
+use App\Http\Controllers\NewsController;
+use Illuminate\Support\Facades\Artisan;
+// use Illuminate\Support\Facades\Request;
+use Illuminate\Http\Request;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -44,11 +48,12 @@ Route::get('/', function () {
 Route::get('/login', [AuthController::class, 'login'])->name('login')->middleware('guest');
 Route::get('/mulai/27738', [AuthController::class, 'loginRe'])->name('loginRe')->middleware('guest');
 Route::post('/prosesLogin', [AuthController::class, 'prosesLogin'])->name('prosesLogin');
-Route::get('/resetPassword', [AuthController::class, 'reset'])->name('password.reset');
-Route::post('/changeDataUser', [AuthController::class, 'changeData'])->name('change.data');
-Route::post('/updatePassword', [AuthController::class, 'update'])->name('password.update');
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('/resetPassword', [AuthController::class, 'reset'])->name('password.reset');
+    Route::post('/changeDataUser', [AuthController::class, 'changeData'])->name('change.data');
+    Route::post('/updatePassword', [AuthController::class, 'update'])->name('password.update');
+
     Route::get('/tiket', [TicketController::class, 'index']);
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -173,6 +178,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/task/delete', [TaskController::class, 'destroy'])->name('task.destroy');
     Route::post('/task/updateProgress', [TaskController::class, 'progressUpdate'])->name('task.progress');
 
+    // Route::get('/news', [NewsController::class, 'index'])->name('news.index');
+    // Route::post('/news/store', [NewsController::class, 'store'])->name('news.store');
+
     // project
     Route::get('/project', [ProjectController::class, 'index'])->name('project.index');
     Route::get('/project/create', [ProjectController::class, 'create'])->name('project.create');
@@ -182,12 +190,32 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/project/delete', [ProjectController::class, 'destroy'])->name('project.destroy');
 
     // Absensi
-    Route::get('/lembur',[AbsensiController::class, 'indexLembur'])->name('absensi.lembur');
+        Route::middleware(['auth', 'check.jabatan:IzinPage, IzinPageApprover'])->group(function(){
+
+            Route::get('/lembur',[AbsensiController::class, 'indexLembur'])->name('absensi.lembur');
+            Route::middleware(['auth','check.jabatan:IzinPage'])->group(function(){
+                Route::get('/izin',[AbsensiController::class, 'indexIzin'])->name('absensi.izin');
+                Route::get('/izin/getDataIzin',[AbsensiController::class, 'getDataIzin'])->name('absensi.izin.getData');
+                Route::get('/izin/getKerja',[AbsensiController::class, 'getJamKerja'])->name('absensi.izin.getJamKerja');
+                Route::post('/izin/submit',[AbsensiController::class, 'submitIzin'])->name('absensi.izin.submit');
+                Route::post('/izin/getAttachmentUrl', [AbsensiController::class, 'getAttachmentUrl']);
+                Route::post('/izin/destroy', [AbsensiController::class, 'destroyIzin']);
+
+            Route::middleware(['check.jabatan:IzinPageApprover'])->group(function(){
+
+                Route::post('/izin/confirmIzin',[AbsensiController::class, 'confirmIzin'])->name('absensi.izin.confirm');
+                Route::get('/izin/getDataIzinDH',[AbsensiController::class, 'getDataIzinDH'])->name('absensi.izin.getDataDH');
+                Route::get('/izinLevelUp',[AbsensiController::class, 'indexIzinDH'])->name('absensi.izinDH');
+            });
+            });
+        });
+
+
     Route::middleware(['auth','check.jabatan:absensiPage'])->group(function(){
         Route::get('/absensiSales',[AbsensiController::class, 'indexAbsensi'])->name('absensi.absensi');
         Route::get('/absensi/getUserShift',[AbsensiController::class, 'getUserShift'])->name('absensi.shift');
         Route::get('/absensi/getDataToday',[AbsensiController::class, 'getDataToday'])->name('absensi.today');
-        Route::post('/submitAbsen',[AbsensiController::class, 'submitAbsen'])->name('absensi.submit');
+        Route::post('/absensi/submitAbsen',[AbsensiController::class, 'submitAbsen'])->name('absensi.submit');
     });
     Route::post('/addLembur',[AbsensiController::class, 'addLembur'])->name('absensi.lembur.add');
 
@@ -195,41 +223,146 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/parseResume/preview',[parseResume::class, 'preview'])->name('parseResume.preview');
     Route::post('/parseResume/submit',[parseResume::class, 'submit'])->name('parseResume.submi');
 
+    Route::get('/add-karyawan-team',[karyawanTeamController::class, 'index'])->name('karyawanTeam.index');
+    Route::get('/add-karyawan-team/getData',[karyawanTeamController::class, 'getData'])->name('karyawanTeam.getData');
 
     // user dashboard
     Route::get('/uDash',[uDashController::class, 'index'])->name('Udash.index');
+    Route::get('/uDash/getDateAbsen',[uDashController::class, 'getDateAbsen'])->name('Udash.dateAbsen');
+    Route::get('/uDash/getDataShift',[uDashController::class, 'getDataShift'])->name('Udash.dataShift');
+    Route::get('/uDash/getChartData',[uDashController::class, 'getChartData'])->name('Udash.chartData');
+    Route::get('/uDash/getAllLembur',[uDashController::class, 'getAllLembur'])->name('Udash.allLembur');
+    Route::get('/uDash/getAllIzin',[uDashController::class, 'getAllIzin'])->name('Udash.allIzin');
 
-    //ROUTE GROUP AKSES Shift Management
-    Route::middleware(['auth','check.jabatan:ShiftManagement'])->group(function(){
-        //Shift
-        Route::get('/userShift',[ShiftController::class, 'index'])->name('shift.index');
-        Route::get('/getWeek',[ShiftController::class, 'getWeek'])->name('shift.getWeek');
-        Route::post('/userShift/submit',[ShiftController::class, 'submit'])->name('shift.submit');
-        Route::post('/userShift/update',[ShiftController::class, 'update'])->name('shift.update');
-        Route::get('/shift/getExport',[ShiftController::class, 'getExport'])->name('shift.export');
-        Route::get('/shift/getShift',[ShiftController::class, 'getShift'])->name('shift.getShift');
-        Route::get('/shift/isLembur',[ShiftController::class, 'isLembur'])->name('shift.isLembur');
+    // //ROUTE GROUP AKSES Shift Management
+    // Route::middleware(['auth','check.jabatan:ShiftManagement'])->group(function(){
+    //     //Shift
+    //     Route::get('/userShift',[ShiftController::class, 'index'])->name('shift.index');
+    //     Route::get('/getWeek',[ShiftController::class, 'getWeek'])->name('shift.getWeek');
+    //     Route::post('/userShift/submit',[ShiftController::class, 'submit'])->name('shift.submit');
+    //     Route::post('/userShift/update',[ShiftController::class, 'update'])->name('shift.update');
+    //     Route::get('/shift/getExport',[ShiftController::class, 'getExport'])->name('shift.export');
+    //     Route::get('/shift/getShift',[ShiftController::class, 'getShift'])->name('shift.getShift');
+    //     Route::get('/shift/isLembur',[ShiftController::class, 'isLembur'])->name('shift.isLembur');
 
+    // });
+
+    // Route::middleware(['auth','check.jabatan:ShiftManagementAdmin'])->group(function(){
+    //     Route::get('/userShiftAdmin',[ShiftController::class, 'indexAdmin'])->name('shift.indexAdmin');
+    //     Route::get('/getWeekAdmin',[ShiftController::class, 'getWeekAdmin'])->name('shift.getWeekAdmin');
+    //     Route::post('/userShift/submit',[ShiftController::class, 'submit'])->name('shift.submit');
+    //     Route::post('/userShift/update',[ShiftController::class, 'update'])->name('shift.update');
+    //     Route::get('/shift/getExport',[ShiftController::class, 'getExport'])->name('shift.export');
+    //     Route::get('/shift/getShift',[ShiftController::class, 'getShift'])->name('shift.getShift');
+    //     Route::get('/shift/isLembur',[ShiftController::class, 'isLembur'])->name('shift.isLembur');
+    // });
+
+    Route::middleware(['auth', 'check.jabatan:ShiftManagement,ShiftManagementAdmin'])->group(function(){
+        // Route yang bisa diakses oleh kedua jabatan
+        Route::post('/swapShift/submit', [ShiftController::class, 'submit'])->name('shift.submit');
+        Route::post('/swapShift/update', [ShiftController::class, 'update'])->name('shift.update');
+        Route::get('/swapShift/getExport', [ShiftController::class, 'getExport'])->name('shift.export');
+        Route::get('/swapShift/getShift', [ShiftController::class, 'getShift'])->name('shift.getShift');
+        Route::get('/swapShift/isLembur', [ShiftController::class, 'isLembur'])->name('shift.isLembur');
+
+        // Route khusus ShiftManagement
+        Route::middleware(['check.jabatan:ShiftManagement'])->group(function(){
+            Route::get('/swapShift', [ShiftController::class, 'index'])->name('shift.index');
+            Route::get('/swapShift/getWeek', [ShiftController::class, 'getWeek'])->name('shift.getWeek');
+        });
+
+        // Route khusus ShiftManagementAdmin
+        Route::middleware(['check.jabatan:ShiftManagementAdmin'])->group(function(){
+            Route::get('/swapShiftAdmin', [ShiftController::class, 'indexAdmin'])->name('shift.indexAdmin');
+            Route::get('/swapShift/getWeekAdmin', [ShiftController::class, 'getWeekAdmin'])->name('shift.getWeekAdmin');
+        });
     });
-    Route::middleware(['auth','check.jabatan:OvertimeManagement'])->group(function(){
-        // OVERTIME
-        Route::get('/overtime',[OvertimeController::class, 'index'])->name('overtime.index');
-        Route::get('/getUserActive',[OvertimeController::class, 'userActive'])->name('overtime`.userActive');
-        Route::get('/getWaktuShift',[OvertimeController::class,'getWaktuShift'])->name('overtime`.getWaktuShift');
-        Route::post('/overtime/submit',[OvertimeController::class, 'submit'])->name('overtime.submit');
-        Route::post('/destroyOvertime', [OvertimeController::class, 'destroy'])->name('overtime.destroy');
-        Route::post('/destroyUserOvertime', [OvertimeController::class, 'destroyUser'])->name('overtime.destroyUser');
-        Route::get('/getOffset',[OvertimeController::class, 'getOffset'])->name('overtime.offset');
-        Route::get('/getDetails',[OvertimeController::class, 'getDetails'])->name('overtime.Details');
-        Route::get('/getExport',[OvertimeController::class, 'getExport'])->name('overtime.export');
-        Route::get('/overtime/getShift',[OvertimeController::class, 'getShift'])->name('overtime.getShift');
 
+
+
+
+    // Route::middleware(['auth','check.jabatan:OvertimeManagementAdmin'])->group(function(){
+    //     Route::get('/getUserActiveAll',[OvertimeController::class, 'userActiveAll'])->name('overtime.userActiveAdmin');
+    //     Route::get('/overtimeAdmin',[OvertimeController::class, 'indexAdmin'])->name('overtime.indexAdmin');
+    //     Route::get('/getWaktuShift',[OvertimeController::class,'getWaktuShift'])->name('overtime`.getWaktuShift');
+    //     Route::post('/overtime/submit',[OvertimeController::class, 'submit'])->name('overtime.submit');
+    //     Route::post('/destroyOvertime', [OvertimeController::class, 'destroy'])->name('overtime.destroy');
+    //     Route::post('/destroyUserOvertime', [OvertimeController::class, 'destroyUser'])->name('overtime.destroyUser');
+    //     Route::get('/getOffset',[OvertimeController::class, 'getOffset'])->name('overtime.offset');
+    //     Route::get('/getDetails',[OvertimeController::class, 'getDetails'])->name('overtime.Details');
+    //     Route::get('/getExportAdmin',[OvertimeController::class, 'getExportAdmin'])->name('overtime.exportAdmin');
+    //     Route::get('/overtime/getShift',[OvertimeController::class, 'getShift'])->name('overtime.getShift');
+    // });
+
+    // Route::middleware(['auth','check.jabatan:OvertimeManagement'])->group(function(){
+    //     // OVERTIME
+    //     Route::get('/overtime',[OvertimeController::class, 'index'])->name('overtime.index');
+    //     Route::get('/getUserActive',[OvertimeController::class, 'userActive'])->name('overtime`.userActive');
+    //     Route::get('/getWaktuShift',[OvertimeController::class,'getWaktuShift'])->name('overtime`.getWaktuShift');
+    //     Route::post('/overtime/submit',[OvertimeController::class, 'submit'])->name('overtime.submit');
+    //     Route::post('/destroyOvertime', [OvertimeController::class, 'destroy'])->name('overtime.destroy');
+    //     Route::post('/destroyUserOvertime', [OvertimeController::class, 'destroyUser'])->name('overtime.destroyUser');
+    //     Route::get('/getOffset',[OvertimeController::class, 'getOffset'])->name('overtime.offset');
+    //     Route::get('/getDetails',[OvertimeController::class, 'getDetails'])->name('overtime.Details');
+    //     Route::get('/getExport',[OvertimeController::class, 'getExport'])->name('overtime.export');
+    //     Route::get('/overtime/getShift',[OvertimeController::class, 'getShift'])->name('overtime.getShift');
+
+    // });
+
+Route::middleware(['auth', 'check.jabatan:OvertimeManagement,OvertimeManagementAdmin'])->group(function() {
+    // Route yang bisa diakses oleh kedua jabatan
+    Route::get('/overtime/getWaktuShift', [OvertimeController::class, 'getWaktuShift'])->name('overtime.getWaktuShift');
+    Route::post('/overtime/submit', [OvertimeController::class, 'submit'])->name('overtime.submit');
+    Route::post('/overtime/destroyOvertime', [OvertimeController::class, 'destroy'])->name('overtime.destroy');
+    Route::post('/overtime/destroyUserOvertime', [OvertimeController::class, 'destroyUser'])->name('overtime.destroyUser');
+    Route::get('/getOffset', [OvertimeController::class, 'getOffset'])->name('overtime.offset');
+    Route::get('/overtime/getDetails', [OvertimeController::class, 'getDetails'])->name('overtime.Details');
+    Route::get('/overtime/getShift', [OvertimeController::class, 'getShift'])->name('overtime.getShift');
+
+    // Route khusus OvertimeManagementAdmin
+    Route::middleware(['check.jabatan:OvertimeManagementAdmin'])->group(function() {
+        Route::get('/overtime/getUserActiveAll', [OvertimeController::class, 'userActiveAll'])->name('overtime.userActiveAdmin');
+        Route::get('/overtimeAdmin', [OvertimeController::class, 'indexAdmin'])->name('overtime.indexAdmin');
+        Route::get('/overtime/getExportAdmin', [OvertimeController::class, 'getExportAdmin'])->name('overtime.exportAdmin');
     });
+
+    // Route khusus OvertimeManagement
+    Route::middleware(['check.jabatan:OvertimeManagement'])->group(function() {
+        Route::get('/overtime', [OvertimeController::class, 'index'])->name('overtime.index');
+        Route::get('/overtime/getUserActive', [OvertimeController::class, 'userActive'])->name('overtime.userActive');
+        Route::get('/overtime/getExport', [OvertimeController::class, 'getExport'])->name('overtime.export');
+    });
+});
 
 
 
 
 });
+
+
+Route::post('/scheduler-T4sk-RuNn3r-sEcr3t', function (Request $request) {
+    // 1. Verifikasi token menggunakan helper config()
+    if ($request->bearerToken() !== env('SCHEDULER_BEARER_TOKEN')) {
+        Log::warning('Unauthorized scheduler execution attempt.');
+        abort(403, 'Unauthorized');
+    }
+
+    // 2. Jalankan scheduler dalam blok try-catch untuk error handling
+    try {
+        Artisan::call('schedule:run');
+        Log::info('Scheduler executed successfully.');
+        return response('Scheduler executed successfully.', 200);
+
+    } catch (\Exception $e) {
+        Log::error('Scheduler execution failed.', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+        return response('Scheduler execution failed.', 500);
+    }
+});
+
+
 Route::get('/test-db', function () {
 try {
     // Coba paksa koneksi ke database default

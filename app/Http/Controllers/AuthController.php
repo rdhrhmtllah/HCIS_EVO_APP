@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Log;
 use App\Models\User;
 use App\Models\Karyawan;
 use Illuminate\Http\Request;
@@ -14,6 +13,7 @@ use RealRashid\SweetAlert\Facades\Alert;
 use GuzzleHttp\Client;
 use App\Models\LoginAttempt;
 use Throwable;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -25,40 +25,47 @@ class AuthController extends Controller
     public function prosesLogin(Request $request)
     {
         // dd(env('SALT_FRONT').$request->input('password').env('SALT_BACK'));
+        try{
 
-        if (!$this->verifyCloudflareCaptcha($request)) {
-            Session::flash('error', 'Username atau password salah!');
 
-        return back()
-                ->withErrors(['captcha' => 'Please complete the security check'])
-                ->withInput($request->except('password'));
-        }
+            if (!$this->verifyCloudflareCaptcha($request)) {
 
-        $userLogin = User::where('Username', $request->username)->first();
-       if ($userLogin && Hash::check(env('SALT_FRONT').$request->password.env('SALT_BACK'), $userLogin->Password)) {
-            Auth::login($userLogin);
-            $request->session()->regenerate();
-            $user = Auth::user();
-            // dd($user);
-            // dd($user);
-            // Check user role and redirect accordingly
-            switch ($user->Role) {
-                case 'superuser':
-                    Session::flash('success', 'Welcome back, Admin!');
-                    return redirect()->intended('/resetPassword');
-                case 'user':
-                    Session::flash('success', 'Welcome back, Manager!');
-                    return redirect()->intended('/resetPassword');
-                    // return abort(403, 'Akses ditolak!');
-                default:
-                    Auth::logout();
-                    Session::flash('error', 'You do not have a valid role assigned.');
-                    return redirect()->route('login');
+            Session::flash('error', 'Tolong tunggu security check selesai!');
+            return back()
+                    ->withErrors(['captcha' => 'Please complete the security check'])
+                    ->withInput($request->except('password'));
             }
-        }
 
-        Session::flash('error', 'Username atau password salah!');
-        return redirect()->back()->withInput();
+            $userLogin = User::where('Username', $request->username)->first();
+        if ($userLogin && Hash::check(env('SALT_FRONT').$request->password.env('SALT_BACK'), $userLogin->Password)) {
+                Auth::login($userLogin);
+                $request->session()->regenerate();
+                $user = Auth::user();
+                // dd($user);
+                // dd($user);
+                // Check user role and redirect accordingly
+                switch ($user->Role) {
+                    case 'superuser':
+                        Session::flash('success', 'Welcome back, Admin!');
+                        return redirect()->intended('/uDash');
+                    case 'user':
+                        Session::flash('success', 'Welcome back, Manager!');
+                        return redirect()->intended('/uDash');
+                        // return abort(403, 'Akses ditolak!');
+                    default:
+                        Auth::logout();
+                        Session::flash('error', 'You do not have a valid role assigned.');
+                        return redirect()->route('login');
+                }
+            }
+
+            Session::flash('error', 'Username atau password salah!');
+            return redirect()->back()->withInput();
+        }catch (\Throwable $e) {
+            Log::channel('loginLog')->error('Terjadi kesalahan Login : '. auth()->user()->Kode_Users . $e->getMessage());
+            Session::flash('error', 'Terjadi Error saat login!');
+            return back();
+        }
     }
 
     public function loginRe()
@@ -123,7 +130,7 @@ class AuthController extends Controller
             return back();
         } catch (Throwable $error) {
             DB::rollBack();
-            Log::info("error ubah password", [
+            Log::channel('loginLog')->info("error ubah password resetPass", [
                 'pesan' => $error->getMessage()
             ]);
             Alert::Error('Error', 'Terjadi kesalahan');
@@ -160,10 +167,10 @@ class AuthController extends Controller
             }
         } catch (\Throwable $th) {
             DB::rollBack();
-            Log::info('changeData Erro',[
+            Log::channel('loginLog')->info('changeData Error',[
                 'pesan' => $th->getMessage()
             ]);
-            Alert::Error('Error', 'Terjadi Kesalahan!'. $th->getMessage());
+            Alert::Error('Error', 'Terjadi Kesalahan!');
             return back();
         }
     }

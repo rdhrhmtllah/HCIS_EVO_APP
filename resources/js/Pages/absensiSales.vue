@@ -27,7 +27,7 @@
                                     </h2>
                                     <p class="subtitle">
                                         {{
-                                            `${DataDayNow.nama_divisi.toLowerCase()}`
+                                            `${DataDayNow?.nama_divisi.toLowerCase()}`
                                         }}
                                     </p>
                                 </div>
@@ -53,7 +53,9 @@
                                         <span class="fs-md-6 text-header"
                                             >{{
                                                 formatDate(
-                                                    new Date(DataDayNow.Tanggal)
+                                                    new Date(
+                                                        DataDayNow?.Tanggal
+                                                    )
                                                 )
                                             }}
                                         </span>
@@ -224,19 +226,19 @@
                     class="content-container p-3 h-100 d-flex justify-content-center align-items-center flex-column"
                 >
                     <span class="fs-6">{{
-                        `SHIFT ${DataDayNow.Nama_Shift.toUpperCase()} HARI INI`
+                        `SHIFT ${DataDayNow?.Nama_Shift.toUpperCase()} HARI INI`
                     }}</span>
                     <div
                         class="d-flex justify-content-evenly w-100 align-items-center"
                     >
                         <span class="fs-1 fw-bold">{{
-                            DataDayNow.Jam_Masuk.split(":")
+                            DataDayNow?.Jam_Masuk.split(":")
                                 .slice(0, 2)
                                 .join(":")
                         }}</span>
                         <span><i class="bi bi-three-dots fs-3"></i></span>
                         <span class="fs-1 fw-bold">{{
-                            DataDayNow.Jam_Keluar.split(":")
+                            DataDayNow?.Jam_Keluar.split(":")
                                 .slice(0, 2)
                                 .join(":")
                         }}</span>
@@ -247,11 +249,11 @@
                             class="bi bi-clock-history me-2 d-flex justify-content-center align-items-center"
                         ></i>
                         {{
-                            DataDayNow.CheckIn && DataDayNow.CheckIn !== ""
-                                ? `Keluar ${DataDayNow.Jam_Keluar.split(":")
+                            DataDayNow?.CheckIn && DataDayNow?.CheckIn !== ""
+                                ? `Keluar ${DataDayNow?.Jam_Keluar.split(":")
                                       .slice(0, 2)
                                       .join(":")}`
-                                : `Masuk ${DataDayNow.Jam_Masuk.split(":")
+                                : `Masuk ${DataDayNow?.Jam_Masuk.split(":")
                                       .slice(0, 2)
                                       .join(":")}`
                         }}
@@ -398,7 +400,6 @@
                         class="day-card flex-grow-1"
                         :class="{ 'active-day': isToday(day.Tanggal) }"
                         @click="scrollToRecord(day.Tanggal)"
-                        :ref="'card' + idx"
                     >
                         <div
                             v-if="day.ID_Shift"
@@ -823,7 +824,7 @@
                                 type="button"
                                 @click="openCamera"
                                 :disabled="
-                                    DataDayNow.CheckIn && DataDayNow.CheckOut
+                                    DataDayNow?.CheckIn && DataDayNow?.CheckOut
                                 "
                                 class="btn btn-primary btn-modern w-100"
                             >
@@ -839,8 +840,8 @@
                                     >Deskripsi Absen</label
                                 ><textarea
                                     :disabled="
-                                        DataDayNow.CheckIn &&
-                                        DataDayNow.CheckOut
+                                        DataDayNow?.CheckIn &&
+                                        DataDayNow?.CheckOut
                                     "
                                     class="form-control"
                                     id="reason"
@@ -861,8 +862,8 @@
                                 >
                                     <span
                                         v-if="
-                                            DataDayNow.CheckIn &&
-                                            !DataDayNow.CheckOut
+                                            DataDayNow?.CheckIn &&
+                                            !DataDayNow?.CheckOut
                                         "
                                         style="font-size: 0.7rem"
                                         class="bg-warning text-white rounded-4 flex-nowrap px-md-2 py-md-1 px-2 py-1 text-center"
@@ -870,8 +871,8 @@
                                     >
                                     <span
                                         v-else-if="
-                                            !DataDayNow.CheckIn &&
-                                            !DataDayNow.CheckOut
+                                            !DataDayNow?.CheckIn &&
+                                            !DataDayNow?.CheckOut
                                         "
                                         style="font-size: 0.7rem"
                                         class="bg-success text-white rounded-4 flex-nowrap px-md-2 py-md-1 px-2 py-1 text-center"
@@ -1063,16 +1064,7 @@ export default {
             );
         },
     },
-    watch: {
-        cards: {
-            deep: true,
-            handler() {
-                this.$nextTick(() => {
-                    this.scrollToTodayCard();
-                });
-            },
-        },
-    },
+
     methods: {
         openFullPicture(url) {
             if (!url) return;
@@ -1134,30 +1126,7 @@ export default {
                 this.loading = false;
             }
         },
-        scrollToTodayCard() {
-            const todayIndex = this.cards.findIndex((card) =>
-                this.isToday(card.date)
-            );
-            if (todayIndex !== -1) {
-                const container = this.$refs.cardsContainer;
-                const card = this.$refs["card" + todayIndex][0];
 
-                if (container && card) {
-                    const containerWidth = container.offsetWidth;
-                    const cardWidth = card.offsetWidth;
-                    const cardLeft = card.offsetLeft;
-
-                    // Hitung posisi scroll untuk membuat card hari ini di tengah
-                    const scrollPosition =
-                        cardLeft - containerWidth / 2 + cardWidth / 2;
-
-                    container.scrollTo({
-                        left: scrollPosition,
-                        behavior: "smooth",
-                    });
-                }
-            }
-        },
         isToday(dateString) {
             const today = new Date();
             const date = new Date(dateString);
@@ -1342,8 +1311,38 @@ export default {
                 },
                 { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
             );
+            // if (
+            //     !this.latitude ||
+            //     !this.longitude ||
+            //     !this.accuracy ||
+            //     this.latitude == 0 ||
+            //     this.longitude == 0 ||
+            //     this.accuracy == 0
+            // ) {
+            //     ElNotification({
+            //         showClose: true,
+            //         message:
+            //             "Terjadi kesalahan mengambil lokasi,silahkan nyalakan lokasi dan refresh website.",
+            //         type: "error",
+            //         customStyle: {
+            //             "z-index": "1050",
+            //         },
+            //     });
+            //     this.latitude = null;
+            //     this.longitude = null;
+            //     this.accuracy = null;
+            //     this.capturedImage = null;
+            //     this.capturedHash = null;
+            //     this.randomHash = null;
+
+            //     this.isLoadingLocation = false;
+            //     this.closeCamera();
+            // }
+            // dd();
         },
         drawCanvasWithWatermark(locationText, timeText, employeeId) {
+            // alert(this.latitude, this.longitude, this.accuracy);
+
             const video = this.$refs.cameraFeed;
             const canvas = this.$refs.canvas;
             const ctx = canvas.getContext("2d");
@@ -1517,7 +1516,7 @@ export default {
                 "Kode_Karyawan",
                 this.userLogin.Kode_Karyawan || null
             );
-            if (this.DataDayNow.CheckIn && !this.DataDayNow.CheckOut) {
+            if (this.DataDayNow?.CheckIn && !this.DataDayNow?.CheckOut) {
                 formData.append("Jenis", "keluar");
             } else {
                 formData.append("Jenis", "masuk");
@@ -1535,9 +1534,13 @@ export default {
 
             try {
                 this.loadingSimpan = true;
-                const response = await axios.post("/submitAbsen", formData, {
-                    headers: { "Content-Type": "multipart/form-data" },
-                });
+                const response = await axios.post(
+                    "/absensi/submitAbsen",
+                    formData,
+                    {
+                        headers: { "Content-Type": "multipart/form-data" },
+                    }
+                );
 
                 if (response.data.status === 200) {
                     // alert(
@@ -1636,9 +1639,6 @@ export default {
         this.historyCardRefs = {};
     },
     mounted() {
-        this.$nextTick(() => {
-            this.scrollToTodayCard();
-        });
         this.clockInterval = setInterval(() => {
             this.liveClock = new Date().toLocaleTimeString("id-ID");
         }, 1000);

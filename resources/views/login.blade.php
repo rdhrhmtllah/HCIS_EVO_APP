@@ -129,6 +129,7 @@
         .btn-outline-primary:focus {
             background-color: var(--primary-color);
             border-color: var(--primary-color);
+            color: var(--surface);
         }
 
         .btn-primary {
@@ -146,6 +147,9 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
         }
+        element.style{
+            justify-content: start;
+        }
 
         .btn-primary:focus {
             box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
@@ -160,6 +164,7 @@
             background: rgba(102, 126, 234, 0.05);
             border: 1px solid rgba(102, 126, 234, 0.1);
             border-radius: 12px;
+            overflow: hidden;
         }
 
         /* Links */
@@ -303,7 +308,7 @@
         <div class="login-card shadow-lg">
             <!-- Header Section -->
             <div class="login-header p-4 text-center">
-                <img src="./assets/compiled/png/logo-lg.png" alt="Logo" width="20%" style="height: fit-content"><br>
+                <img src="./assets/compiled/png/logo-lg.webp" alt="Logo" width="20%" style="height: fit-content"><br>
                 {{-- <div class="logo-container mx-auto mb-3 d-flex align-items-center justify-content-center animate__animated animate__bounceIn">
 
                 </div> --}}
@@ -359,7 +364,7 @@
 
                     <!-- Captcha Section -->
                     <div class="mb-4">
-                        <div class="captcha-wrapper p-3 text-center ">
+                        <div class="captcha-wrapper py-3 text-center ">
                             <div class="cf-turnstile"
                                  data-sitekey="{{ env('CLOUDFLARE_TURNSTILE_SITEKEY') }}"
                                  data-theme="light">
