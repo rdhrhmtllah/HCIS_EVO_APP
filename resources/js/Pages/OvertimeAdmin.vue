@@ -15,7 +15,7 @@
                     </div>
                     <div>
                         <div
-                            class="title-header fs-3 fw-bold text-white m-0 p-0 title"
+                            class="title-header text-white fs-3 fw-bold m-0 p-0 title"
                         >
                             Manajemen Lembur Karyawan
                         </div>
@@ -482,7 +482,19 @@
                         <div class="date-selection mb-5 px-md-3">
                             <div class="form-group">
                                 <div class="date-picker-grid">
-                                    <div
+                                    <input
+                                        v-model="selectedAssignDates"
+                                        type="date"
+                                        class="form-control h-50"
+                                    />
+                                    <!-- <el-date-picker
+
+                                        type="dates"
+                                        format="YYYY-MM-DD"
+                                        value-format="YYYY-MM-DD"
+                                        placeholder="Pick one or more dates"
+                                    /> -->
+                                    <!-- <div
                                         v-for="(day, idx) in tanggal"
                                         :key="idx"
                                         class="date-picker-item"
@@ -507,7 +519,7 @@
                                                 class="bi bi-check-circle-fill"
                                             ></i>
                                         </div>
-                                    </div>
+                                    </div> -->
                                 </div>
                             </div>
                         </div>
@@ -910,7 +922,7 @@
                                                 <div
                                                     v-if="
                                                         employee.JamComparison ==
-                                                        'False'
+                                                        'FALSE'
                                                     "
                                                     style="
                                                         font-size: 10px;
@@ -918,7 +930,7 @@
                                                     "
                                                     class="fw-bold badge bg-danger rounded-5 m-0"
                                                 >
-                                                    Sudah Lembur
+                                                    Jam Pulang Kurang
                                                 </div> -->
                                             </div>
                                             <div
@@ -931,7 +943,7 @@
                                                         10
                                                     )
                                                 }}
-                                                <div
+                                                <!-- <div
                                                     v-if="
                                                         employee.lemburPernah ==
                                                         'TRUE'
@@ -943,7 +955,7 @@
                                                     class="fw-bold badge bg-danger rounded-5 m-0"
                                                 >
                                                     Sudah Lembur
-                                                </div>
+                                                </div> -->
                                             </div>
                                             <div
                                                 v-tooltip="employee.Divisi"
@@ -1259,7 +1271,12 @@
                     >
                         Lanjut
                         <i
+                            v-if="!loading"
                             class="bi bi-arrow-right ms-2 d-flex justify-content-center align-items-center"
+                        ></i>
+                        <i
+                            v-if="loading"
+                            class="spinner-border spinner-border-sm ms-2"
                         ></i>
                     </button>
 
@@ -1649,10 +1666,18 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="shift-cell">
+                                    <td
+                                        v-tooltip="item.reason"
+                                        class="shift-cell"
+                                    >
                                         <div class="shift-container">
                                             <div class="shift-content">
-                                                {{ item.reason }}
+                                                {{
+                                                    truncateText(
+                                                        item.reason,
+                                                        30
+                                                    )
+                                                }}
                                                 <span class="shift-name">
                                                 </span>
                                             </div>
@@ -1764,8 +1789,7 @@
         title="Pilih Tanggal Mulai dan Selesai"
         width="480px"
         align-center
-        z-index="1048 !important"
-        style="z-index: 1048 !important"
+        z-index="1048"
     >
         <el-calendar v-model="calendarDate">
             <template #date-cell="{ data }">
@@ -1801,7 +1825,6 @@
         title="Pilih Tanggal Filter"
         width="480px"
         align-center
-        z-index="1048"
     >
         <el-calendar v-model="calendarDateFilter">
             <template #date-cell="{ data }">
@@ -1918,7 +1941,7 @@ export default {
             // shiftModal Assign
             assignSearchShift: "",
             selectedAssignShift: null,
-            selectedAssignDates: null,
+            selectedAssignDates: "",
             assignReason: "",
             // filteredAssignEmployees: [],
 
@@ -1979,6 +2002,7 @@ export default {
         //     const ValidTime = timeInput.validity.valid;
         //     return ValidTime;
         // },
+
         isAllAssignValid() {
             // Check setiap user sudah valid jam nya
             return this.selectedAssignEmployees.every((emp) => emp.isValid);
@@ -2196,7 +2220,7 @@ export default {
             if (selectedDate.toDateString() === today.toDateString()) {
                 // Dapatkan waktu sekarang di zona waktu Indonesia (UTC+7)
                 const currentTimeString = today
-                    .toLocaleTimeString("id-ID", {
+                    .toLocaleTimeString("en-US", {
                         hour12: false,
                         timeZone: "Asia/Jakarta",
                     })
@@ -2223,12 +2247,12 @@ export default {
                     String(minutes).padStart(2, "0") +
                     ":" +
                     String(seconds).padStart(2, "0");
-                console.log(adjustedTimeString, currentTimeString);
                 return adjustedTimeString > currentTimeString;
             }
 
             return true;
         },
+
         getCurrentTime() {
             return new Date();
         },
@@ -2455,7 +2479,7 @@ export default {
         async getExportData(Start, End) {
             try {
                 this.loading = true;
-                const response = await axios.get("/overtime/getExport", {
+                const response = await axios.get("/overtime/getExportAdmin", {
                     params: {
                         start: Start,
                         end: End,
@@ -2531,7 +2555,7 @@ export default {
                     alignment: { vertical: "middle", horizontal: "center" },
                 };
 
-                worksheet.mergeCells("B1:H1");
+                worksheet.mergeCells("B1:K1");
                 worksheet.getCell("B1").value = "Employee Overtime Management";
                 worksheet.getCell("B1").style = headerStyle;
 
@@ -2541,8 +2565,11 @@ export default {
                 const headers = [
                     "No. Transaksi",
                     "Nama Karyawan",
+                    "Divisi",
+                    "Dapartment",
                     "Tanggal Lembur",
-                    "Waktu",
+                    "Waktu Awal",
+                    "Waktu Akhir",
                     "Durasi",
                     "Alasan",
                     "Status Lembur(Check Out)",
@@ -2567,8 +2594,11 @@ export default {
                     { key: "tanggal", width: 15 },
                     { key: "noTrans", width: 20 },
                     { key: "nama", width: 30 },
+                    { key: "divisi", width: 35 },
+                    { key: "dapartment", width: 35 },
                     { key: "tglLembur", width: 15 },
-                    { key: "waktu", width: 20 },
+                    { key: "waktuAwal", width: 20 },
+                    { key: "waktuAkhir", width: 20 },
                     { key: "durasi", width: 15 },
                     { key: "alasan", width: 40 },
                     { key: "status", width: 40 },
@@ -2597,8 +2627,10 @@ export default {
                             row.values = {
                                 nama: user.name,
                                 tglLembur: this.formatDate(user.start_time),
-                                waktu: this.formatTime(
-                                    user.start_time,
+                                waktuAwal: this.formatTimeSingle(
+                                    user.start_time
+                                ),
+                                waktuAkhir: this.formatTimeSingle(
                                     user.end_time
                                 ),
                                 durasi: this.formatDuration(
@@ -2607,6 +2639,8 @@ export default {
                                 ),
                                 alasan: user.reason,
                                 status: user.CHECKOUT,
+                                divisi: user.divisi,
+                                dapartment: user.dapartment,
                             };
 
                             row.eachCell(
@@ -3345,7 +3379,7 @@ export default {
                     time: this.assignTime,
                 };
 
-                const response = await axios.get("/overtime/getUserActive", {
+                const response = await axios.get("/overtime/getUserActiveAll", {
                     params,
                 });
 
@@ -3498,13 +3532,7 @@ element.style {
     z-index: 1048;
 }
 .el-overlay {
-    z-index: 1048 !important;
-}
-.el-picker-panel.el-date-picker.el-popper {
-    z-index: 1048 !important; /* Pastikan lebih tinggi dari 2003 */
-}
-element.style {
-    z-index: 1048 !important;
+    z-index: 1048;
 }
 .dialog-footer {
     text-align: right;
@@ -3516,17 +3544,6 @@ element.style {
 .el-dialog__body {
     padding-top: 10px;
     padding-bottom: 10px;
-}
-
-#app > div:nth-child(7) {
-    z-index: 1048 !important;
-}
-
-:deep(.el-overlay) {
-    z-index: 1048 !important;
-}
-:deep(.el-dialog) {
-    z-index: 1049 !important;
 }
 
 /* Style untuk rentang tanggal */
@@ -4850,9 +4867,6 @@ element.style {
 }
 
 .date-picker-grid {
-    min-height: 8rem;
-
-    width: 100%;
     display: flex;
     justify-content: center;
     padding: 1rem 0rem;
@@ -4861,7 +4875,7 @@ element.style {
 }
 
 .date-picker-item {
-    min-width: 6rem;
+    /* width: 6rem; */
     justify-content: center;
     flex-grow: 1;
     flex-shrink: 0;

@@ -12,7 +12,19 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Berjalan setiap tanggal 1 pada awal bulan
+        // $schedule->command('cuti:tambahCuti')->monthly();
+
+        // // Berjalan setiap hari pada pukul 00:00
+        // $schedule->command('cuti:hakCutiTambahan')->daily();
+        // $schedule->command('cuti:kuotaAwalCuti')->daily();
+        // $schedule->command('cuti:cutiHangusHarian')->daily();
+        $schedule->command('izin:waUlang')->daily();
+        // $schedule->command('izin:waUlang')->everyMinute();
+
+        $schedule->command('izin:expiredIzin')->dailyAt('23:59');
+        // Berjalan setiap akhir tahun pada 31 Desember
+        // $schedule->command('cuti:cutiAkhirTahun')->yearlyOn(12, 31, '23:59');
     }
 
     /**

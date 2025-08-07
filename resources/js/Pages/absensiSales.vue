@@ -1,5 +1,6 @@
 <template>
     <div
+        v-if="isActive"
         class="row d-flex align-items-center justify-content-center mb-3 fade-in"
     >
         <div class="col-md-11">
@@ -10,7 +11,6 @@
                         <div class="col-sm-8">
                             <div class="header-info">
                                 <div
-                                    @click="getData"
                                     class="icon-container d-flex align-items-center justify-content-center"
                                 >
                                     <i
@@ -20,14 +20,14 @@
                                 <div class="text-content">
                                     <h2 class="title text-white text-start">
                                         {{
-                                            `Halo, ${DataDayNow.Nama.split(" ")
-                                                .slice(0, 2)
+                                            `Halo, ${DataDayNow?.Nama.split(" ")
+                                                .slice(0, 1)
                                                 .join(" ")}`
                                         }}
                                     </h2>
                                     <p class="subtitle">
                                         {{
-                                            `${DataDayNow.nama_divisi.toLowerCase()}`
+                                            `${DataDayNow?.nama_divisi.toLowerCase()}`
                                         }}
                                     </p>
                                 </div>
@@ -53,7 +53,9 @@
                                         <span class="fs-md-6 text-header"
                                             >{{
                                                 formatDate(
-                                                    new Date(DataDayNow.Tanggal)
+                                                    new Date(
+                                                        DataDayNow?.Tanggal
+                                                    )
                                                 )
                                             }}
                                         </span>
@@ -78,16 +80,110 @@
             </div>
         </div>
     </div>
+    <div
+        v-else
+        class="row d-flex align-items-center justify-content-center mb-3 fade-in"
+    >
+        <div class="col-md-11">
+            <div class="modern-header">
+                <div class="header-background"></div>
+                <div class="header-content">
+                    <div class="row align-items-center">
+                        <!-- Left Side Skeleton -->
+                        <div class="col-sm-8">
+                            <div class="header-info">
+                                <div
+                                    class="icon-container d-flex align-items-center justify-content-center skeleton"
+                                    style="
+                                        width: 50px;
+                                        height: 50px;
+                                        border-radius: 50%;
+                                    "
+                                ></div>
+                                <div class="text-content ms-3">
+                                    <div
+                                        class="skeleton skeleton-text"
+                                        style="
+                                            width: 150px;
+                                            height: 25px;
+                                            margin-bottom: 10px;
+                                        "
+                                    ></div>
+                                    <div
+                                        class="skeleton skeleton-text"
+                                        style="width: 100px; height: 20px"
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Side Skeleton -->
+                        <div class="col-sm-4">
+                            <div
+                                class="header-actions d-flex gap-2 flex-nowrap flex-sm-column justify-content-center justify-content-md-start justify-content-md-center align-items-md-end"
+                            >
+                                <!-- Date Skeleton (visible on mobile) -->
+                                <div
+                                    class="date-range d-block d-md-none px-2 px-md-3 py-1 gap-2 gap-md-3"
+                                >
+                                    <div
+                                        class="date-item d-flex align-items-center"
+                                    >
+                                        <div
+                                            class="skeleton"
+                                            style="
+                                                width: 24px;
+                                                height: 24px;
+                                                margin-right: 8px;
+                                            "
+                                        ></div>
+                                        <div
+                                            class="skeleton skeleton-text"
+                                            style="width: 100px; height: 20px"
+                                        ></div>
+                                    </div>
+                                </div>
+
+                                <!-- Button Skeleton -->
+                                <div
+                                    class="skeleton"
+                                    style="
+                                        width: 100%;
+                                        height: 40px;
+                                        border-radius: 5px;
+                                    "
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- DATE Container -->
-    <div class="row d-flex justify-content-center fade-in mb-2 mb-md-0">
+    <div
+        v-if="isActive"
+        class="row d-flex justify-content-center fade-in mb-2 mb-md-0"
+    >
         <div class="col-11 p-md-2 row p-0">
             <div class="col-6 d-none d-md-block ps-0 pe-1">
                 <div
                     class="content-container p-3 flex-shrink-1 h-100 position-relative"
                 >
                     <i
+                        v-if="dayNight == 'Siang'"
                         class="bi bi-cloud-sun position-absolute d-flex justify-content-center align-items-center"
+                        style="
+                            font-size: 14rem;
+                            right: 8rem;
+                            top: 4.5rem;
+                            opacity: 30%;
+                        "
+                    ></i>
+                    <i
+                        v-else
+                        class="bi bi-cloud-moon position-absolute d-flex justify-content-center align-items-center"
                         style="
                             font-size: 14rem;
                             right: 8rem;
@@ -130,19 +226,19 @@
                     class="content-container p-3 h-100 d-flex justify-content-center align-items-center flex-column"
                 >
                     <span class="fs-6">{{
-                        `SHIFT ${DataDayNow.Nama_Shift.toUpperCase()} HARI INI`
+                        `SHIFT ${DataDayNow?.Nama_Shift.toUpperCase()} HARI INI`
                     }}</span>
                     <div
                         class="d-flex justify-content-evenly w-100 align-items-center"
                     >
                         <span class="fs-1 fw-bold">{{
-                            DataDayNow.Jam_Masuk.split(":")
+                            DataDayNow?.Jam_Masuk.split(":")
                                 .slice(0, 2)
                                 .join(":")
                         }}</span>
                         <span><i class="bi bi-three-dots fs-3"></i></span>
                         <span class="fs-1 fw-bold">{{
-                            DataDayNow.Jam_Keluar.split(":")
+                            DataDayNow?.Jam_Keluar.split(":")
                                 .slice(0, 2)
                                 .join(":")
                         }}</span>
@@ -153,15 +249,89 @@
                             class="bi bi-clock-history me-2 d-flex justify-content-center align-items-center"
                         ></i>
                         {{
-                            DataDayNow.CheckIn && DataDayNow.CheckIn !== ""
-                                ? `Keluar ${DataDayNow.Jam_Keluar.split(":")
+                            DataDayNow?.CheckIn && DataDayNow?.CheckIn !== ""
+                                ? `Keluar ${DataDayNow?.Jam_Keluar.split(":")
                                       .slice(0, 2)
                                       .join(":")}`
-                                : `Masuk ${DataDayNow.Jam_Masuk.split(":")
+                                : `Masuk ${DataDayNow?.Jam_Masuk.split(":")
                                       .slice(0, 2)
                                       .join(":")}`
                         }}
                     </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div v-else class="row d-flex justify-content-center fade-in mb-2 mb-md-0">
+        <div class="col-11 p-md-2 row p-0">
+            <!-- Left Column (Date) - Hidden on mobile -->
+            <div class="col-6 d-none d-md-block ps-0 pe-1">
+                <div
+                    class="content-container p-3 flex-shrink-1 h-100 position-relative skeleton"
+                >
+                    <div class="d-flex gap-2 px-2">
+                        <!-- Day number -->
+                        <div
+                            class="skeleton"
+                            style="
+                                width: 5rem;
+                                height: 5rem;
+                                font-weight: bolder;
+                            "
+                        ></div>
+
+                        <div
+                            class="d-flex flex-column flex-shrink-1 justify-content-center align-items-start"
+                        >
+                            <!-- Day name -->
+                            <div
+                                class="skeleton skeleton-text mb-2"
+                                style="width: 100px; height: 32px"
+                            ></div>
+                            <!-- Full date -->
+                            <div
+                                class="skeleton skeleton-text"
+                                style="width: 150px; height: 20px"
+                            ></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column (Shift Info) -->
+            <div class="col-md-6 col-12 p-0 ps-md-1">
+                <div
+                    class="content-container p-3 h-100 d-flex justify-content-center align-items-center flex-column skeleton"
+                >
+                    <!-- Shift title -->
+                    <div
+                        class="skeleton skeleton-text mb-3"
+                        style="width: 180px; height: 20px"
+                    ></div>
+
+                    <!-- Time range -->
+                    <div
+                        class="d-flex justify-content-evenly w-100 align-items-center mb-3"
+                    >
+                        <div
+                            class="skeleton skeleton-text"
+                            style="width: 60px; height: 48px"
+                        ></div>
+                        <div
+                            class="skeleton skeleton-text"
+                            style="width: 24px; height: 24px"
+                        ></div>
+                        <div
+                            class="skeleton skeleton-text"
+                            style="width: 60px; height: 48px"
+                        ></div>
+                    </div>
+
+                    <!-- Action button -->
+                    <div
+                        class="skeleton w-100 rounded-4 py-2"
+                        style="height: 40px"
+                    ></div>
                 </div>
             </div>
         </div>
@@ -214,7 +384,7 @@
 
     <template v-else>
         <!-- DATE BAR -->
-        <!-- opsi 1 -->
+
         <div class="row d-flex justify-content-center fade-in mb-2 mb-md-0">
             <div class="week-navigation col-11">
                 <button class="nav-button" @click="prevWeek">
@@ -223,9 +393,9 @@
                     ></i>
                 </button>
 
-                <div class="week-days">
+                <div class="week-days cards-container" ref="cardsContainer">
                     <div
-                        v-for="day in datas"
+                        v-for="(day, idx) in datas"
                         :key="day.date"
                         class="day-card flex-grow-1"
                         :class="{ 'active-day': isToday(day.Tanggal) }"
@@ -281,244 +451,8 @@
             </div>
         </div>
 
-        <!-- <div class="row d-flex justify-content-center fade-in mb-2 mb-md-0">
-        <div class="col-11 p-md-2 p-0">
-            <div class="content-container p-1">
-                <div class="d-flex flex-column gap-4 p-2">
-                    <div
-                        class="fs-2 fw-bold d-flex gap-md-2 gap-2 overflow-x-scroll overflow-md-hidden pb-3"
-                    >
-                        <div
-                            class="p-0 m-0 d-flex flex-column flex-md-grow-1 justify-content-center align-items-center tanggalBar"
-                        >
-                            <span class="fs-6 text-center w-100">27 Jun</span>
-                            <div
-                                class="d-flex rounded-4 justify-content-center px-md-2 bg-secondary text-white align-items-stretch align-items-center gap-2 px-2 py-2 flex-column flex-grow-1 w-100 tanggalItem"
-                            >
-                                <span class="fw-light fs-6 MarkHari text-center"
-                                    >Minggu</span
-                                >
-                                <div
-                                    class="d-flex flex-grow-1 gap-1 flex-column w-100"
-                                >
-                                    <div
-                                        class="flex-grow-1 bg-white fs-6 rounded-4 d-flex align-items-center justify-content-center text-dark"
-                                    >
-                                        16:00
-                                    </div>
-                                    <div
-                                        class="flex-grow-1 bg-white fs-6 rounded-4 d-flex align-items-center justify-content-center text-dark"
-                                    >
-                                        -
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                            class="p-0 m-0 d-flex flex-column flex-md-grow-1 justify-content-center align-items-center tanggalBar"
-                        >
-                            <span class="fs-6 text-center w-100">28 Jun</span>
-                            <div
-                                class="d-flex rounded-4 justify-content-center px-md-2 bg-secondary text-white align-items-stretch align-items-center gap-2 px-2 py-2 flex-column flex-grow-1 w-100 tanggalItem"
-                            >
-                                <span class="fw-light fs-6 MarkHari text-center"
-                                    >Senin</span
-                                >
-                                <div
-                                    class="d-flex flex-grow-1 gap-1 flex-column w-100"
-                                >
-                                    <div
-                                        class="flex-grow-1 bg-white fs-6 rounded-4 d-flex align-items-center justify-content-center text-dark"
-                                    >
-                                        16:00
-                                    </div>
-                                    <div
-                                        class="flex-grow-1 bg-white fs-6 rounded-4 d-flex align-items-center justify-content-center text-dark"
-                                    >
-                                        -
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                            class="p-0 m-0 d-flex flex-column flex-md-grow-1 justify-content-center align-items-center tanggalBar"
-                        >
-                            <span class="fs-6 text-center w-100">29 Jun</span>
-                            <div
-                                class="d-flex rounded-4 justify-content-center px-md-2 bg-secondary text-white align-items-stretch align-items-center gap-2 px-2 py-2 flex-column flex-grow-1 w-100 tanggalItem"
-                            >
-                                <span class="fw-light fs-6 MarkHari text-center"
-                                    >Selesa</span
-                                >
-                                <div
-                                    class="d-flex flex-grow-1 gap-1 flex-column w-100"
-                                >
-                                    <div
-                                        class="flex-grow-1 bg-white fs-6 rounded-4 d-flex align-items-center justify-content-center text-dark"
-                                    >
-                                        16:00
-                                    </div>
-                                    <div
-                                        class="flex-grow-1 bg-white fs-6 rounded-4 d-flex align-items-center justify-content-center text-dark"
-                                    >
-                                        -
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                            class="p-0 m-0 d-flex flex-column flex-md-grow-1 justify-content-center align-items-center tanggalBar"
-                        >
-                            <span class="fs-6 text-center w-100">30 Jun</span>
-                            <div
-                                class="d-flex rounded-4 justify-content-center px-md-2 bg-secondary text-white align-items-stretch align-items-center gap-2 px-2 py-2 flex-column flex-grow-1 w-100 tanggalItem"
-                            >
-                                <span class="fw-light fs-6 MarkHari text-center"
-                                    >Rabu</span
-                                >
-                                <div
-                                    class="d-flex flex-grow-1 gap-1 flex-column w-100"
-                                >
-                                    <div
-                                        class="flex-grow-1 bg-white fs-6 rounded-4 d-flex align-items-center justify-content-center text-dark"
-                                    >
-                                        16:00
-                                    </div>
-                                    <div
-                                        class="flex-grow-1 bg-white fs-6 rounded-4 d-flex align-items-center justify-content-center text-dark"
-                                    >
-                                        -
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                            class="p-0 m-0 d-flex flex-column flex-md-grow-1 justify-content-center align-items-center tanggalBar"
-                        >
-                            <span class="fs-6 text-center w-100">01 Jul</span>
-                            <div
-                                class="d-flex rounded-4 justify-content-center px-md-2 bg-secondary text-white align-items-stretch align-items-center gap-2 px-2 py-2 flex-column flex-grow-1 w-100 tanggalItem"
-                            >
-                                <span class="fw-light fs-6 MarkHari text-center"
-                                    >Kamis</span
-                                >
-                                <div
-                                    class="d-flex flex-grow-1 gap-1 flex-column w-100"
-                                >
-                                    <div
-                                        class="flex-grow-1 bg-white fs-6 rounded-4 d-flex align-items-center justify-content-center text-dark"
-                                    >
-                                        16:00
-                                    </div>
-                                    <div
-                                        class="flex-grow-1 bg-white fs-6 rounded-4 d-flex align-items-center justify-content-center text-dark"
-                                    >
-                                        -
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                            class="p-0 m-0 d-flex flex-column flex-md-grow-1 justify-content-center align-items-center tanggalBar"
-                        >
-                            <span class="fs-6 text-center w-100">02 Jun</span>
-                            <div
-                                class="d-flex rounded-4 justify-content-center px-md-2 bg-secondary text-white align-items-stretch align-items-center gap-2 px-2 py-2 flex-column flex-grow-1 w-100 tanggalItem"
-                            >
-                                <span class="fw-light fs-6 MarkHari text-center"
-                                    >Jumat</span
-                                >
-                                <div
-                                    class="d-flex flex-grow-1 gap-1 flex-column w-100"
-                                >
-                                    <div
-                                        class="flex-grow-1 bg-white fs-6 rounded-4 d-flex align-items-center justify-content-center text-dark"
-                                    >
-                                        16:00
-                                    </div>
-                                    <div
-                                        class="flex-grow-1 bg-white fs-6 rounded-4 d-flex align-items-center justify-content-center text-dark"
-                                    >
-                                        -
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                            class="p-0 m-0 d-flex flex-column flex-md-grow-1 justify-content-center align-items-center tanggalBar"
-                        >
-                            <span class="fs-6 text-center w-100">03 Jul</span>
-                            <div
-                                class="d-flex rounded-4 justify-content-center px-md-2 bg-secondary text-white align-items-stretch align-items-center gap-2 px-2 py-2 flex-column flex-grow-1 w-100 tanggalItem"
-                            >
-                                <span class="fw-light fs-6 MarkHari text-center"
-                                    >Sabtu</span
-                                >
-                                <div
-                                    class="d-flex flex-grow-1 gap-1 flex-column w-100"
-                                >
-                                    <div
-                                        class="flex-grow-1 bg-white fs-6 rounded-4 d-flex align-items-center justify-content-center text-dark"
-                                    >
-                                        16:00
-                                    </div>
-                                    <div
-                                        class="flex-grow-1 bg-white fs-6 rounded-4 d-flex align-items-center justify-content-center text-dark"
-                                    >
-                                        -
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> -->
-
-        <!-- control Panel -->
-        <!-- <div class="row d-flex justify-content-center mb-2 mb-md-0 fade-in">
-        <div class="col-11 p-md-2 p-0">
-            <div class="control-panel">
-                <div class="nav-controls">
-                    <button
-                        @click="prevWeek()"
-                        class="btn-nav"
-                        :disabled="loading"
-                        :class="{ loading: loading }"
-                    >
-                        <i
-                            class="bi bi-chevron-left d-flex justify-content-center align-items-center"
-                        ></i>
-                        <span class="sm-nav">Sebelum</span>
-                    </button>
-
-                    <div class="date-picker-container">
-                        <input
-                            type="date"
-                            v-model="selectedDate"
-                            @change="onDateChange"
-                            class="date-picker form-control"
-                        />
-                    </div>
-
-                    <button
-                        @click="nextWeek()"
-                        class="btn-nav"
-                        :disabled="loading"
-                        :class="{ loading: loading }"
-                    >
-                        <span class="sm-nav">Lanjut</span>
-                        <i
-                            class="bi bi-chevron-right d-flex justify-content-center align-items-center"
-                        ></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div> -->
         <!-- HISTORY -->
-        <div class="row d-flex justify-content-center fade-in mb-4">
+        <div class="row d-flex justify-content-center fade-in mb-4 px-md-2">
             <div class="col-11 p-0">
                 <div class="content-container bg-white p-3 shadow-sm">
                     <div class="d-flex flex-column gap-3">
@@ -547,6 +481,9 @@
                                 >
                                     <!-- Check In Section -->
                                     <div
+                                        @click="
+                                            openFullPicture(item.filePath_Masuk)
+                                        "
                                         class="check-section col-md-6 p-3 border-end-md"
                                     >
                                         <div class="d-flex flex-column h-100">
@@ -613,7 +550,7 @@
                                                         >
                                                     </div>
                                                     <span
-                                                        class="text-success"
+                                                        class="text-warning"
                                                         v-if="
                                                             item.CheckIn &&
                                                             item.No_Transaksi_Masuk
@@ -667,7 +604,14 @@
                                     </div>
 
                                     <!-- Check Out Section -->
-                                    <div class="check-section col-md-6 p-3">
+                                    <div
+                                        @click="
+                                            openFullPicture(
+                                                item.filePath_Keluar
+                                            )
+                                        "
+                                        class="check-section col-md-6 p-3"
+                                    >
                                         <div class="d-flex flex-column h-100">
                                             <div
                                                 class="d-flex align-items-center mb-2"
@@ -800,19 +744,44 @@
                                 </div>
 
                                 <div
-                                    class="d-flex flex-column flex-md-row justify-content-center align-items-center fs-3"
-                                    style="min-height: 10rem"
+                                    class="d-flex flex-grow-1 align-items-center justify-content-center py-4"
                                 >
-                                    <!-- Check In Section -->
-                                    <i
-                                        class="bi bi-bell-slash d-flex justify-content-center align-items-center me-4"
-                                    ></i
-                                    >Tidak ada shift Hari ini
+                                    <div class="text-center text-muted">
+                                        <i
+                                            class="fa-solid fa-bell-slash fs-2 mb-2"
+                                        ></i>
+                                        <p class="mb-0 fw-medium">
+                                            Tidak ada shift hari ini
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+        <!-- PICTURE MODAL -->
+        <div
+            v-if="isPictureOpen"
+            class="modal-backdrop fade-in"
+            @click="closeAttendanceModal"
+        ></div>
+
+        <div v-if="isPictureOpen" class="attendance-modal zoom-in">
+            <div
+                class="attendance-modal-content px-2 px-md-3 py-3 d-flex flex-column align-items-end"
+            >
+                <i
+                    @click="closeFullPicture"
+                    class="fa-solid fa-xmark fs-1 rounded-2 px-2 py-1"
+                    style="right: 0"
+                ></i>
+                <img
+                    :src="fullPicture"
+                    alt="Foto Absensi Keluar"
+                    class="attendance-photo"
+                />
             </div>
         </div>
 
@@ -823,8 +792,8 @@
             @click="closeAttendanceModal"
         ></div>
         <div v-if="isAttendanceModalOpen" class="attendance-modal zoom-in">
-            <div class="attendance-modal-content">
-                <h3 class="mb-4">Formulir Absensi</h3>
+            <div class="attendance-modal-content px-4 py-3">
+                <h3 class="mb-md-4">Formulir Absensi</h3>
                 <form @submit.prevent="submitAttendance">
                     <div class="row">
                         <div class="col-md-6 mb-4 mb-md-0">
@@ -845,14 +814,17 @@
                                         class="bi bi-image d-flex justify-content-center align-items-center mb-3"
                                         style="font-size: 2.5rem"
                                     ></i>
-                                    <p>Belum ada foto</p>
+                                    <p class="px-2">
+                                        Silahkan Ambil foto dengan menekan
+                                        tombol kamera
+                                    </p>
                                 </div>
                             </div>
                             <button
                                 type="button"
                                 @click="openCamera"
                                 :disabled="
-                                    DataDayNow.CheckIn && DataDayNow.CheckOut
+                                    DataDayNow?.CheckIn && DataDayNow?.CheckOut
                                 "
                                 class="btn btn-primary btn-modern w-100"
                             >
@@ -865,11 +837,11 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="reason" class="form-label"
-                                    >Alasan</label
+                                    >Deskripsi Absen</label
                                 ><textarea
                                     :disabled="
-                                        DataDayNow.CheckIn &&
-                                        DataDayNow.CheckOut
+                                        DataDayNow?.CheckIn &&
+                                        DataDayNow?.CheckOut
                                     "
                                     class="form-control"
                                     id="reason"
@@ -878,7 +850,7 @@
                                 ></textarea>
                             </div>
                             <div
-                                class="mb-3 form-control row m-0 d-flex w-100 align-items-center justify-content-between p-md-1 p-2"
+                                class="mb-md-3 form-control row m-0 d-flex w-100 align-items-center justify-content-between p-md-1 p-2"
                             >
                                 <label for="reason" class="col-6"
                                     ><span class="form-label m-0"
@@ -890,8 +862,8 @@
                                 >
                                     <span
                                         v-if="
-                                            DataDayNow.CheckIn &&
-                                            !DataDayNow.CheckOut
+                                            DataDayNow?.CheckIn &&
+                                            !DataDayNow?.CheckOut
                                         "
                                         style="font-size: 0.7rem"
                                         class="bg-warning text-white rounded-4 flex-nowrap px-md-2 py-md-1 px-2 py-1 text-center"
@@ -899,8 +871,8 @@
                                     >
                                     <span
                                         v-else-if="
-                                            !DataDayNow.CheckIn &&
-                                            !DataDayNow.CheckOut
+                                            !DataDayNow?.CheckIn &&
+                                            !DataDayNow?.CheckOut
                                         "
                                         style="font-size: 0.7rem"
                                         class="bg-success text-white rounded-4 flex-nowrap px-md-2 py-md-1 px-2 py-1 text-center"
@@ -916,7 +888,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="mt-4 d-flex justify-content-end gap-2">
+                    <div class="mt-md-4 d-flex justify-content-end gap-2">
                         <button
                             type="button"
                             class="btn btn-secondary btn-modern"
@@ -989,11 +961,15 @@ export default {
     },
     props: {
         userLogin: Array,
-        DataDayNow: Array,
+        TodayData: Array,
     },
     data() {
         return {
-            datasToday: null,
+            isPictureOpen: false,
+            fullPicture: null,
+            closePicture: false,
+            isActive: false,
+            DataDayNow: {},
             loading: true,
             datas: null,
             latitude: null,
@@ -1024,6 +1000,20 @@ export default {
         };
     },
     computed: {
+        dayNight() {
+            const sekarang = new Date();
+            const jam = sekarang.getHours();
+
+            let keteranganWaktu;
+
+            if (jam >= 6 && jam < 18) {
+                keteranganWaktu = "Siang";
+            } else {
+                keteranganWaktu = "Malam";
+            }
+
+            return keteranganWaktu;
+        },
         pickDateToday() {
             const date = this.dates.find((d) => {
                 new Date(d.Tanggal) == new Date();
@@ -1074,7 +1064,22 @@ export default {
             );
         },
     },
+
     methods: {
+        openFullPicture(url) {
+            if (!url) return;
+            this.fullPicture = url;
+            this.isPictureOpen = true;
+        },
+        closeFullPicture() {
+            this.fullPicture = null;
+            this.isPictureOpen = false;
+        },
+        test() {
+            this.DataDayNow = this.TodayData;
+            console.log(this.DataDayNow);
+            this.isActive = true;
+        },
         async nextWeek() {
             if (this.datas > 0) {
                 alert("Terjadi kesalahan saat minggu selanjut nya..");
@@ -1121,6 +1126,7 @@ export default {
                 this.loading = false;
             }
         },
+
         isToday(dateString) {
             const today = new Date();
             const date = new Date(dateString);
@@ -1305,8 +1311,38 @@ export default {
                 },
                 { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
             );
+            // if (
+            //     !this.latitude ||
+            //     !this.longitude ||
+            //     !this.accuracy ||
+            //     this.latitude == 0 ||
+            //     this.longitude == 0 ||
+            //     this.accuracy == 0
+            // ) {
+            //     ElNotification({
+            //         showClose: true,
+            //         message:
+            //             "Terjadi kesalahan mengambil lokasi,silahkan nyalakan lokasi dan refresh website.",
+            //         type: "error",
+            //         customStyle: {
+            //             "z-index": "1050",
+            //         },
+            //     });
+            //     this.latitude = null;
+            //     this.longitude = null;
+            //     this.accuracy = null;
+            //     this.capturedImage = null;
+            //     this.capturedHash = null;
+            //     this.randomHash = null;
+
+            //     this.isLoadingLocation = false;
+            //     this.closeCamera();
+            // }
+            // dd();
         },
         drawCanvasWithWatermark(locationText, timeText, employeeId) {
+            // alert(this.latitude, this.longitude, this.accuracy);
+
             const video = this.$refs.cameraFeed;
             const canvas = this.$refs.canvas;
             const ctx = canvas.getContext("2d");
@@ -1328,7 +1364,7 @@ export default {
 
             // Generate random watermark hash
             const randomHash = Math.random().toString(36).substring(2, 10);
-            const watermarkText = `${timeText} | ${locationText} | ${randomHash}`;
+            const watermarkLines = [timeText, locationText, randomHash];
 
             // Draw watermark background
             const padding = 15;
@@ -1338,9 +1374,11 @@ export default {
             ctx.font = `bold ${fontSize}px Inter, Arial, sans-serif`;
             ctx.textAlign = "left";
 
-            const metrics = ctx.measureText(watermarkText);
-            const bgHeight = lineHeight + padding * 2;
-            const bgWidth = metrics.width + padding * 2;
+            const maxLineWidth = Math.max(
+                ...watermarkLines.map((line) => ctx.measureText(line).width)
+            );
+            const bgWidth = maxLineWidth + padding * 2;
+            const bgHeight = watermarkLines.length * lineHeight + padding * 2;
             const bgX = 0;
             const bgY = canvas.height - bgHeight;
 
@@ -1350,7 +1388,16 @@ export default {
             ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
             ctx.shadowColor = "black";
             ctx.shadowBlur = 4;
-            ctx.fillText(watermarkText, padding, canvas.height - padding);
+
+            watermarkLines.forEach((line, index) => {
+                const y =
+                    canvas.height -
+                    bgHeight +
+                    padding +
+                    (index + 1) * lineHeight -
+                    lineHeight / 2;
+                ctx.fillText(line, padding, y);
+            });
 
             // Convert to image and hash
             const base64Image = canvas.toDataURL("image/png");
@@ -1364,6 +1411,7 @@ export default {
             this.isLoadingLocation = false;
             this.closeCamera();
         },
+
         openAttendanceModal() {
             this.form.employeeName = this.userName;
             this.isAttendanceModalOpen = true;
@@ -1386,7 +1434,8 @@ export default {
             try {
                 const response = await axios.get("/absensi/getDataToday");
                 if (response.status == 200) {
-                    this.datasToday = response.data.data;
+                    this.DataDayNow = response.data.data;
+                    console.log(this.DataDayNow);
                 }
             } catch (error) {
                 ElMessage({
@@ -1451,9 +1500,9 @@ export default {
             formData.append("photo", file);
             formData.append("alasan", this.form.reason || "");
             formData.append("employee_id", this.employeeId);
-            formData.append("location_latitude", this.latitude || "0");
-            formData.append("location_longitude", this.longitude || "0");
-            formData.append("accuracy", this.accuracy || "0");
+            formData.append("location_latitude", this.latitude || null);
+            formData.append("location_longitude", this.longitude || null);
+            formData.append("accuracy", this.accuracy || null);
             const now = new Date();
             const wibOffsetMs = 7 * 60 * 60 * 1000;
             const wibDate = new Date(now.getTime() + wibOffsetMs);
@@ -1467,7 +1516,7 @@ export default {
                 "Kode_Karyawan",
                 this.userLogin.Kode_Karyawan || null
             );
-            if (this.DataDayNow.CheckIn && !this.DataDayNow.CheckOut) {
+            if (this.DataDayNow?.CheckIn && !this.DataDayNow?.CheckOut) {
                 formData.append("Jenis", "keluar");
             } else {
                 formData.append("Jenis", "masuk");
@@ -1485,9 +1534,13 @@ export default {
 
             try {
                 this.loadingSimpan = true;
-                const response = await axios.post("/submitAbsen", formData, {
-                    headers: { "Content-Type": "multipart/form-data" },
-                });
+                const response = await axios.post(
+                    "/absensi/submitAbsen",
+                    formData,
+                    {
+                        headers: { "Content-Type": "multipart/form-data" },
+                    }
+                );
 
                 if (response.data.status === 200) {
                     // alert(
@@ -1502,6 +1555,7 @@ export default {
                         },
                     });
                     this.getData();
+                    this.getDataToday();
                 } else {
                     alert(
                         response.data.message ||
@@ -1588,7 +1642,10 @@ export default {
         this.clockInterval = setInterval(() => {
             this.liveClock = new Date().toLocaleTimeString("id-ID");
         }, 1000);
-        this.datasToday = this.$DataDayNow;
+        setTimeout(() => {
+            this.test();
+        }, 1000);
+
         this.getData();
     },
     beforeUnmount() {
@@ -1633,6 +1690,40 @@ export default {
     box-shadow: var(--shadow);
     border: 1px solid var(--border);
     margin-bottom: 0rem;
+}
+.skeleton {
+    background-color: #e0e0e0;
+    position: relative;
+    overflow: hidden;
+}
+
+.skeleton::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.5),
+        transparent
+    );
+    animation: shimmer 1.5s infinite;
+}
+
+.skeleton-text {
+    border-radius: 4px;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
 }
 
 .attendance-card {
@@ -1841,6 +1932,7 @@ export default {
 
 .day-card-skeleton {
     min-width: 80px;
+    flex-grow: 1;
     background: #f1f5f9;
     border-radius: 0.75rem;
     padding: 0.75rem;
@@ -2344,6 +2436,7 @@ body {
 }
 
 .subtitle {
+    text-align: start;
     margin: 0.5rem 0 0 0;
     opacity: 0.9;
     font-size: 1.1rem;
@@ -2792,7 +2885,7 @@ body {
 
 .day-card {
     min-width: 80px;
-    max-width: 140px;
+    flex-grow: 1;
     background: var(--surface);
     border-radius: 0.75rem;
     padding: 0.75rem;
@@ -3602,7 +3695,7 @@ body {
     box-shadow: var(--shadow-lg);
     width: 100%;
     max-width: 900px;
-    padding: 2rem;
+    /* padding: 1rem 2rem; */
     position: relative;
 }
 .photo-preview-container {

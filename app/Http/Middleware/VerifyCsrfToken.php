@@ -12,6 +12,7 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        //
+        // Tambahkan path Anda di sini
+        'scheduler-T4sk-RuNn3r-sEcr3t',
     ];
 }

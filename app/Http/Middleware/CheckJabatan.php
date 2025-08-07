@@ -14,16 +14,20 @@ class CheckJabatan
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next, string $jabatan): Response
-    {
-
-        if(!Auth::check()){
-            return redirect('login');
-        }
-        if(!$request->user()->memilikiJabatan($jabatan)){
-            abort(403, 'Akses Ditolak.');
-        }
-
-        return $next($request);
+   public function handle(Request $request, Closure $next, string ...$jabatans): Response
+{
+    if (!Auth::check()) {
+        return redirect('login');
     }
+
+    foreach ($jabatans as $jabatan) {
+        if ($request->user()->memilikiJabatan($jabatan)) {
+            return $next($request);
+        }
+    }
+
+
+    return redirect()->back();
+    // abort(403, 'Akses Ditolak.');
+}
 }

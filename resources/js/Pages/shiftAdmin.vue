@@ -21,8 +21,7 @@
                                         Manajemen Penugasan Shift
                                     </h2>
                                     <p class="subtitle">
-                                        Kelola pergantian shift divisi
-                                        {{ divisi.toLowerCase() }}
+                                        Sistem kelola pergantian shift admin
                                     </p>
                                 </div>
                             </div>
@@ -96,9 +95,9 @@
                     <div class="date-picker-container">
                         <input
                             type="date"
+                            placeholder="Pilih tanggal"
                             v-model="selectedDate"
                             @change="onDateChange"
-                            placeholder="Pilih tanggal"
                             class="date-picker form-control"
                         />
                     </div>
@@ -261,7 +260,11 @@
                                                     {{ employee.name }}
                                                 </div>
                                                 <div class="employee-id">
-                                                    {{ divisi }}
+                                                    {{
+                                                        getUserDivision(
+                                                            employee.Kode_Karyawan
+                                                        )
+                                                    }}
                                                 </div>
                                             </div>
                                         </div>
@@ -719,7 +722,11 @@
                                     </div>
 
                                     <div class="employee-department">
-                                        {{ divisi.toUpperCase() }}
+                                        {{
+                                            getUserDivision(
+                                                employee.Kode_Karyawan
+                                            )
+                                        }}
                                     </div>
                                     <!-- <div class="" style="font-size: 0.6rem">
                                         {{ console.log(employee) }}
@@ -859,7 +866,15 @@
                             >
                                 <label class="form-label">Pilih Tanggal:</label>
                                 <div class="date-picker-grid">
-                                    <div
+                                    <el-date-picker
+                                        v-model="selectedAssignDates"
+                                        class="w-100"
+                                        type="dates"
+                                        format="YYYY-MM-DD"
+                                        value-format="YYYY-MM-DD"
+                                        placeholder="Pick one or more dates"
+                                    />
+                                    <!-- <div
                                         v-for="(day, idx) in tanggalLoop"
                                         :key="idx"
                                         class="date-picker-item"
@@ -890,7 +905,7 @@
                                                 class="bi bi-check-circle-fill"
                                             ></i>
                                         </div>
-                                    </div>
+                                    </div> -->
                                 </div>
                             </div>
 
@@ -905,7 +920,6 @@
                                             type="date"
                                             class="form-control date-input"
                                             v-model="assignStartDate"
-                                            :min="minDate"
                                         />
                                     </div>
                                     <!-- <div class="date-separator">—</div> -->
@@ -1080,12 +1094,7 @@
                     >
                         Lanjut
                         <i
-                            v-if="!loading"
                             class="bi bi-arrow-right ms-2 d-flex justify-content-center align-items-center"
-                        ></i>
-                        <i
-                            v-if="loading"
-                            class="spinner-border spinner-border-sm ms-2"
                         ></i>
                     </button>
 
@@ -1221,6 +1230,7 @@ export default {
     },
     data() {
         return {
+            dataExtend: [],
             isLemburData: [],
             jenisShift: [],
             tanggalHariIni: new Date(),
@@ -1379,6 +1389,15 @@ export default {
         window.removeEventListener("resize", this.checkScreenSize);
     },
     methods: {
+        getUserDivision(Kode) {
+            const user = this.dataExtend.find((emp) => {
+                return emp.Kode_Karyawan == Kode;
+            });
+            if (!user) {
+                return "Tidak ada divisi";
+            }
+            return user.nama_divisi;
+        },
         dayNight() {
             const sekarang = new Date();
             const jam = sekarang.getHours();
@@ -1501,9 +1520,10 @@ export default {
             }
         },
         async saveShift() {
-            this.loading = true;
             if (this.selectedEmployee && this.selectedDayIndex !== null) {
                 try {
+                    this.loading = true;
+
                     const response = await axios.post("/swapShift/update", {
                         params: {
                             employee: this.selectedEmployee,
@@ -1523,8 +1543,6 @@ export default {
                                 "z-index": "1050",
                             },
                         });
-                        this.closeAlertModal();
-                        this.closeShiftModal();
                         location.reload();
                     }
                 } catch (error) {
@@ -1540,8 +1558,10 @@ export default {
                     });
                     this.closeAlertModal();
                 } finally {
-                    this.loading = false;
                     this.closeShiftModal();
+                    this.closeAlertModal();
+
+                    this.loading = false;
                 }
             }
 
@@ -1635,7 +1655,7 @@ export default {
             }
         },
         log() {
-            console.log(this.jenisShift);
+            console.log(this.getUserDivision("S56"));
         },
         checkScreenSize() {
             if (window.innerWidth >= 768) {
@@ -1981,7 +2001,7 @@ export default {
         async fetchWeekDates() {
             this.loading = true;
             try {
-                const response = await axios.get("/swapShift/getWeek", {
+                const response = await axios.get("/swapShift/getWeekAdmin", {
                     params: { start_date: this.currentStartDate },
                 });
 
@@ -1990,6 +2010,7 @@ export default {
                 // console.log(response.data.Tanggal);
                 this.startOfWeek = this.formatDate(response.data.start_of_week);
                 this.endOfWeek = this.formatDate(response.data.end_of_week);
+                this.dataExtend = response.data.dataExtend;
                 this.processEmployeesData();
             } catch (error) {
                 console.error("Error fetching week dates:", error);
@@ -2228,52 +2249,35 @@ export default {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            const sementara = new Date("2025-07-21");
-            sementara.setHours(0, 0, 0, 0);
-
             // Calculate the H+2 date (lusa)
 
             const hPlusTwoDate = new Date(today);
-            // hPlusTwoDate.setDate(today.getDate() + 2);
-            hPlusTwoDate.setDate(today.getDate());
+            hPlusTwoDate.setDate(today.getDate() + 2);
 
-            // const canClick = cellDate >= hPlusTwoDate;
-            const canClick = cellDate >= sementara;
+            const canClick = cellDate >= hPlusTwoDate;
 
             return canClick;
         },
         // Edit Shift Modal
         openShiftModal(userId, dayIndex, date) {
-            if (this.isClickable(date)) {
-                // alert(this.isClickable(date));
-                this.assignSelectedShift = null;
-                this.jenisShift = [];
-                const tanggalShift = [date];
-                // console.log(date);
-                this.getShift(tanggalShift);
-                this.selectedEmployee = this.employees.find(
-                    (emp) => emp.userId === userId
-                );
-                this.selectedDayIndex = dayIndex;
-                this.selectedDate = date;
-                this.selectedShiftValue = this.getEmployeeShiftForDay(
-                    userId,
-                    dayIndex
-                );
-                this.shiftLama = this.getEmployeeShiftForDay(userId, dayIndex);
-                this.showShiftModal = true;
-            } else {
-                ElMessage({
-                    showClose: true,
-                    // message: "Tidak Bisa megubah shift di hari sebelum nya.",
-                    message:
-                        "Tidak Bisa megubah shift dibawah tanggal 21 Jul 2025.",
-                    type: "error",
-                    customStyle: {
-                        "z-index": "1050",
-                    },
-                });
-            }
+            // if (this.isClickable(date)) {
+            // alert(this.isClickable(date));
+            this.assignSelectedShift = null;
+            this.jenisShift = [];
+            const tanggalShift = [date];
+            // console.log(date);
+            this.getShift(tanggalShift);
+            this.selectedEmployee = this.employees.find(
+                (emp) => emp.userId === userId
+            );
+            this.selectedDayIndex = dayIndex;
+            this.selectedDate = date;
+            this.selectedShiftValue = this.getEmployeeShiftForDay(
+                userId,
+                dayIndex
+            );
+            this.shiftLama = this.getEmployeeShiftForDay(userId, dayIndex);
+            this.showShiftModal = true;
         },
 
         closeShiftModal() {
@@ -2330,6 +2334,7 @@ export default {
             this.selectedAssignEmployees = this.filteredAssignEmployees.map(
                 (emp) => emp.Kode_Karyawan
             );
+            console.log(this.selectedAssignEmployees);
         },
 
         clearEmployeeSelection() {
