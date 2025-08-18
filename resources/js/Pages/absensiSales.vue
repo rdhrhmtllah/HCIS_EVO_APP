@@ -1052,12 +1052,12 @@ export default {
             const hasReason = this.reason !== null;
             const isSubmitting = this.isSubmitting;
 
-            const checkIn = this.DataDayNow?.CheckIn;
-            const checkOut = this.DataDayNow?.CheckOut;
+            // const checkIn = this.DataDayNow?.CheckIn;
+            // const checkOut = this.DataDayNow?.CheckOut;
 
-            if (checkIn !== null && checkOut !== null) {
-                return false;
-            }
+            // if (checkIn !== null && checkOut !== null) {
+            //     return false;
+            // }
 
             return (
                 hasCapturedImage && hasLocation && !isSubmitting && hasReason

@@ -1524,14 +1524,17 @@ export default {
                 try {
                     this.loading = true;
 
-                    const response = await axios.post("/swapShift/update", {
-                        params: {
-                            employee: this.selectedEmployee,
-                            date: this.selectedDate,
-                            shift: this.assignSelectedShift,
-                            shift_lama: this.shiftLama,
-                        },
-                    });
+                    const response = await axios.post(
+                        "/swapShift/updateAdmin",
+                        {
+                            params: {
+                                employee: this.selectedEmployee,
+                                date: this.selectedDate,
+                                shift: this.assignSelectedShift,
+                                shift_lama: this.shiftLama,
+                            },
+                        }
+                    );
 
                     if (response.status === 200) {
                         ElMessage({
@@ -1543,7 +1546,7 @@ export default {
                                 "z-index": "1050",
                             },
                         });
-                        location.reload();
+                        await this.fetchWeekDates();
                     }
                 } catch (error) {
                     console.error("Error Fetching Time :", error);
@@ -2367,7 +2370,7 @@ export default {
                 sendNotification: this.sendNotification,
             };
             try {
-                const response = await axios.post("/swapShift/submit", {
+                const response = await axios.post("/swapShift/submitAdmin", {
                     params: { AssignShift: assignmentData },
                 });
                 if (response.status === 200) {
@@ -2379,10 +2382,9 @@ export default {
                             "z-index": "1050",
                         },
                     });
+                    await this.fetchWeekDates();
                     this.closeAlertModal();
                     this.closeAssignModal();
-
-                    location.reload();
                 }
 
                 // console.log(assignmentData);

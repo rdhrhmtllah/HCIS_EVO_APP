@@ -42,17 +42,12 @@ class waUlang extends Command
             // dd($lusa);
             $datasPending = DB::table('HRIS_Approval_Request as a')
             ->join('HRIS_Approval_Flow as b', 'a.Flow_Id', '=', 'b.id')
-
-            // Ambil yang belum disetujui
             ->whereNull('a.Flag_Approval')
-
-            // Filter tanggal
+            ->whereNull('b.Status')
             ->where(function ($query) use ($kemarin, $lusa) {
                 $query->whereDate('a.created_at', $kemarin)
                     ->orWhereDate('a.created_at', $lusa);
             })
-
-            // Semua approval sebelumnya HARUS Y (approve)
             ->whereNotExists(function ($sub) {
                 $sub->select(DB::raw(1))
                     ->from('HRIS_Approval_Request as prev')
@@ -60,23 +55,39 @@ class waUlang extends Command
                     ->whereColumn('prev.No_Transaksi', 'a.No_Transaksi')
                     ->whereRaw('prev_flow.order_flow < b.order_flow')
                     ->where(function ($q) {
-                        $q->whereNull('prev.Flag_Approval')     // belum approve
-                        ->orWhere('prev.Flag_Approval', '!=', 'Y'); // bukan Y
+                        $q->whereNull('prev.Flag_Approval')
+                        ->whereNull('prev_flow.Status')
+                        ->orWhere('prev.Flag_Approval', '!=', 'Y');
                     });
             })
-
-            // Ambil top 1 per No_Transaksi (yang order_flow-nya paling kecil dari yang valid)
             ->whereIn('a.id', function ($query) {
                 $query->selectRaw('MIN(t1.id)')
                     ->from('HRIS_Approval_Request as t1')
                     ->join('HRIS_Approval_Flow as t2', 't1.Flow_Id', '=', 't2.id')
                     ->whereNull('t1.Flag_Approval')
+                    ->whereNull('t2.Status')
                     ->groupBy('t1.No_Transaksi');
+            })
+
+            // Cek apakah di 3 tabel transaksi ada yang statusnya 'Y'
+            ->whereNotExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from(DB::raw("
+                        (
+                            SELECT No_Transaksi FROM Transaksi_Terlambat_Pulang_Cepat WHERE Status = 'Y'
+                            UNION ALL
+                            SELECT No_Transaksi FROM Transaksi_Sakit_Izin WHERE Status = 'Y'
+                            UNION ALL
+                            SELECT No_Transaksi FROM Transaksi_Cuti WHERE Status = 'Y'
+                        ) as t_check
+                    "))
+                    ->whereColumn('t_check.No_Transaksi', 'a.No_Transaksi');
             })
 
             ->select('a.*', 'b.order_flow')
             ->orderBy('a.No_Transaksi')
             ->get();
+
 
 
 
@@ -99,6 +110,7 @@ class waUlang extends Command
                 $approver = DB::table("HRIS_Approval_Flow as a")
                     ->join("Karyawan as b", "a.Kode_Karyawan", "=", "b.Kode_Karyawan")
                     ->where("a.id", $flowId)
+                    ->whereNull('a.Status')
                     ->first();
 
                 if (!$approver) {

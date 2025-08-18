@@ -190,25 +190,59 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/project/delete', [ProjectController::class, 'destroy'])->name('project.destroy');
 
     // Absensi
-        Route::middleware(['auth', 'check.jabatan:IzinPage, IzinPageApprover'])->group(function(){
+        // Route::middleware(['auth', 'check.jabatan:IzinPage, IzinPageApprover'])->group(function(){
 
-            Route::get('/lembur',[AbsensiController::class, 'indexLembur'])->name('absensi.lembur');
-            Route::middleware(['auth','check.jabatan:IzinPage'])->group(function(){
-                Route::get('/izin',[AbsensiController::class, 'indexIzin'])->name('absensi.izin');
-                Route::get('/izin/getDataIzin',[AbsensiController::class, 'getDataIzin'])->name('absensi.izin.getData');
-                Route::get('/izin/getKerja',[AbsensiController::class, 'getJamKerja'])->name('absensi.izin.getJamKerja');
-                Route::post('/izin/submit',[AbsensiController::class, 'submitIzin'])->name('absensi.izin.submit');
-                Route::post('/izin/getAttachmentUrl', [AbsensiController::class, 'getAttachmentUrl']);
-                Route::post('/izin/destroy', [AbsensiController::class, 'destroyIzin']);
+        //     Route::get('/lembur',[AbsensiController::class, 'indexLembur'])->name('absensi.lembur');
+        //     Route::middleware(['auth','check.jabatan:IzinPage'])->group(function(){
+        //         Route::get('/izin',[AbsensiController::class, 'indexIzin'])->name('absensi.izin');
+        //         Route::get('/izin/getDataIzin',[AbsensiController::class, 'getDataIzin'])->name('absensi.izin.getData');
+        //         Route::get('/izin/getKerja',[AbsensiController::class, 'getJamKerja'])->name('absensi.izin.getJamKerja');
+        //         Route::post('/izin/submit',[AbsensiController::class, 'submitIzin'])->name('absensi.izin.submit');
+        //         Route::post('/izin/getAttachmentUrl', [AbsensiController::class, 'getAttachmentUrl']);
+        //         Route::post('/izin/destroy', [AbsensiController::class, 'destroyIzin']);
 
-            Route::middleware(['check.jabatan:IzinPageApprover'])->group(function(){
+        //     Route::middleware(['check.jabatan:IzinPageApprover'])->group(function(){
 
-                Route::post('/izin/confirmIzin',[AbsensiController::class, 'confirmIzin'])->name('absensi.izin.confirm');
-                Route::get('/izin/getDataIzinDH',[AbsensiController::class, 'getDataIzinDH'])->name('absensi.izin.getDataDH');
-                Route::get('/izinLevelUp',[AbsensiController::class, 'indexIzinDH'])->name('absensi.izinDH');
-            });
-            });
+        //         Route::post('/izin/confirmIzin',[AbsensiController::class, 'confirmIzin'])->name('absensi.izin.confirm');
+        //         Route::get('/izin/getDataIzinDH',[AbsensiController::class, 'getDataIzinDH'])->name('absensi.izin.getDataDH');
+        //         Route::get('/izinLevelUp',[AbsensiController::class, 'indexIzinDH'])->name('absensi.izinDH');
+        //     });
+        //     });
+        // });
+    // Absensi
+
+
+    Route::middleware(['auth', 'check.jabatan:IzinPage,IzinPageApprover, IzinPageAdmin'])->group(function() {
+        // Route umum untuk kedua jabatan
+        Route::get('/lembur', [AbsensiController::class, 'indexLembur'])->name('absensi.lembur');
+        Route::post('/izin/getAttachmentUrl', [AbsensiController::class, 'getAttachmentUrl']);
+
+        // Route khusus IzinPage
+        Route::middleware(['check.jabatan:IzinPage'])->group(function() {
+            Route::get('/izin', [AbsensiController::class, 'indexIzin'])->name('absensi.izin');
+            Route::get('/izin/getDataIzin', [AbsensiController::class, 'getDataIzin'])->name('absensi.izin.getData');
+            Route::get('/izin/getKerja', [AbsensiController::class, 'getJamKerja'])->name('absensi.izin.getJamKerja');
+            Route::post('/izin/submit', [AbsensiController::class, 'submitIzin'])->name('absensi.izin.submit');
+            Route::post('/izin/destroy', [AbsensiController::class, 'destroyIzin']);
+            Route::get('/izin/getExport', [AbsensiController::class, 'getExport'])->name('absensi.izin.export');
         });
+
+        Route::middleware(['check.jabatan:IzinPageAdmin'])->group(function() {
+            Route::get('/izinAdmin', [AbsensiController::class, 'indexIzinAdmin'])->name('absensi.izinAdmin');
+            Route::get('/izin/getDataIzinAdmin', [AbsensiController::class, 'getDataIzinAdmin'])->name('absensi.izin.getDataAdmin');
+            Route::get('/izin/getExportAdmin', [AbsensiController::class, 'getExportAdmin'])->name('absensi.izin.exportAdmin');
+
+        });
+
+        // Route khusus IzinPageApprover
+        Route::middleware(['check.jabatan:IzinPageApprover'])->group(function() {
+            Route::post('/izin/confirmIzin', [AbsensiController::class, 'confirmIzin'])->name('absensi.izin.confirm');
+            Route::get('/izin/getDataIzinDH', [AbsensiController::class, 'getDataIzinDH'])->name('absensi.izin.getDataDH');
+            Route::get('/izinLevelUp', [AbsensiController::class, 'indexIzinDH'])->name('absensi.izinDH');
+            Route::get('/izin/getExportDH', [AbsensiController::class, 'getExportDH'])->name('absensi.izin.exportDH');
+        });
+    });
+
 
 
     Route::middleware(['auth','check.jabatan:absensiPage'])->group(function(){
@@ -223,8 +257,16 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/parseResume/preview',[parseResume::class, 'preview'])->name('parseResume.preview');
     Route::post('/parseResume/submit',[parseResume::class, 'submit'])->name('parseResume.submi');
 
+    Route::middleware(['auth','check.jabatan:addKaryawanTeam'])->group(function(){
+
     Route::get('/add-karyawan-team',[karyawanTeamController::class, 'index'])->name('karyawanTeam.index');
     Route::get('/add-karyawan-team/getData',[karyawanTeamController::class, 'getData'])->name('karyawanTeam.getData');
+    Route::get('/add-karyawan-team/getAllData',[karyawanTeamController::class, 'getDataAll'])->name('karyawanTeam.getDataAll');
+    Route::post('/add-karyawan-team/simpanApproval',[karyawanTeamController::class, 'simpanApproval'])->name('karyawanTeam.simpanApproval');
+    Route::post('/add-karyawan-team/simpanTeam',[karyawanTeamController::class, 'simpanTeam'])->name('karyawanTeam.simpanTeam');
+    Route::post('/add-karyawan-team/simpanUser',[karyawanTeamController::class, 'simpanUser'])->name('karyawanTeam.simpanUser');
+    Route::post('/add-karyawan-team/kirimUlangUser',[karyawanTeamController::class, 'kirimUlangUser'])->name('karyawanTeam.kirimUlangUser');
+    });
 
     // user dashboard
     Route::get('/uDash',[uDashController::class, 'index'])->name('Udash.index');
@@ -267,6 +309,8 @@ Route::middleware(['auth'])->group(function () {
 
         // Route khusus ShiftManagement
         Route::middleware(['check.jabatan:ShiftManagement'])->group(function(){
+            Route::post('/swapShift/submitAdmin', [ShiftController::class, 'submitAdmin'])->name('shift.submitAdmin');
+            Route::post('/swapShift/updateAdmin', [ShiftController::class, 'updateAdmin'])->name('shift.updateAdmin');
             Route::get('/swapShift', [ShiftController::class, 'index'])->name('shift.index');
             Route::get('/swapShift/getWeek', [ShiftController::class, 'getWeek'])->name('shift.getWeek');
         });
@@ -321,6 +365,7 @@ Route::middleware(['auth', 'check.jabatan:OvertimeManagement,OvertimeManagementA
 
     // Route khusus OvertimeManagementAdmin
     Route::middleware(['check.jabatan:OvertimeManagementAdmin'])->group(function() {
+        Route::post('/overtime/submitAdmin', [OvertimeController::class, 'submitAdmin'])->name('overtime.submitAdmin');
         Route::get('/overtime/getUserActiveAll', [OvertimeController::class, 'userActiveAll'])->name('overtime.userActiveAdmin');
         Route::get('/overtimeAdmin', [OvertimeController::class, 'indexAdmin'])->name('overtime.indexAdmin');
         Route::get('/overtime/getExportAdmin', [OvertimeController::class, 'getExportAdmin'])->name('overtime.exportAdmin');
@@ -361,6 +406,16 @@ Route::post('/scheduler-T4sk-RuNn3r-sEcr3t', function (Request $request) {
         return response('Scheduler execution failed.', 500);
     }
 });
+
+Route::get('/cek-time', function () {
+    return [
+        'now' => now()->format('Y-m-d H:i:s'),
+        'timezone' => config('app.timezone'),
+        'php_timezone' => date_default_timezone_get(),
+        'server' => gethostname(),
+    ];
+});
+
 
 
 Route::get('/test-db', function () {

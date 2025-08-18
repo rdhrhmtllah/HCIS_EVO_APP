@@ -1129,7 +1129,11 @@
                 >
                     Batal
                 </button>
-                <button class="btn-modern btn-success" @click="yesModal">
+                <button
+                    class="btn-modern btn-success"
+                    :disabled="loading"
+                    @click="yesModal"
+                >
                     <div
                         v-if="loading"
                         class="d-flex justify-content-center align-items-center"
@@ -1474,7 +1478,7 @@ export default {
             const today = new Date();
 
             // Logika inti: tambahkan 2 hari dari tanggal hari ini
-            today.setDate(today.getDate() + 2);
+            today.setDate(today.getDate());
 
             // Format tanggal ke format 'YYYY-MM-DD' yang dibutuhkan oleh atribut 'min'
             const year = today.getFullYear();
@@ -1502,50 +1506,30 @@ export default {
         },
         async saveShift() {
             this.loading = true;
-            if (this.selectedEmployee && this.selectedDayIndex !== null) {
-                try {
-                    const response = await axios.post("/swapShift/update", {
-                        params: {
-                            employee: this.selectedEmployee,
-                            date: this.selectedDate,
-                            shift: this.assignSelectedShift,
-                            shift_lama: this.shiftLama,
-                        },
-                    });
 
-                    if (response.status === 200) {
-                        ElMessage({
-                            showClose: true,
-                            message:
-                                "Congrats, Berhasil Menambahkan Data Lembur.",
-                            type: "success",
-                            customStyle: {
-                                "z-index": "1050",
-                            },
-                        });
-                        this.closeAlertModal();
-                        this.closeShiftModal();
-                        location.reload();
-                    }
-                } catch (error) {
-                    console.error("Error Fetching Time :", error);
-                    ElMessage({
-                        showClose: true,
-                        message:
-                            "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
-                        type: "error",
-                        customStyle: {
-                            "z-index": "1050",
-                        },
-                    });
-                    this.closeAlertModal();
-                } finally {
-                    this.loading = false;
-                    this.closeShiftModal();
+            // langsung tutup modal begitu klik save
+            this.closeAlertModal();
+
+            try {
+                const response = await axios.post("/swapShift/update", {
+                    params: {
+                        employee: this.selectedEmployee,
+                        date: this.selectedDate,
+                        shift: this.assignSelectedShift,
+                        shift_lama: this.shiftLama,
+                    },
+                });
+
+                if (response.status === 200) {
+                    ElMessage.success("Berhasil menyimpan shift!");
+                    this.closeShiftModal(); // kalau ada modal lain khusus shift
+                    this.fetchWeekDates(); // refresh data di background
                 }
+            } catch (error) {
+                ElMessage.error("Terjadi kesalahan, silakan coba lagi!");
+            } finally {
+                this.loading = false;
             }
-
-            // this.showNotification("success", "Shift berhasil diperbarui");
         },
         async isLembur(type) {
             this.loading = true;
@@ -2228,7 +2212,7 @@ export default {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            const sementara = new Date("2025-07-21");
+            const sementara = new Date(this.tanggalLoop[0]);
             sementara.setHours(0, 0, 0, 0);
 
             // Calculate the H+2 date (lusa)
@@ -2265,9 +2249,7 @@ export default {
             } else {
                 ElMessage({
                     showClose: true,
-                    // message: "Tidak Bisa megubah shift di hari sebelum nya.",
-                    message:
-                        "Tidak Bisa megubah shift dibawah tanggal 21 Jul 2025.",
+                    message: "Tidak Bisa megubah shift di hari sebelum nya.",
                     type: "error",
                     customStyle: {
                         "z-index": "1050",
@@ -2347,6 +2329,7 @@ export default {
 
         async saveAssignShift() {
             this.loading = true;
+
             const assignmentData = {
                 employees: this.selectedAssignEmployees,
                 shiftType: this.assignShiftType,
@@ -2361,26 +2344,28 @@ export default {
                 replaceExisting: this.replaceExistingShifts,
                 sendNotification: this.sendNotification,
             };
+
+            // Tutup modal duluan biar user gak bisa klik tombol lagi
+            this.closeAlertModal();
+
             try {
                 const response = await axios.post("/swapShift/submit", {
                     params: { AssignShift: assignmentData },
                 });
+
                 if (response.status === 200) {
                     ElMessage({
                         showClose: true,
                         message: "Congrats, Berhasil Menambahkan Data Lembur.",
                         type: "success",
-                        customStyle: {
-                            "z-index": "1050",
-                        },
+                        customStyle: { "z-index": "1050" },
                     });
-                    this.closeAlertModal();
+
                     this.closeAssignModal();
 
-                    location.reload();
+                    // fetch jalan di background, tidak ditunggu
+                    this.fetchWeekDates();
                 }
-
-                // console.log(assignmentData);
             } catch (error) {
                 console.error("Error Fetching Time :", error);
                 ElMessage({
@@ -2388,16 +2373,12 @@ export default {
                     message:
                         "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                     type: "error",
-                    customStyle: {
-                        "z-index": "1050",
-                    },
+                    customStyle: { "z-index": "1050" },
                 });
-                this.closeAlertModal();
             } finally {
                 this.loading = false;
             }
         },
-
         showNotification(type, message) {
             console.log(`${type}: ${message}`);
         },
@@ -2505,7 +2486,12 @@ export default {
 * {
     box-sizing: border-box;
 }
-
+.modal-overlay {
+    display: none;
+}
+.modal-overlay.show {
+    display: flex; /* atau block, sesuai desain */
+}
 body {
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,

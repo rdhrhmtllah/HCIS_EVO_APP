@@ -11,6 +11,7 @@
                         <div class="col-sm-8">
                             <div class="header-info">
                                 <div
+                                    @click="console.log(dataRecord.length)"
                                     class="icon-container d-flex align-items-center justify-content-center"
                                 >
                                     <i
@@ -59,6 +60,11 @@
                                     </div>
                                 </div>
                                 <button
+                                    @click="
+                                        searchQuery = '';
+                                        showAssignModal = true;
+                                    "
+                                    @disabed="allKaryawan.length < 1"
                                     class="btn-modern btn-primary flex-nowrap w-full px-md-2 py-md-2"
                                 >
                                     <i
@@ -113,37 +119,7 @@
                                 ></span>
                             </div>
                         </div>
-                        <div
-                            class="d-md-none d-block flex-grow-1 col-6 col-md-12 p-1 position-relative"
-                        >
-                            <select
-                                v-model="filterDropdown"
-                                name=""
-                                id=""
-                                class="form-control"
-                            >
-                                <option selected value="">Semua</option>
-                                <option value="Izin Pribadi">Izin</option>
-                                <option value="cuti">Cuti</option>
-                                <option value="sakit">Sakit</option>
-                                <option value="pulang cepat">
-                                    Pulang cepat
-                                </option>
-                                <option value="terlambat">Terlambat</option>
-                            </select>
-                            <i
-                                v-if="filterDropdown == ''"
-                                class="bi bi-chevron-down position-absolute"
-                                style="right: 17px; top: 18px"
-                            ></i>
-                            <span
-                                v-else
-                                style="right: 17px; top: 13px"
-                                @click="filterDropdown = ''"
-                                class="closeFilter p-1 rounded-3 ms-2 position-absolute"
-                                ><i class="bi bi-x"></i
-                            ></span>
-                        </div>
+
                         <div class="search-container d-md-flex d-none pe-0">
                             <i
                                 class="ms-2 bi bi-search search-icon d-flex justify-content-center align-items-center"
@@ -160,63 +136,8 @@
                                 class="search-results-count"
                                 v-if="searchQuery"
                             >
-                                {{ filteredPermissions.length }} hasil
+                                {{ dataRecord.length }} hasil
                             </div>
-                            <div
-                                class="search-suggestions"
-                                v-if="showSearchSuggestions"
-                            >
-                                <div
-                                    class="suggestion-item"
-                                    v-for="suggestion in filteredSuggestions"
-                                    :key="suggestion"
-                                    @mousedown="selectSuggestion(suggestion)"
-                                >
-                                    <i class="bi bi-clock-history"></i>
-                                    {{ suggestion }}
-                                </div>
-                                <div
-                                    v-if="
-                                        searchQuery &&
-                                        filteredSuggestions.length === 0
-                                    "
-                                    class="suggestion-item text-muted"
-                                >
-                                    Tidak ada saran ditemukan.
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                            style="width: 10rem"
-                            class="d-md-block w-max d-none position-relative ps-0"
-                        >
-                            <select
-                                v-model="filterDropdown"
-                                name=""
-                                id=""
-                                class="form-control w-max"
-                            >
-                                <option selected value="">Semua</option>
-                                <option value="Izin Pribadi">Izin</option>
-                                <option value="cuti">Cuti</option>
-                                <option value="sakit">Sakit</option>
-                                <option value="pulang cepat">
-                                    Pulang cepat
-                                </option>
-                                <option value="terlambat">Terlambat</option>
-                            </select>
-                            <i
-                                v-if="filterDropdown == ''"
-                                class="bi bi-chevron-down position-absolute"
-                                style="right: 25px; top: 14px"
-                            ></i>
-                            <span
-                                v-else
-                                style="right: 20px; top: 8px"
-                                @click="filterDropdown = ''"
-                                class="closeFilter p-1 rounded-3 ms-2 position-absolute"
-                                ><i class="bi bi-x"></i
-                            ></span>
                         </div>
                     </div>
 
@@ -237,82 +158,8 @@
                                 class="search-results-count"
                                 v-if="searchQuery"
                             >
-                                {{ filteredPermissions.length }} hasil
+                                {{ dataRecord.length }} hasil
                             </div>
-                            <div
-                                class="search-suggestions"
-                                v-if="showSearchSuggestions"
-                            >
-                                <div
-                                    class="suggestion-item"
-                                    v-for="suggestion in filteredSuggestions"
-                                    :key="suggestion"
-                                    @mousedown="selectSuggestion(suggestion)"
-                                >
-                                    <i class="bi bi-clock-history"></i>
-                                    {{ suggestion }}
-                                </div>
-                                <div
-                                    v-if="
-                                        searchQuery &&
-                                        filteredSuggestions.length === 0
-                                    "
-                                    class="suggestion-item text-muted"
-                                >
-                                    Tidak ada saran ditemukan.
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="flex-grow-1 d-md-block d-none">
-                            <input
-                                v-if="!selectedDateFilter"
-                                v-model="selectedDateFilter"
-                                type="date"
-                                class="form-control"
-                                placeholder="Semua"
-                                style="cursor: pointer"
-                                title="Pilih Tanggal"
-                            />
-                            <div
-                                v-else
-                                type="date"
-                                class="form-control"
-                                placeholder="Semua"
-                                title="Pilih Tanggal"
-                                style="cursor: pointer"
-                            >
-                                {{ formatDateToDMY(selectedDateFilter) }}
-                                <span
-                                    @click="selectedDateFilter = null"
-                                    v-tooltip="'Hapus filter'"
-                                    class="closeFilter p-1 rounded-3 ms-2"
-                                    ><i class="bi bi-x"></i
-                                ></span>
-                            </div>
-                        </div>
-                        <!-- view Toggle -->
-                        <div class="view-toggle py-2">
-                            <button
-                                class="toggle-btn"
-                                :class="{ active: viewMode === 'table' }"
-                                @click="setViewMode('table')"
-                                title="Tampilan Tabel"
-                            >
-                                <i
-                                    class="bi bi-table d-flex justify-content-center align-items-center"
-                                ></i>
-                            </button>
-                            <button
-                                class="toggle-btn"
-                                :class="{ active: viewMode === 'card' }"
-                                @click="setViewMode('card')"
-                                title="Tampilan Kartu"
-                            >
-                                <i
-                                    class="bi bi-grid-3x3-gap d-flex justify-content-center align-items-center"
-                                ></i>
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -332,12 +179,12 @@
                             <span></span>
                         </div>
                     </div>
-                    <p class="loading-text">Memuat data izin...</p>
+                    <p class="loading-text">Memuat data Karyawan...</p>
                 </div>
 
                 <!-- Not Found -->
                 <div
-                    v-else-if="dataRecord?.length === 0 && !loading"
+                    v-else-if="dataRecord.length === 0 && !loadingData"
                     class="empty-state"
                 >
                     <div class="empty-icon">
@@ -345,26 +192,13 @@
                             class="bi bi-inbox d-flex justify-content-center align-items-center"
                         ></i>
                     </div>
-                    <h4>Tidak Ada Data Izin</h4>
-                    <p>
-                        Anda belum memiliki pengajuan izin. Klik tombol "Ajukan
-                        Izin" untuk membuat pengajuan baru.
-                    </p>
-                    <button class="btn-modern btn-primary">
-                        <i
-                            class="bi bi-plus-circle me-2 d-flex justify-content-center align-items-center"
-                        ></i>
-                        Ajukan Izin
-                    </button>
+                    <h4>Karyawan tidak ditemukan</h4>
+                    <p>Karyawan yang dicari belum ada!</p>
                 </div>
 
-                <transition name="fade-switch" mode="out-in">
+                <transition v-else name="fade-switch" mode="out-in">
                     <!-- Table -->
-                    <div
-                        v-if="!loadingData && dataRecord?.length > 0"
-                        class="table-view-container"
-                        key="table"
-                    >
+                    <div class="table-view-container" key="table">
                         <div class="table-responsive-wrapper">
                             <table class="modern-table">
                                 <thead>
@@ -374,7 +208,7 @@
                                                 class="header-cell-content py-2"
                                             >
                                                 <i
-                                                    class="bi bi-people me-2 d-flex justify-content-center align-items-center"
+                                                    class="bi bi-people-fill me-2 d-flex justify-content-center align-items-center"
                                                 ></i>
                                                 <span
                                                     >Nama
@@ -390,7 +224,7 @@
                                         <th class="header-cell">
                                             <div class="header-cell-content">
                                                 <i
-                                                    class="bi bi-calendar me-2 d-flex justify-content-center align-items-center"
+                                                    class="bi bi-collection-fill me-2 d-flex justify-content-center align-items-center"
                                                 ></i>
                                                 <span>Jabatan</span>
                                             </div>
@@ -398,23 +232,16 @@
                                         <th class="header-cell">
                                             <div class="header-cell-content">
                                                 <i
-                                                    class="bi bi-calendar me-2 d-flex justify-content-center align-items-center"
+                                                    class="bi bi-clipboard-check-fill me-2 d-flex justify-content-center align-items-center"
                                                 ></i>
-                                                <span>Approver 1</span>
+                                                <span>Approver</span>
                                             </div>
                                         </th>
+
                                         <th class="header-cell">
                                             <div class="header-cell-content">
                                                 <i
-                                                    class="bi bi-chat-square-text me-2 d-flex justify-content-center align-items-center"
-                                                ></i>
-                                                <span>Approver 2</span>
-                                            </div>
-                                        </th>
-                                        <th class="header-cell">
-                                            <div class="header-cell-content">
-                                                <i
-                                                    class="bi bi-paperclip me-2 d-flex justify-content-center align-items-center"
+                                                    class="bi bi-people-fill me-2 d-flex justify-content-center align-items-center"
                                                 ></i>
                                                 <span>Jumlah Team</span>
                                             </div>
@@ -422,9 +249,17 @@
                                         <th class="header-cell">
                                             <div class="header-cell-content">
                                                 <i
-                                                    class="bi bi-paperclip me-2 d-flex justify-content-center align-items-center"
+                                                    class="bi bi-person-vcard me-2 d-flex justify-content-center align-items-center"
                                                 ></i>
                                                 <span>User Web</span>
+                                            </div>
+                                        </th>
+                                        <th class="header-cell">
+                                            <div class="header-cell-content">
+                                                <i
+                                                    class="bi bi-person-rolodex me-2 d-flex justify-content-center align-items-center"
+                                                ></i>
+                                                <span>Tergabung Team</span>
                                             </div>
                                         </th>
                                     </tr>
@@ -433,6 +268,7 @@
                                     <tr
                                         v-for="item in dataRecord"
                                         :key="item.Kode_Karyawan"
+                                        @click="showDetail(item)"
                                         class="table-row"
                                     >
                                         <td class="sticky-column">
@@ -452,14 +288,15 @@
                                         </td>
                                         <td>
                                             <div class="reason-cell">
-                                                {{ item.Approver1 }}
+                                                {{
+                                                    approversInfoFromString(
+                                                        item.Approvers
+                                                    ).total
+                                                }}
+                                                Orang
                                             </div>
                                         </td>
-                                        <td>
-                                            <div class="reason-cell">
-                                                {{ item.Approver2 }}
-                                            </div>
-                                        </td>
+
                                         <td>
                                             <div
                                                 v-if="item.Team != 0"
@@ -480,6 +317,23 @@
                                                 class="reason-cell"
                                             >
                                                 {{ item.UserID_Web }}
+                                            </div>
+                                            <div
+                                                v-else
+                                                class="reason-cell text-denger"
+                                            >
+                                                Belum ada
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div
+                                                v-if="
+                                                    tergabungTeam(item).total !=
+                                                    0
+                                                "
+                                                class="reason-cell"
+                                            >
+                                                {{ tergabungTeam(item).total }}
                                             </div>
                                             <div
                                                 v-else
@@ -519,8 +373,6 @@
                             </button>
                         </div>
                     </div>
-
-                    <!-- Card -->
                 </transition>
             </div>
         </div>
@@ -539,10 +391,11 @@
                         <i
                             class="bi bi-calendar-plus me-2 d-flex justify-content-center align-items-center"
                         ></i>
-                        Pengajuan Izin
+                        Prefrences karyawan website
                     </h3>
                     <p class="header-subtitle">
-                        Ajukan izin pulang cepat, terlambat, atau sakit
+                        Input Karyawan Team, Create user Karyawan, dan Karyawan
+                        Approver
                     </p>
                 </div>
                 <button
@@ -556,7 +409,7 @@
                 </button>
             </div>
 
-            <div class="modal-body">
+            <div class="modal-body approval">
                 <div v-if="assignStep === 1" class="step-content">
                     <div class="form-section">
                         <!-- Jenis Izin -->
@@ -564,21 +417,21 @@
                             <i
                                 class="bi bi-calendar-event me-2 d-flex justify-content-center align-items-center"
                             ></i>
-                            Pilih SUBMIT
+                            Pilih Jenis Submit
                         </h4>
 
                         <div class="form-group">
                             <div class="permission-type-options row g-2">
-                                <div class="col-12 col-md-6">
+                                <div class="col-12 col-md-4">
                                     <div
                                         class="permission-type-card"
                                         :class="{
                                             selected: assignSubmit === 'team',
                                         }"
-                                        @click="handleAssignIzin('team')"
+                                        @click="assignSubmit = 'team'"
                                     >
                                         <div class="permission-type-icon">
-                                            <i class="bi bi-house-door"></i>
+                                            <i class="bi bi-people"></i>
                                         </div>
                                         <div class="permission-type-content">
                                             <h6>Karyawan Team</h6>
@@ -596,124 +449,29 @@
                                     </div>
                                 </div>
 
-                                <!-- Aktifkan Cuti -->
-
-                                <!-- <div class="col-12 col-md-4">
-                                    <div
-                                        class="permission-type-card"
-                                        :class="{
-                                            selected: assignIzinType === 'cuti',
-                                        }"
-                                        @click="handleAssignIzin('cuti')"
-                                    >
-                                        <div class="permission-type-icon">
-                                            <i class="bi bi-clock"></i>
-                                        </div>
-                                        <div class="permission-type-content">
-                                            <h6>Cuti</h6>
-                                            <p class="text-muted small">
-                                                Izin untuk mengambil cuti
-                                            </p>
-                                        </div>
-                                        <div class="permission-type-check">
-                                            <i
-                                                class="bi bi-check-circle-fill"
-                                                v-if="assignIzinType === 'cuti'"
-                                            ></i>
-                                            <i class="bi bi-circle" v-else></i>
-                                        </div>
-                                    </div>
-                                </div> -->
-
-                                <!-- AKhir Aktifkan Cuti -->
-
-                                <!-- <div class="col-12 col-md-3">
-                                    <div
-                                        class="permission-type-card"
-                                        :class="{
-                                            selected:
-                                                assignIzinType ===
-                                                'pulangCepat',
-                                        }"
-                                        @click="handleAssignIzin('pulangCepat')"
-                                    >
-                                        <div class="permission-type-icon">
-                                            <i class="bi bi-house-door"></i>
-                                        </div>
-                                        <div class="permission-type-content">
-                                            <h6>Pulang Cepat</h6>
-                                            <p class="text-muted small">
-                                                Keluar sebelum waktu pulang
-                                            </p>
-                                        </div>
-                                        <div class="permission-type-check">
-                                            <i
-                                                class="bi bi-check-circle-fill"
-                                                v-if="
-                                                    assignIzinType ===
-                                                    'pulangCepat'
-                                                "
-                                            ></i>
-                                            <i class="bi bi-circle" v-else></i>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-12 col-md-3">
-                                    <div
-                                        class="permission-type-card"
-                                        :class="{
-                                            selected:
-                                                assignIzinType === 'terlambat',
-                                        }"
-                                        @click="handleAssignIzin('terlambat')"
-                                    >
-                                        <div class="permission-type-icon">
-                                            <i class="bi bi-clock"></i>
-                                        </div>
-                                        <div class="permission-type-content">
-                                            <h6>Terlambat</h6>
-                                            <p class="text-muted small">
-                                                Datang setelah waktu masuk
-                                            </p>
-                                        </div>
-                                        <div class="permission-type-check">
-                                            <i
-                                                class="bi bi-check-circle-fill"
-                                                v-if="
-                                                    assignIzinType ===
-                                                    'terlambat'
-                                                "
-                                            ></i>
-                                            <i class="bi bi-circle" v-else></i>
-                                        </div>
-                                    </div>
-                                </div> -->
-
-                                <div class="col-12 col-md-6">
+                                <div class="col-12 col-md-4">
                                     <div
                                         class="permission-type-card"
                                         :class="{
                                             selected:
                                                 assignSubmit === 'websiteUser',
                                         }"
-                                        @click="handleAssignIzin('websiteUser')"
+                                        @click="assignSubmit = 'websiteUser'"
                                     >
                                         <div class="permission-type-icon">
-                                            <i class="bi bi-heart-pulse"></i>
+                                            <i class="bi bi-person-circle"></i>
                                         </div>
                                         <div class="permission-type-content">
                                             <h6>Karyawan Webiste User</h6>
                                             <p class="text-muted small">
-                                                Input karyawan Webiste User 1
-                                                dan 2
+                                                Input karyawan user website
                                             </p>
                                         </div>
                                         <div class="permission-type-check">
                                             <i
                                                 class="bi bi-check-circle-fill"
                                                 v-if="
-                                                    assignIzinType ===
+                                                    assignSubmit ===
                                                     'websiteUser'
                                                 "
                                             ></i>
@@ -721,30 +479,29 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-12 col-md-6">
+                                <div class="col-12 col-md-4">
                                     <div
                                         class="permission-type-card"
                                         :class="{
                                             selected:
                                                 assignSubmit === 'approver',
                                         }"
-                                        @click="handleAssignIzin('approver')"
+                                        @click="assignSubmit = 'approver'"
                                     >
                                         <div class="permission-type-icon">
-                                            <i class="bi bi-heart-pulse"></i>
+                                            <i class="bi bi-card-checklist"></i>
                                         </div>
                                         <div class="permission-type-content">
                                             <h6>Karyawan Approver</h6>
                                             <p class="text-muted small">
-                                                Input karyawan Approver 1 dan 2
+                                                Input karyawan Approver
                                             </p>
                                         </div>
                                         <div class="permission-type-check">
                                             <i
                                                 class="bi bi-check-circle-fill"
                                                 v-if="
-                                                    assignIzinType ===
-                                                    'approver'
+                                                    assignSubmit === 'approver'
                                                 "
                                             ></i>
                                             <i class="bi bi-circle" v-else></i>
@@ -753,770 +510,485 @@
                                 </div>
                             </div>
                         </div>
-
-                        <h4
-                            v-if="assignIzinType == 'izinFull'"
-                            class="section-title"
-                        >
-                            <i
-                                class="bi bi-calendar-event me-2 d-flex justify-content-center align-items-center"
-                            ></i>
-                            Pilih Jenis
-                        </h4>
-                        <h4 v-else class="section-title">
-                            <i
-                                class="bi bi-calendar-event me-2 d-flex justify-content-center align-items-center"
-                            ></i>
-                            Keterangan Jenis
-                        </h4>
-
-                        <div class="form-group">
-                            <!-- Izin Tidak Masuk -->
-                            <select
-                                v-if="assignIzinType == 'izinFull'"
-                                name=""
-                                id=""
-                                v-model="assignIzinType2"
-                                class="form-control"
-                            >
-                                <option selected :value="null">
-                                    Pilih Jenis Izin
-                                </option>
-                                <option
-                                    v-for="item in pilihanIzin"
-                                    :key="item.jenis"
-                                    :value="item.value"
-                                >
-                                    {{ item.Jenis }}
-                                </option>
-                            </select>
-                            <!-- Sakit -->
-                            <!-- <select
-                                v-else-if="assignIzinType == 'sakit'"
-                                name=""
-                                id=""
-                                v-model="assignIzinType2"
-                                class="form-control"
-                            >
-                                <option selected :value="null">
-                                    Pilih Jenis Izin
-                                </option>
-                                <option
-                                    v-for="item in pilihanSakit"
-                                    :key="item.jenis"
-                                    :value="item.value"
-                                >
-                                    {{ item.Jenis }}
-                                </option>
-                            </select> -->
-
-                            <div
-                                v-else-if="assignIzinType == 'sakit'"
-                                name=""
-                                id=""
-                                disabled
-                                class="w-100 form-control"
-                                style="
-                                    border-radius: 10px !important;
-                                    padding: 0.75rem 1rem !important;
-                                "
-                            >
-                                <div class="d-flex justify-content-between">
-                                    <span class=""
-                                        >Izin sakit satu hari penuh
-                                    </span>
-                                    <!-- <i
-                                        :class="getIconCuti(dataCuti.Sisa_Cuti)"
-                                    ></i> -->
-                                </div>
-                            </div>
-                            <div
-                                v-else-if="assignIzinType == 'cuti'"
-                                name=""
-                                id=""
-                                disabled
-                                class="w-100 form-control"
-                                :class="getClassCuti(dataCuti.Sisa_Cuti)"
-                                style="
-                                    border-radius: 10px !important;
-                                    padding: 0.75rem 1rem !important;
-                                "
-                            >
-                                <div class="d-flex justify-content-between">
-                                    <span class=""
-                                        >Sisa Cuti adalah
-                                        {{ dataCuti.Sisa_Cuti }}</span
-                                    >
-                                    <i
-                                        :class="getIconCuti(dataCuti.Sisa_Cuti)"
-                                    ></i>
-                                </div>
-                            </div>
-
-                            <!-- non selected -->
-                            <select
-                                v-tooltip="'Pilih Jenis Izin dulu'"
-                                v-else
-                                disabled
-                                class="form-control"
-                            >
-                                <option>Pilih Jenis Izin</option>
-                            </select>
-                        </div>
-
-                        <h4 class="section-title">
-                            <i
-                                class="bi bi-calendar-event me-2 d-flex justify-content-center align-items-center"
-                            ></i>
-                            Pilih Tanggal
-                        </h4>
-                        <div
-                            v-if="!assignIzinType2 || !assignIzinType"
-                            class="form-group d-flex cursor-pointer justify-content-start align-items-center"
-                        >
-                            <div
-                                class="form-control d-flex align-items-center justify-content-center cursor-pointer"
-                            >
-                                <div class="me-2">
-                                    <i
-                                        class="bi bi-calendar-week d-flex justify-content-center align-items-center"
-                                    ></i>
-                                </div>
-                                <div v-if="!AssignDateRange" class="w-100">
-                                    Pilih Izin dan Jenis Izin terlebih dahulu
-                                </div>
-                                <div v-else class="w-100">
-                                    {{ formatDateString(AssignDateRange[0]) }}
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                            v-else-if="
-                                assignIzinType2 &&
-                                (assignIzinType2 == 'izinFull' ||
-                                    assignIzinType2 == 'sakit')
-                            "
-                            @click="openDialog"
-                            class="form-group d-flex cursor-pointer justify-content-start align-items-center"
-                        >
-                            <div
-                                class="form-control d-flex align-items-center justify-content-center cursor-pointer"
-                            >
-                                <div class="me-2">
-                                    <i
-                                        class="bi bi-calendar-week d-flex justify-content-center align-items-center"
-                                    ></i>
-                                </div>
-                                <div v-if="!AssignDateRange" class="w-100">
-                                    Tekan untuk pilih tanggal
-                                </div>
-                                <div v-else class="w-100">
-                                    {{
-                                        AssignDateRange[0] == AssignDateRange[1]
-                                            ? formatDateString(
-                                                  AssignDateRange[0]
-                                              )
-                                            : formatDateString(
-                                                  AssignDateRange[0]
-                                              ) +
-                                              " s.d " +
-                                              formatDateString(
-                                                  AssignDateRange[1]
-                                              )
-                                    }}
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                            v-else-if="
-                                assignIzinType2 &&
-                                (assignIzinType == 'cuti' ||
-                                    assignIzinType2 === 'cutiHutang')
-                            "
-                            @click="openDialogCuti"
-                            class="form-group d-flex cursor-pointer justify-content-start align-items-center"
-                        >
-                            <div
-                                class="form-control d-flex align-items-center justify-content-center cursor-pointer"
-                            >
-                                <div class="me-2">
-                                    <i
-                                        class="bi bi-calendar-week d-flex justify-content-center align-items-center"
-                                    ></i>
-                                </div>
-                                <div v-if="!AssignDateRange" class="w-100">
-                                    Tekan untuk pilih tanggal Cuti
-                                </div>
-                                <div v-else class="w-100">
-                                    {{
-                                        AssignDateRange[0] == AssignDateRange[1]
-                                            ? formatDateString(
-                                                  AssignDateRange[0]
-                                              )
-                                            : formatDateString(
-                                                  AssignDateRange[0]
-                                              ) +
-                                              " s.d " +
-                                              formatDateString(
-                                                  AssignDateRange[1]
-                                              )
-                                    }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div
-                            v-else
-                            @click="openDialogSingle"
-                            class="form-group d-flex cursor-pointer justify-content-start align-items-center"
-                        >
-                            <div
-                                class="form-control d-flex align-items-center justify-content-center cursor-pointer"
-                            >
-                                <div class="me-2">
-                                    <i
-                                        class="bi bi-calendar-week d-flex justify-content-center align-items-center"
-                                    ></i>
-                                </div>
-                                <div v-if="!AssignDateRange" class="w-100">
-                                    Tekan untuk pilih tanggal
-                                </div>
-                                <div v-else class="w-100">
-                                    {{ formatDateString(AssignDateRange[0]) }}
-                                </div>
-                            </div>
-                        </div>
                     </div>
                     <div class="form-section">
-                        <!-- Jenis Izin -->
                         <h4 class="section-title">
-                            <i
-                                class="bi bi-calendar-event me-2 d-flex justify-content-center align-items-center"
-                            ></i>
-                            Pilih user
+                            <i class="bi bi-people me-2"></i>
+                            Pilih Karyawan
                         </h4>
 
-                        <div class="form-group"></div>
+                        <!-- Search box -->
+                        <div class="search-container assign-search">
+                            <i
+                                class="bi bi-search search-icon d-flex justify-content-center align-items-center"
+                            ></i>
+                            <input
+                                type="text"
+                                class="search-input"
+                                placeholder="Cari nama karyawan..."
+                                v-model="assignSearchQuery"
+                                @focus="showAssignDropdown = true"
+                                @blur="hideAssignDropdown"
+                            />
+                        </div>
 
-                        <h4
-                            v-if="assignIzinType == 'izinFull'"
-                            class="section-title"
+                        <!-- Dropdown suggestion -->
+                        <ul
+                            v-if="showAssignDropdown && suggestionAssign.length"
+                            class="dropdown-suggestion p-0 max-w-fit"
                         >
-                            <i
-                                class="bi bi-calendar-event me-2 d-flex justify-content-center align-items-center"
-                            ></i>
-                            Pilih Jenis
-                        </h4>
-                        <h4 v-else class="section-title">
-                            <i
-                                class="bi bi-calendar-event me-2 d-flex justify-content-center align-items-center"
-                            ></i>
-                            Keterangan Jenis
-                        </h4>
-
-                        <div class="form-group">
-                            <!-- Izin Tidak Masuk -->
-                            <select
-                                v-if="assignIzinType == 'izinFull'"
-                                name=""
-                                id=""
-                                v-model="assignIzinType2"
-                                class="form-control"
-                            >
-                                <option selected :value="null">
-                                    Pilih Jenis Izin
-                                </option>
-                                <option
-                                    v-for="item in pilihanIzin"
-                                    :key="item.jenis"
-                                    :value="item.value"
-                                >
-                                    {{ item.Jenis }}
-                                </option>
-                            </select>
-                            <!-- Sakit -->
-                            <!-- <select
-                                v-else-if="assignIzinType == 'sakit'"
-                                name=""
-                                id=""
-                                v-model="assignIzinType2"
-                                class="form-control"
-                            >
-                                <option selected :value="null">
-                                    Pilih Jenis Izin
-                                </option>
-                                <option
-                                    v-for="item in pilihanSakit"
-                                    :key="item.jenis"
-                                    :value="item.value"
-                                >
-                                    {{ item.Jenis }}
-                                </option>
-                            </select> -->
-
-                            <div
-                                v-else-if="assignIzinType == 'sakit'"
-                                name=""
-                                id=""
-                                disabled
-                                class="w-100 form-control"
-                                style="
-                                    border-radius: 10px !important;
-                                    padding: 0.75rem 1rem !important;
+                            <li
+                                v-for="employee in suggestionAssign"
+                                :key="employee.Kode_Karyawan"
+                                @mousedown.prevent="
+                                    selectedAssignEmployees = employee;
+                                    showAssignDropdown = false;
                                 "
+                                class="dropdown-item max-w-fit"
                             >
-                                <div class="d-flex justify-content-between">
-                                    <span class=""
-                                        >Izin sakit satu hari penuh
-                                    </span>
-                                    <!-- <i
-                                        :class="getIconCuti(dataCuti.Sisa_Cuti)"
-                                    ></i> -->
-                                </div>
-                            </div>
-                            <div
-                                v-else-if="assignIzinType == 'cuti'"
-                                name=""
-                                id=""
-                                disabled
-                                class="w-100 form-control"
-                                :class="getClassCuti(dataCuti.Sisa_Cuti)"
-                                style="
-                                    border-radius: 10px !important;
-                                    padding: 0.75rem 1rem !important;
-                                "
-                            >
-                                <div class="d-flex justify-content-between">
-                                    <span class=""
-                                        >Sisa Cuti adalah
-                                        {{ dataCuti.Sisa_Cuti }}</span
-                                    >
-                                    <i
-                                        :class="getIconCuti(dataCuti.Sisa_Cuti)"
-                                    ></i>
-                                </div>
-                            </div>
+                                {{ truncateText(employee.Nama, 20) }}
+                                <span class="opacity-50">
+                                    | {{ employee.nama_divisi }} |
+                                    {{ employee.HP }}
+                                </span>
+                            </li>
+                        </ul>
 
-                            <!-- non selected -->
-                            <select
-                                v-tooltip="'Pilih Jenis Izin dulu'"
-                                v-else
-                                disabled
-                                class="form-control"
-                            >
-                                <option>Pilih Jenis Izin</option>
-                            </select>
-                        </div>
-
-                        <h4 class="section-title">
-                            <i
-                                class="bi bi-calendar-event me-2 d-flex justify-content-center align-items-center"
-                            ></i>
-                            Pilih Tanggal
-                        </h4>
+                        <!-- Selected Employee -->
                         <div
-                            v-if="!assignIzinType2 || !assignIzinType"
-                            class="form-group d-flex cursor-pointer justify-content-start align-items-center"
+                            v-if="selectedAssignEmployees"
+                            class="mt-3 selected-employee"
                         >
-                            <div
-                                class="form-control d-flex align-items-center justify-content-center cursor-pointer"
-                            >
-                                <div class="me-2">
-                                    <i
-                                        class="bi bi-calendar-week d-flex justify-content-center align-items-center"
-                                    ></i>
-                                </div>
-                                <div v-if="!AssignDateRange" class="w-100">
-                                    Pilih Izin dan Jenis Izin terlebih dahulu
-                                </div>
-                                <div v-else class="w-100">
-                                    {{ formatDateString(AssignDateRange[0]) }}
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                            v-else-if="
-                                assignIzinType2 &&
-                                (assignIzinType2 == 'izinFull' ||
-                                    assignIzinType2 == 'sakit')
-                            "
-                            @click="openDialog"
-                            class="form-group d-flex cursor-pointer justify-content-start align-items-center"
-                        >
-                            <div
-                                class="form-control d-flex align-items-center justify-content-center cursor-pointer"
-                            >
-                                <div class="me-2">
-                                    <i
-                                        class="bi bi-calendar-week d-flex justify-content-center align-items-center"
-                                    ></i>
-                                </div>
-                                <div v-if="!AssignDateRange" class="w-100">
-                                    Tekan untuk pilih tanggal
-                                </div>
-                                <div v-else class="w-100">
-                                    {{
-                                        AssignDateRange[0] == AssignDateRange[1]
-                                            ? formatDateString(
-                                                  AssignDateRange[0]
-                                              )
-                                            : formatDateString(
-                                                  AssignDateRange[0]
-                                              ) +
-                                              " s.d " +
-                                              formatDateString(
-                                                  AssignDateRange[1]
-                                              )
-                                    }}
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                            v-else-if="
-                                assignIzinType2 &&
-                                (assignIzinType == 'cuti' ||
-                                    assignIzinType2 === 'cutiHutang')
-                            "
-                            @click="openDialogCuti"
-                            class="form-group d-flex cursor-pointer justify-content-start align-items-center"
-                        >
-                            <div
-                                class="form-control d-flex align-items-center justify-content-center cursor-pointer"
-                            >
-                                <div class="me-2">
-                                    <i
-                                        class="bi bi-calendar-week d-flex justify-content-center align-items-center"
-                                    ></i>
-                                </div>
-                                <div v-if="!AssignDateRange" class="w-100">
-                                    Tekan untuk pilih tanggal Cuti
-                                </div>
-                                <div v-else class="w-100">
-                                    {{
-                                        AssignDateRange[0] == AssignDateRange[1]
-                                            ? formatDateString(
-                                                  AssignDateRange[0]
-                                              )
-                                            : formatDateString(
-                                                  AssignDateRange[0]
-                                              ) +
-                                              " s.d " +
-                                              formatDateString(
-                                                  AssignDateRange[1]
-                                              )
-                                    }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div
-                            v-else
-                            @click="openDialogSingle"
-                            class="form-group d-flex cursor-pointer justify-content-start align-items-center"
-                        >
-                            <div
-                                class="form-control d-flex align-items-center justify-content-center cursor-pointer"
-                            >
-                                <div class="me-2">
-                                    <i
-                                        class="bi bi-calendar-week d-flex justify-content-center align-items-center"
-                                    ></i>
-                                </div>
-                                <div v-if="!AssignDateRange" class="w-100">
-                                    Tekan untuk pilih tanggal
-                                </div>
-                                <div v-else class="w-100">
-                                    {{ formatDateString(AssignDateRange[0]) }}
-                                </div>
-                            </div>
+                            <strong>Dipilih:</strong>
+                            {{ selectedAssignEmployees.Nama }}
                         </div>
                     </div>
                 </div>
 
                 <div v-if="assignStep === 2" class="step-content">
-                    <div class="form-section">
-                        <h4 class="section-title">
-                            <i class="bi bi-gear me-2"></i>
-                            Detail Izin
-                        </h4>
+                    <!-- Karyawan Team -->
+                    <div v-if="assignSubmit == 'team'">
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="bi bi-gear me-2"></i>
+                                Leader Team
+                            </h4>
 
-                        <!-- Time Selection (for early leave/late arrival) -->
-                        <div
-                            class="form-group mb-4"
-                            v-if="
-                                assignIzinType2 === 'pulangCepat' ||
-                                assignIzinType2 === 'terlambat' ||
-                                assignIzinType2 === 'sakitTibaTiba'
-                            "
-                        >
-                            <label class="form-label">
-                                {{
-                                    assignIzinType2 === "pulangCepat" ||
-                                    assignIzinType2 === "sakitTibaTiba"
-                                        ? "Waktu Pulang"
-                                        : "Waktu Datang"
-                                }}
-                            </label>
-                            <div
-                                class="input-group px-2 px-md-3 mb-3 text-black"
-                            >
-                                <el-slider
-                                    v-model="AssignTime"
-                                    :min="min"
-                                    :max="max"
-                                    :step="0.5"
-                                    :format-tooltip="formatSliderTooltip"
-                                    :show-tooltip="true"
-                                    tooltip-class="custom-tooltip"
-                                    :tooltip-props="{
-                                        placement: 'top',
-                                        alwaysVisible: true,
-                                    }"
-                                    :marks="JamOptions"
-                                    show-stops
-                                    style="width: 100%"
-                                />
+                            <!-- Time Selection (for early leave/late arrival) -->
+
+                            <!-- Description -->
+                            <div class="form-group mb-3">
+                                <!-- <label class="form-label">Team Leader</label> -->
+                                <label class="form-mark">{{
+                                    selectedAssignEmployees.Nama
+                                }}</label>
                             </div>
-                            <small class="text-muted">
-                                {{
-                                    assignIzinType2 === "pulangCepat" ||
-                                    assignIzinType2 === "sakitTibaTiba"
-                                        ? "Pilih waktu Anda akan pulang"
-                                        : "Pilih waktu Anda akan tiba"
-                                }}
-                            </small>
                         </div>
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i
+                                    class="bi bi-people me-2 d-flex justify-content-center align-items-center"
+                                ></i>
+                                Pilih Team
+                            </h4>
+                            <div class="form-group team mb-3">
+                                <!-- Search Employee -->
 
-                        <!-- Description -->
-                        <div class="form-group mb-3">
-                            <label class="form-label">Alasan/Keterangan</label>
-                            <textarea
-                                class="form-control"
-                                rows="3"
-                                v-model="permissionReason"
-                                placeholder="Jelaskan alasan permohonan izin Anda"
-                            ></textarea>
+                                <div class="row">
+                                    <!-- LIST KARYAWAN -->
+                                    <div class="col-md-6">
+                                        <div class="form-label">
+                                            Yang tersedia
+                                        </div>
+                                        <div
+                                            class="search-container assign-search"
+                                        >
+                                            <i
+                                                class="bi bi-search search-icon d-flex justify-content-center align-items-center"
+                                            ></i>
+                                            <input
+                                                type="text"
+                                                class="search-input"
+                                                placeholder="Cari nama karyawan..."
+                                                v-model="yangTersediaSearch"
+                                            />
+                                        </div>
+                                        <div class="employee-selection-list">
+                                            <div
+                                                v-for="employee in availableList"
+                                                :key="employee.Kode_Karyawan"
+                                                class="employee-selection-item"
+                                                :class="{
+                                                    selected:
+                                                        selectedAssignEmployees ==
+                                                        employee,
+                                                }"
+                                                @click="
+                                                    addToTeam(employee)
+                                                    // console.log(newMembers);
+                                                "
+                                            >
+                                                <!-- <div class="employee-checkbox">
+                                                    <i
+                                                        class="bi bi-check d-flex justify-content-center align-items-center"
+                                                        v-if="
+                                                            selectedAssignEmployees ==
+                                                            employee
+                                                        "
+                                                    ></i>
+                                                </div> -->
+                                                <div class="employee-avatar">
+                                                    {{
+                                                        getInitials(
+                                                            employee.Nama
+                                                        )
+                                                    }}
+                                                </div>
+                                                <div class="employee-details">
+                                                    <div class="employee-name">
+                                                        {{ employee.Nama }}
+                                                    </div>
+
+                                                    <div
+                                                        class="employee-department"
+                                                    >
+                                                        {{
+                                                            employee.nama_divisi?.toUpperCase() +
+                                                            " | " +
+                                                            employee.nama_jabatan
+                                                        }}
+                                                    </div>
+                                                    <!-- <div class="" style="font-size: 0.6rem">
+                                                    {{ console.log(employee) }}
+                                                </div> -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- YANG SUDAH ADA -->
+                                    <div class="col-md-6">
+                                        <div class="form-label">Tergabung</div>
+
+                                        <div
+                                            class="search-container assign-search"
+                                        >
+                                            <i
+                                                class="bi bi-search search-icon d-flex justify-content-center align-items-center"
+                                            ></i>
+                                            <input
+                                                type="text"
+                                                class="search-input"
+                                                placeholder="Cari nama karyawan..."
+                                                v-model="tergabungSearch"
+                                            />
+                                        </div>
+                                        <div class="employee-selection-list">
+                                            <div
+                                                v-for="employee in haveTeam"
+                                                :key="employee.Kode_Karyawan"
+                                                class="employee-selection-item"
+                                                :class="{
+                                                    selected:
+                                                        selectedAssignEmployees ==
+                                                        employee,
+                                                }"
+                                                @click="
+                                                    removeFromTeam(employee);
+                                                    console.log(removedMembers);
+                                                "
+                                            >
+                                                <div
+                                                    class="employee-checkbox rounded-4 bg"
+                                                >
+                                                    <i
+                                                        class="bi bi-x tex-white d-flex justify-content-center align-items-center"
+                                                    ></i>
+                                                </div>
+                                                <div class="employee-avatar">
+                                                    {{
+                                                        getInitials(
+                                                            employee.Nama
+                                                        )
+                                                    }}
+                                                </div>
+                                                <div class="employee-details">
+                                                    <div class="employee-name">
+                                                        {{ employee.Nama }}
+                                                    </div>
+
+                                                    <div
+                                                        class="employee-department"
+                                                    >
+                                                        {{
+                                                            employee.nama_divisi?.toUpperCase() +
+                                                            " | " +
+                                                            employee.nama_jabatan
+                                                        }}
+                                                    </div>
+                                                    <!-- <div class="" style="font-size: 0.6rem">
+                                                    {{ console.log(employee) }}
+                                                </div> -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                    <div v-if="assignSubmit == 'websiteUser'">
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="bi bi-gear me-2"></i>
+                                Karyawan yang akan diberi User
+                            </h4>
 
-                <div v-if="assignStep === 3" class="step-content">
-                    <div class="form-section">
-                        <h4 class="section-title">
-                            <i
-                                class="bi bi-paperclip me-2 d-flex justify-content-center align-items-center"
-                            ></i>
-                            Lampiran
-                        </h4>
+                            <!-- Time Selection (for early leave/late arrival) -->
 
-                        <!-- File Upload for Sick Leave -->
-                        <div
-                            class="form-group"
-                            v-if="assignIzinType == 'sakit'"
-                        >
-                            <label
-                                v-if="AssignDateRange[0] != AssignDateRange[1]"
-                                class="form-label"
-                                >Surat Keterangan Dokter (Wajib)</label
-                            >
-                            <label v-else class="form-label"
-                                >Surat Keterangan Dokter (Optional)</label
-                            >
-                            <div class="file-upload-wrapper">
-                                <input
-                                    type="file"
-                                    class="form-control"
-                                    ref="doctorLetterInput"
-                                    @change="handleFileUpload"
-                                    accept=".pdf,.jpg,.jpeg,.png"
-                                    style="display: none"
-                                />
-                                <div
-                                    v-if="!AssignFile"
-                                    class="file-upload-area"
-                                    @click="$refs.doctorLetterInput.click()"
-                                >
-                                    <label
-                                        class="file-upload-label d-flex align-items-center justify-content-center"
-                                    >
-                                        <i
-                                            class="bi bi-upload me-2 d-flex align-items-center justify-content-center"
-                                        ></i>
-                                        <span>Unggah File</span>
-                                    </label>
+                            <!-- Description -->
+                            <div class="form-group mb-3">
+                                <!-- <label class="form-label">Team Leader</label> -->
+                                <label class="form-mark">{{
+                                    selectedAssignEmployees.Nama
+                                }}</label>
+                            </div>
+                        </div>
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="bi bi-gear me-2"></i>
+                                SetingUser
+                            </h4>
+                            <div class="row">
+                                <div class="col-md-8 py-3">
+                                    <div class="form-group">
+                                        <label class="form-label"
+                                            >Username</label
+                                        >
+                                        <input
+                                            v-model="AssignUsername"
+                                            :disabled="
+                                                selectedAssignEmployees.Username
+                                            "
+                                            type="text"
+                                            class="form-control"
+                                            :class="
+                                                alredyUsername &&
+                                                !selectedAssignEmployees.Username
+                                                    ? 'border-danger'
+                                                    : ''
+                                            "
+                                            @input="console.log(alredyUsername)"
+                                        />
+                                        <span
+                                            class="text-danger text-sm"
+                                            :class="
+                                                alredyUsername &&
+                                                !selectedAssignEmployees.Username
+                                                    ? ''
+                                                    : 'd-none'
+                                            "
+                                            >Username sudah ada!</span
+                                        >
+                                    </div>
                                 </div>
-                                <div v-else class="file-display-area">
-                                    <span class="file-name">{{
-                                        AssignFile.name
-                                    }}</span>
-                                    <button
-                                        @click="removeFile"
-                                        class="btn-remove-file"
+                                <div class="col-md-4 py-3">
+                                    <div class="form-group">
+                                        <label class="form-label mb-3"
+                                            >Extras</label
+                                        >
+                                        <!-- <div class="d-flex align-items-center">
+                                            <div
+                                                class="form-check form-switch me-3"
+                                            >
+                                                <input
+                                                    style="
+                                                        cursor: pointer !important;
+                                                    "
+                                                    disabled
+                                                    class="form-check-input cursor-pointer"
+                                                    type="checkbox"
+                                                    id="whatsappSwitch"
+                                                    v-model="isWhatsappUser"
+                                                />
+                                            </div>
+                                            <label
+                                                class="form-check-label"
+                                                for="whatsappSwitch"
+                                            >
+                                                Kirim WhatsApp
+                                            </label>
+                                        </div> -->
+                                        <div class="d-flex align-items-center">
+                                            <button
+                                                :disabled="
+                                                    !selectedAssignEmployees.Username
+                                                "
+                                                @click="
+                                                    showAlertModalFC(
+                                                        'Anda yakin untuk mengirim ulang user dan password user ini?',
+                                                        'kirimUlangUser',
+                                                        'Kirim'
+                                                    )
+                                                "
+                                                style="
+                                                    cursor: pointer !important;
+                                                "
+                                                class="me-3 btn-primary px-2 py-2 btn-modern d-flex align-items-center"
+                                            >
+                                                <i
+                                                    v-if="!loadingSimpan"
+                                                    class="bi bi-send me-2 d-flex justify-content-center align-items-center"
+                                                ></i>
+
+                                                <i
+                                                    v-else
+                                                    class="spinner-border me-2 spinner-border-sm ms-2"
+                                                ></i>
+                                                Send
+                                            </button>
+                                            <label
+                                                class="form-check-label d-flex align-items-center mb-0"
+                                                for="whatsappSwitch"
+                                            >
+                                                Kirim Ulang User
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group user">
+                                <label class="form-label mb-3"
+                                    >Akses diberi</label
+                                >
+                                <div class="row g-3">
+                                    <div
+                                        v-for="menu in menuList"
+                                        :key="menu.pageKey"
+                                        class="col-6 col-md-4 col-lg-3"
                                     >
-                                        <i class="bi bi-x-circle-fill"></i>
+                                        <div
+                                            class="access-option p-3 border rounded-3 d-flex align-items-center"
+                                            :class="{
+                                                'bg-success bg-opacity-25':
+                                                    isActivePages(menu.pageKey),
+                                            }"
+                                            @click="
+                                                toggleAccess(menu.pageKey);
+                                                console.log(activePages);
+                                            "
+                                        >
+                                            <span
+                                                class="access-icon me-3 bg-primary bg-opacity-10 p-2 rounded-2"
+                                            >
+                                                <i
+                                                    :class="[
+                                                        menu.icon,
+                                                        'text-primary d-flex justify-content-center align-items-center',
+                                                    ]"
+                                                ></i>
+                                            </span>
+                                            <span class="access-name">{{
+                                                menu.name
+                                            }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="assignSubmit == 'approver'">
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="bi bi-gear me-2"></i>
+                                Karyawan yang akan diberi approver
+                            </h4>
+
+                            <!-- Time Selection (for early leave/late arrival) -->
+
+                            <!-- Description -->
+                            <div class="form-group mb-3">
+                                <!-- <label class="form-label">Team Leader</label> -->
+                                <label class="form-mark">{{
+                                    selectedAssignEmployees.Nama
+                                }}</label>
+                            </div>
+                        </div>
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="bi bi-person-plus me-2"></i>
+                                Pilih Approver
+                            </h4>
+
+                            <div class="form-group AssignApproval mb-3">
+                                <div
+                                    v-for="(item, idx) in formFields"
+                                    :key="idx"
+                                    class="approver-field mb-3"
+                                >
+                                    <label class="form-label"
+                                        >Approver {{ idx + 1 }}</label
+                                    >
+                                    <div class="position-relative">
+                                        <input
+                                            type="text"
+                                            v-model="item.Nama"
+                                            @input="item.showDropdown = true"
+                                            @focus="item.showDropdown = true"
+                                            @blur="hideDropdown(idx)"
+                                            class="form-control"
+                                            placeholder="Ketik nama karyawan..."
+                                        />
+
+                                        <!-- Dropdown suggestion -->
+                                        <ul
+                                            v-if="
+                                                item.showDropdown &&
+                                                suggestionFilter(item.Nama, idx)
+                                                    .length
+                                            "
+                                            class="dropdown-suggestion"
+                                        >
+                                            <li
+                                                v-for="(
+                                                    karyawan, kIdx
+                                                ) in suggestionFilter(
+                                                    item.Nama,
+                                                    idx
+                                                )"
+                                                :key="kIdx"
+                                                @mousedown.prevent="
+                                                    selectKaryawan(
+                                                        idx,
+                                                        karyawan
+                                                    )
+                                                "
+                                                class="dropdown-item"
+                                            >
+                                                {{ karyawan.Nama }}
+                                                <span class="opacity-50">
+                                                    |
+                                                    {{
+                                                        karyawan.nama_divisi
+                                                    }}</span
+                                                >
+                                            </li>
+                                        </ul>
+                                        <button
+                                            @click="removeField(idx)"
+                                            class="btn-remove closeRounded rounded-3 me-2"
+                                        >
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Tombol tambah -->
+                                <div class="add-field">
+                                    <button @click="addField" class="btn-add">
+                                        <i class="bi bi-plus me-1"></i> Tambah
                                     </button>
                                 </div>
                             </div>
-                            <small class="text-muted"
-                                >Format: PDF, JPG, PNG (maks. 5MB)</small
-                            >
-                        </div>
-
-                        <div class="form-group" v-else>
-                            <label class="form-label"
-                                >Foto Atau File Tambahan (Optional)</label
-                            >
-                            <div class="file-upload-wrapper">
-                                <input
-                                    type="file"
-                                    class="form-control"
-                                    ref="doctorLetterInput"
-                                    @change="handleFileUpload"
-                                    accept=".pdf,.jpg,.jpeg,.png"
-                                    style="display: none"
-                                />
-                                <div
-                                    v-if="!AssignFile"
-                                    class="file-upload-area"
-                                    @click="$refs.doctorLetterInput.click()"
-                                >
-                                    <label
-                                        class="file-upload-label d-flex align-items-center justify-content-center"
-                                    >
-                                        <i
-                                            class="bi bi-upload me-2 d-flex align-items-center justify-content-center"
-                                        ></i>
-                                        <span>Unggah File</span>
-                                    </label>
-                                </div>
-                                <div v-else class="file-display-area">
-                                    <span class="file-name">{{
-                                        AssignFile.name
-                                    }}</span>
-                                    <button
-                                        @click="removeFile"
-                                        class="btn-remove-file"
-                                    >
-                                        <i class="bi bi-x-circle-fill"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <small class="text-muted"
-                                >Format: PDF, JPG, PNG (maks. 5MB)</small
-                            >
-                        </div>
-                        <!-- <div v-else class="text-muted text-center py-4">
-                            Tidak ada lampiran yang diperlukan untuk jenis izin
-                            ini.
-                        </div> -->
-                    </div>
-                </div>
-                <div v-if="assignStep === 4" class="step-content">
-                    <div class="form-section">
-                        <h4 class="section-title">
-                            <i
-                                class="bi bi-gear me-2 d-flex justify-content-center align-items-center"
-                            ></i>
-                            Ringkasan
-                        </h4>
-
-                        <div class="form-group AssignRingkasan p-3">
-                            <div
-                                style="border-bottom: 1px solid #e2e8f0"
-                                class="d-flex justify-content-between pb-2 align-items-center mb-4"
-                            >
-                                <span class="d-flex align-items-center fs-6">
-                                    <i
-                                        class="bi bi-code-square me-2 fw-bold d-flex justify-content-center align-items-center"
-                                    ></i>
-                                    <span class="m-0 fw-medium">
-                                        Jenis Izin</span
-                                    >
-                                </span>
-                                <div style="color: #6366f1" class="fw-bold">
-                                    {{ parseIzin(assignIzinType2) }}
-                                </div>
-                            </div>
-                            <div
-                                style="border-bottom: 1px solid #e2e8f0"
-                                class="d-flex justify-content-between pb-2 align-items-center mb-4"
-                            >
-                                <span class="d-flex align-items-center fs-6">
-                                    <i
-                                        class="bi bi-calendar me-2 fw-bold d-flex justify-content-center align-items-center"
-                                    ></i>
-                                    <span class="m-0 fw-medium"> Tanggal</span>
-                                </span>
-                                <div style="color: #6366f1" class="fw-bold">
-                                    {{
-                                        formatTanggalIzin(
-                                            assignIzinType,
-                                            AssignDateRange[0],
-                                            AssignDateRange[1],
-                                            formatTimeForSubmission(AssignTime)
-                                        )
-                                    }}
-                                </div>
-                            </div>
-                            <div
-                                style="border-bottom: 1px solid #e2e8f0"
-                                class="d-flex justify-content-between pb-2 align-items-center mb-4"
-                            >
-                                <span class="d-flex align-items-center fs-6">
-                                    <i
-                                        class="bi bi-blockquote-right me-2 fw-bold d-flex justify-content-center align-items-center"
-                                    ></i>
-                                    <span class="m-0 fw-medium"> Alasan</span>
-                                </span>
-                                <div style="color: #6366f1" class="fw-bold">
-                                    {{ permissionReason }}
-                                </div>
-                            </div>
-                            <div
-                                v-if="
-                                    assignIzinType2 === 'pulangCepat' ||
-                                    assignIzinType2 === 'terlambat' ||
-                                    assignIzinType2 === 'sakitTibaTiba'
-                                "
-                                style="border-bottom: 1px solid #e2e8f0"
-                                class="d-flex justify-content-between pb-2 align-items-center mb-4"
-                            >
-                                <span class="d-flex align-items-center fs-6">
-                                    <i
-                                        class="bi bi-clock me-2 fw-bold d-flex justify-content-center align-items-center"
-                                    ></i>
-                                    <span class="m-0 fw-medium">Waktu</span>
-                                </span>
-                                <div style="color: #6366f1" class="fw-bold">
-                                    {{
-                                        assignIzinType2 == "izinFull" ||
-                                        assignIzinType2 == "sakit"
-                                            ? "Tidak ada"
-                                            : formatTimeForSubmission(
-                                                  AssignTime
-                                              )
-                                                  .split(":")
-                                                  .slice(0, 2)
-                                                  .join(":")
-                                    }}
-                                </div>
-                            </div>
-                            <div
-                                class="d-flex justify-content-between pb-2 align-items-center mb-1"
-                            >
-                                <span class="d-flex align-items-center fs-6">
-                                    <i
-                                        class="bi bi-textarea me-2 fw-bold d-flex justify-content-center align-items-center"
-                                    ></i>
-                                    <span class="m-0 fw-medium">Lampiran</span>
-                                </span>
-                                <div style="color: #6366f1" class="fw-bold">
-                                    {{ AssignFile ? "Ada" : "Tidak ada" }}
-                                </div>
-                            </div>
-                            <!-- <small class="text-muted"
-                                >Format: PDF, JPG, PNG (maks. 5MB)</small
-                            > -->
                         </div>
                     </div>
                 </div>
@@ -1543,7 +1015,7 @@
                     </button>
 
                     <button
-                        v-if="assignStep < 4"
+                        v-if="assignStep < 2"
                         class="btn-modern btn-primary"
                         @click="nextAssignStep"
                         :disabled="!canProceedToNextStep"
@@ -1560,9 +1032,15 @@
                     </button>
 
                     <button
-                        v-if="assignStep === 4"
+                        v-if="assignStep === 2"
                         class="btn-modern btn-success"
-                        @click="submitData"
+                        @click="
+                            showAlertModalFC(
+                                'Anda yakin ingin menyimpan data ini?',
+                                'simpanAssign',
+                                'Simpan'
+                            )
+                        "
                     >
                         <i
                             v-if="!loadingSimpan"
@@ -1579,18 +1057,218 @@
             </div>
         </div>
     </div>
+
+    <!-- details modal -->
+
+    <el-dialog
+        v-model="showDetailModal"
+        :title="`Detail Karyawan - ${currentDetail?.Nama || ''}`"
+        width="70%"
+        :fullscreen="isMobile()"
+        class="detail-modal"
+        :lock-scroll="true"
+    >
+        <div v-if="currentDetail" class="detail-modal-content">
+            <div class="detail-grid">
+                <!-- Basic Information -->
+                <div class="detail-item">
+                    <span class="detail-label">Nama:</span>
+                    <span class="detail-value highlight">
+                        {{ currentDetail.namaUser || "TIDAK ADA" }}
+                    </span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Divisi:</span>
+                    <span class="detail-value">
+                        {{ currentDetail.nama_divisi || "TIDAK ADA" }}
+                    </span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Jabatan:</span>
+                    <span class="detail-value">
+                        {{ currentDetail.nama_jabatan || "TIDAK ADA" }}
+                    </span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">ID WEB:</span>
+                    <span class="detail-value">
+                        {{ currentDetail.UserID_Web || "TIDAK ADA" }}
+                    </span>
+                </div>
+
+                <!-- Approvers Section -->
+                <div class="detail-item full-width">
+                    <span class="detail-label">Approver:</span>
+                    <div class="scrollable-container">
+                        <template v-if="!currentApprovers.length">
+                            <el-tag type="info" size="medium">TIDAK ADA</el-tag>
+                        </template>
+                        <template v-else>
+                            <el-tag
+                                v-for="(approver, index) in currentApprovers"
+                                :key="index"
+                                type="success"
+                                size="medium"
+                                class="approver-tag"
+                            >
+                                {{ approver }}
+                            </el-tag>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Teams Membership Section -->
+                <div class="detail-item full-width">
+                    <span class="detail-label">Tergabung pada tim:</span>
+                    <div class="scrollable-container">
+                        <template v-if="!currentTeamMemberships.length">
+                            <el-tag type="info" size="medium">TIDAK ADA</el-tag>
+                        </template>
+                        <template v-else>
+                            <el-tag
+                                v-for="(team, index) in currentTeamMemberships"
+                                :key="index"
+                                :type="getTagType(index)"
+                                size="medium"
+                                class="membership-tag"
+                            >
+                                {{ team }}
+                            </el-tag>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <template #footer>
+            <div class="modal-footer-actions p-0 pt-3">
+                <button
+                    class="btn-modern btn-secondary"
+                    @click="showDetailModal = false"
+                >
+                    Tutup
+                </button>
+            </div>
+        </template>
+    </el-dialog>
+
+    <!-- alert modal -->
+    <el-dialog
+        v-model="showAlertModal"
+        title="Konfirmasi menyimpan data"
+        width="400px"
+        center
+        :lock-scroll="true"
+    >
+        <div class="delete-modal-content">
+            <i class="bi bi-exclamation-triangle warning-icon"></i>
+            <p>
+                {{ Pesan }}
+            </p>
+            <p class="text-danger">Tindakan ini tidak dapat dibatalkan.</p>
+        </div>
+        <template #footer>
+            <div class="delete-modal-footer">
+                <button
+                    class="btn-modern btn-secondary"
+                    @click="closeAlertModal"
+                >
+                    Batal
+                </button>
+                <button class="btn-modern btn-success" @click="fnc">
+                    {{ buttonAlert }}
+                </button>
+            </div>
+        </template>
+    </el-dialog>
 </template>
 
 <script>
 import axios from "axios";
-import _ from "lodash";
+import _, { truncate } from "lodash";
 
+import { ElMessage, ElNotification, ElDialog, ElTag } from "element-plus";
+import "element-plus/dist/index.css";
 export default {
     props: {
         namaKaryawan: String,
+        // allKaryawan: Array,
+        // karyawanTeam: Array,
+        // ApprovalFlow: Array,
+        // PageAccess: Array,
+    },
+    components: {
+        ElMessage,
+        ElNotification,
+        ElDialog,
+        ElTag,
     },
     data() {
         return {
+            buttonAlert: "",
+
+            // details Modal
+
+            allKaryawan: [],
+            karyawanTeam: [],
+            ApprovalFlow: [],
+            PageAccess: [],
+
+            showDetailModal: false,
+
+            menuList: [
+                {
+                    name: "Ganti Shift",
+                    pageKey: "ShiftManagement",
+                    icon: "bi bi-arrow-left-right",
+                },
+                {
+                    name: "Lembur",
+                    pageKey: "OvertimeManagement",
+                    icon: "bi bi-clock",
+                },
+                {
+                    name: "Izin",
+                    pageKey: "IzinPage",
+                    icon: "bi bi-person-walking",
+                },
+                {
+                    name: "Izin Approver",
+                    pageKey: "IzinPageApprover",
+                    icon: "bi bi-check-circle",
+                },
+                {
+                    name: "Absensi",
+                    pageKey: "absensiPage",
+                    icon: "bi bi-calendar-check",
+                },
+            ],
+            AssignActivePages: [],
+            activePages: [],
+            showAlertModal: false,
+            Pesan: null,
+            fnc: null,
+            // user
+            AssignUsername: "",
+            isWhatsappUser: false,
+            AssignPageAccess: [],
+
+            // Approver Karyawan
+            removedApprover: [],
+            formFields: [],
+
+            // Karyawan Team
+            yangTersediaSearch: "",
+            tergabungSearch: "",
+            newMembers: [],
+            removedMembers: [],
+            assignSearchQuery: null,
+
+            selectedAssignEmployees: null,
+
             showAssignModal: false,
             assignSubmit: null,
             assignStep: 1,
@@ -1601,6 +1279,8 @@ export default {
             totalPages: 0,
             currentPage: 0,
             lastPage: 0,
+            viewMode: "table",
+
             paginate: [],
             totalData: 0,
             currentDate: new Date(),
@@ -1608,9 +1288,174 @@ export default {
             prevLink: null,
             dayNight: "Siang",
             loadingData: false,
+            tagTypes: ["", "success", "info", "warning", "danger"],
         };
     },
-    computed: {},
+    computed: {
+        filteredTeams() {
+            if (!this.selectedItem?.teams) return [];
+            return this.selectedItem.teams.filter((team) =>
+                team.toLowerCase().includes(this.teamSearch.toLowerCase())
+            );
+        },
+        activePages() {
+            const access = this.getAccessUser();
+            if (!access || !access.Jenis_page) return [];
+            return access.Jenis_page; // array seperti ["IzinPage", "LemburPage"]
+        },
+        getApproval() {
+            const Kode_Karyawan = this.selectedAssignEmployees.Kode_Karyawan;
+            if (!Kode_Karyawan) return [];
+
+            const approvalFlowData = this.ApprovalFlow.find(
+                (item) => item.Requester === Kode_Karyawan
+            );
+
+            if (!approvalFlowData || !approvalFlowData.Approver) return [];
+
+            // 1. Buat lookup untuk data karyawan
+            const karyawanLookup = this.allKaryawan.reduce((acc, curr) => {
+                acc[curr.Kode_Karyawan] = curr;
+                return acc;
+            }, {});
+
+            // 2. Urutkan berdasarkan order_flow dan gabungkan data
+            return approvalFlowData.Approver.sort(
+                (a, b) => a.order_flow - b.order_flow
+            )
+                .map((approver) => ({
+                    ...karyawanLookup[approver.Kode_Karyawan],
+                    order_flow: approver.order_flow,
+                }))
+                .filter(Boolean);
+        },
+
+        alredyUsername() {
+            if (this.AssignUsername == "") return false;
+            const filtered = this.allKaryawan.find(
+                (emp) =>
+                    emp.Username?.toLowerCase() ==
+                    this.AssignUsername.toLowerCase()
+            );
+            return !!filtered; // true kalau ketemu, false kalau tidak
+        },
+        teamList() {
+            // 1. cari nama leader
+            const leaderName = this.selectedAssignEmployees.Kode_Karyawan;
+
+            if (!leaderName) return [];
+
+            let leaderObj = this.karyawanTeam.find((item) => {
+                if (!item?.LeaderTeam || typeof item.LeaderTeam !== "string")
+                    return false;
+
+                const itemLeader = item.LeaderTeam.trim().toUpperCase();
+                const searchLeader = leaderName.trim().toUpperCase();
+
+                return (
+                    itemLeader === searchLeader ||
+                    itemLeader.includes(searchLeader) ||
+                    searchLeader.includes(itemLeader)
+                );
+            });
+
+            // 2. kalau nggak ketemu, tambahkan leader baru
+            if (!leaderObj) {
+                leaderObj = {
+                    LeaderTeam: leaderName,
+                    Team: [],
+                };
+                this.karyawanTeam.push(leaderObj);
+            }
+
+            // 3. kembalikan daftar anggota team
+            return leaderObj.Team;
+        },
+
+        availableList() {
+            return this.allKaryawan.filter((k) => {
+                // Filter untuk menghapus karyawan yang sama dengan yang dipilih
+                if (
+                    k.Kode_Karyawan ===
+                    this.selectedAssignEmployees.Kode_Karyawan
+                )
+                    return false;
+
+                // Filter untuk menghapus karyawan yang sudah ada di teamList
+                if (
+                    this.teamList.some(
+                        (memberName) => memberName == k.Kode_Karyawan
+                    )
+                )
+                    return false;
+
+                // Filter berdasarkan pencarian
+                if (this.yangTersediaSearch) {
+                    const keyword = this.yangTersediaSearch.toLowerCase();
+                    return (
+                        (k.Nama && k.Nama.toLowerCase().includes(keyword)) ||
+                        (k.Kode_Karyawan &&
+                            k.Kode_Karyawan.toLowerCase().includes(keyword))
+                    );
+                }
+
+                return true;
+            });
+        },
+
+        haveTeam() {
+            return this.allKaryawan.filter((k) => {
+                // Jangan tampilkan karyawan yang sama dengan yang dipilih
+                if (
+                    k.Kode_Karyawan ===
+                    this.selectedAssignEmployees.Kode_Karyawan
+                )
+                    return false;
+
+                // Pastikan hanya yang ada di teamList
+                if (
+                    !this.teamList.some(
+                        (memberName) => memberName == k.Kode_Karyawan
+                    )
+                )
+                    return false;
+
+                // Kalau ada searchQuery, filter lagi
+                if (this.tergabungSearch) {
+                    const keyword = this.tergabungSearch.toLowerCase();
+                    return (
+                        (k.Nama && k.Nama.toLowerCase().includes(keyword)) ||
+                        (k.Kode_Karyawan &&
+                            k.Kode_Karyawan.toLowerCase().includes(keyword))
+                    );
+                }
+
+                return true;
+            });
+        },
+
+        filteredAssignEmployees() {
+            let filtered = this.allKaryawan;
+
+            if (this.assignSearchQuery) {
+                filtered = filtered.filter((employee) =>
+                    employee.Nama.toLowerCase().includes(
+                        this.assignSearchQuery.toLowerCase()
+                    )
+                );
+            }
+            // console.log(filtered[0].Nama);
+            return filtered;
+        },
+        suggestionAssign() {
+            if (!this.assignSearchQuery) return [];
+            return this.allKaryawan.filter((employee) =>
+                employee.Nama.toLowerCase().includes(
+                    this.assignSearchQuery.toLowerCase()
+                )
+            );
+        },
+    },
     created() {
         this.debouncedSearch = _.debounce(this.getData, 500);
     },
@@ -1620,24 +1465,652 @@ export default {
         },
     },
     mounted() {
-        this.getData("/add-karyawan-team/getData");
         const currentHour = new Date().getHours();
-
         this.dayNight =
             currentHour >= 6 && currentHour < 18 ? "Siang" : "Malam";
+        this.getData("/add-karyawan-team/getData").then(() => {
+            this.loadAccess();
+        });
+        this.getAllData();
     },
     methods: {
-        async getData(url = null) {
-            const params = new URLSearchParams();
-            if (this.searchQuery) {
-                params.append("search", this.searchQuery);
+        async getAllData() {
+            this.loadingData = true;
+            try {
+                const res = await axios.get("/add-karyawan-team/getAllData");
+
+                if (res.status == 200) {
+                    this.allKaryawan = res.data.allKaryawan;
+                    this.karyawanTeam = res.data.karyawanTeam;
+                    this.ApprovalFlow = res.data.ApprovalFlow;
+                    this.PageAccess = res.data.PageAccess;
+                }
+            } catch (error) {
+                console.log(error);
+            } finally {
+                this.loadingData = false;
+            }
+        },
+        getTagType(index) {
+            return this.tagTypes[index % this.tagTypes.length];
+        },
+        showDetail(item) {
+            // Reset semua data sebelum menampilkan yang baru
+            this.currentDetail = null;
+            this.currentApprovers = [];
+            this.currentTeamMemberships = [];
+
+            // Set timeout kecil untuk memastikan reactivity bekerja
+            this.$nextTick(() => {
+                this.currentDetail = { ...item }; // Clone object untuk menghindari reference
+                this.processApprovers();
+                this.processTeamMemberships();
+                this.showDetailModal = true;
+            });
+        },
+
+        processApprovers() {
+            if (!this.currentDetail?.Approvers) {
+                this.currentApprovers = [];
+                return;
             }
 
-            const endpoint =
-                url || `/add-karyawan-team/getData?${params.toString()}`;
+            const approversStr = this.currentDetail.Approvers;
+            if (
+                !approversStr ||
+                approversStr.trim() === "" ||
+                approversStr === "TIDAK ADA"
+            ) {
+                this.currentApprovers = [];
+            } else {
+                this.currentApprovers = approversStr
+                    .split("|")
+                    .map((name) => name.trim())
+                    .filter((name) => name);
+            }
+        },
 
-            axios.get(endpoint).then((res) => {
-                console.log(res.data.data.lastPage);
+        processTeamMemberships() {
+            if (!this.currentDetail) {
+                this.currentTeamMemberships = [];
+                return;
+            }
+
+            const karyawanNama =
+                this.currentDetail.Kode_Karyawan ||
+                this.currentDetail["ID WEB"];
+            if (!karyawanNama) {
+                this.currentTeamMemberships = [];
+                return;
+            }
+
+            const hasil = [];
+            this.karyawanTeam.forEach((teamObj) => {
+                if (teamObj.Team.includes(karyawanNama)) {
+                    hasil.push(teamObj.LeaderTeam);
+                }
+            });
+
+            this.currentTeamMemberships = hasil;
+        },
+        tergabungTeam(user) {
+            const karyawanNama = user.Kode_Karyawan; // atau Kode_Karyawan kalau datanya pakai kode
+            const hasil = [];
+
+            this.karyawanTeam.forEach((teamObj) => {
+                if (teamObj.Team.includes(karyawanNama)) {
+                    hasil.push(teamObj.LeaderTeam);
+                }
+            });
+            // console.log(hasil);
+            return {
+                total: hasil?.length || 0,
+                data: hasil || [],
+            };
+        },
+        truncateText(text, length) {
+            return text.length > length
+                ? text.substring(0, length) + "..."
+                : text;
+        },
+        hideAssignDropdown() {
+            // kasih delay supaya @mousedown di <li> keburu eksekusi
+            setTimeout(() => {
+                this.showAssignDropdown = false;
+            }, 200);
+        },
+
+        isMobile() {
+            return this.windowWidth < 768;
+        },
+        closeAssignModal() {
+            this.showAssignModal = false;
+            this.selectedAssignEmployees = null;
+
+            this.AssignActivePages = [];
+            this.activePages = [];
+            this.showAlertModal = false;
+            this.Pesan = null;
+            this.fnc = null;
+            // user
+            this.AssignUsername = "";
+            this.isWhatsappUser = false;
+            this.AssignPageAccess = [];
+
+            // Approver Karyawan
+            this.removedApprover = [];
+            this.formFields = [];
+
+            // Karyawan Team
+            this.yangTersediaSearch = "";
+            this.tergabungSearch = "";
+            this.newMembers = [];
+            this.removedMembers = [];
+            this.assignSearchQuery = null;
+            this.assignStep = 1;
+        },
+        isActivePages(pageKey) {
+            const res = this.activePages.includes(String(pageKey).trim());
+            console.log("isActive check", pageKey, res, this.activePages);
+            return res;
+        },
+        getAccessUser() {
+            const UserID_AbsenK =
+                this.selectedAssignEmployees.UserID_Web || null;
+
+            if (!UserID_AbsenK) return [];
+
+            const userPageAccess =
+                this.PageAccess.find(
+                    (item) => item.UserID_Web == UserID_AbsenK
+                ) || null;
+            // console.log(userPageAccess);
+            return userPageAccess;
+        },
+        loadAccess() {
+            const access = this.getAccessUser();
+            this.activePages = Array.isArray(access?.Jenis_page)
+                ? [...access.Jenis_page]
+                : [];
+        },
+        toggleAccess(pageKey) {
+            const idx = this.activePages.indexOf(pageKey);
+            if (idx > -1) {
+                // hapus
+                this.activePages.splice(idx, 1);
+            } else {
+                // tambah
+                this.activePages.push(pageKey);
+            }
+            // trik supaya Vue sadar array berubah
+            this.activePages = [...this.activePages];
+        },
+        parsePageAccess(page) {
+            if (!page) return "";
+
+            if (page == "IzinPageApprover") {
+                return {
+                    title: "Izin Approver",
+                    icon: "bi bi-clock",
+                };
+            } else if (page == "IzinPage") {
+                return {
+                    title: "Izin",
+                    icon: "bi bi-person-walking",
+                };
+            } else if (page == "overtimeManagement") {
+                return {
+                    title: "Lembur",
+                    icon: "bi bi-clock",
+                };
+            }
+        },
+        approversInfoFromString(approversStr) {
+            if (
+                !approversStr ||
+                approversStr.trim() === "" ||
+                approversStr === "TIDAK ADA"
+            ) {
+                return {
+                    total: 0,
+                    list: "TIDAK ADA",
+                };
+            }
+
+            const approversArray = approversStr
+                .split("|")
+                .map((name) => name.trim());
+
+            return {
+                total: approversArray.length,
+                list: approversArray.join(" | "),
+            };
+        },
+        normalizeOrderFlow() {
+            // Urutkan berdasarkan order_flow yang ada
+            this.formFields.sort((a, b) => a.order_flow - b.order_flow);
+
+            // Perbarui order_flow secara berurutan
+            this.formFields.forEach((field, idx) => {
+                field.order_flow = idx + 1;
+            });
+        },
+        getSimpanfnc() {
+            if (!this.assignSubmit) {
+                this.closeAlertModal;
+
+                ElMessage({
+                    message: "Form belum lengkap!.",
+                    type: "warning",
+                });
+            }
+        },
+        isSameApprover() {},
+        showAlertModalFC(pesan, jenis, button) {
+            this.Pesan = pesan;
+            // this.fnc = fnc;
+            if (this.assignSubmit == "team") {
+                this.fnc = () => this.submitTeam();
+                this.buttonAlert = button;
+                this.showAlertModal = true;
+            } else if (this.assignSubmit == "websiteUser") {
+                if (
+                    !this.AssignUsername ||
+                    this.AssignUsername == " " ||
+                    this.AssignUsername == "-"
+                ) {
+                    ElMessage({
+                        message: "Form belum lengkap!.",
+                        type: "warning",
+                    });
+                    this.showAlertModal = false;
+                } else {
+                    if (jenis == "kirimUlangUser") {
+                        this.fnc = () => this.kirimUlangUser();
+                        this.buttonAlert = button;
+                    } else {
+                        this.fnc = () => this.submitUser();
+                        this.buttonAlert = button;
+                    }
+                    this.showAlertModal = true;
+                }
+            } else if (this.assignSubmit == "approver") {
+                this.fnc = () => this.submitApprover();
+                this.buttonAlert = button;
+
+                this.showAlertModal = true;
+            }
+        },
+        isCreatedUsername() {
+            if (
+                !this.selectedAssignEmployees.Username ||
+                this.selectedAssignEmployees.Username == "-" ||
+                this.selectedAssignEmployees.Username == " "
+            ) {
+                return this.AssignUsername;
+            }
+
+            return null;
+        },
+        async submitTeam() {
+            this.closeAlertModal();
+
+            try {
+                this.loadingSimpan = true;
+                const response = await axios.post(
+                    "/add-karyawan-team/simpanTeam",
+                    {
+                        Kode_Karyawan:
+                            this.selectedAssignEmployees.Kode_Karyawan,
+                        newMembers: this.newMembers,
+                        removedMembers: this.removedMembers,
+                    }
+                );
+                if (response.status == 200) {
+                    this.getData("/add-karyawan-team/getData");
+                    ElNotification({
+                        title: "Berhasil",
+                        message: "Data berhasil disimpan!",
+                        type: "success",
+                    });
+                }
+            } catch (error) {
+                let errorMessage = "Terjadi error!.";
+                if (
+                    error.response &&
+                    error.response.data &&
+                    error.response.data.message
+                ) {
+                    errorMessage = error.response.data.message;
+                }
+
+                ElMessage({
+                    message: errorMessage,
+                    type: "error",
+                });
+            } finally {
+                this.getData("/add-karyawan-team/getData");
+                this.getAllData();
+                this.closeAssignModal();
+
+                this.loadingSimpan = false;
+            }
+        },
+        async submitUser() {
+            try {
+                this.closeAlertModal();
+                this.loadingSimpan = true;
+                const response = await axios.post(
+                    "/add-karyawan-team/simpanUser",
+                    {
+                        Kode_Karyawan:
+                            this.selectedAssignEmployees.Kode_Karyawan,
+                        Username: this.isCreatedUsername(),
+                        Pages: this.activePages,
+                    }
+                );
+                if (response.status == 200) {
+                    this.getData("/add-karyawan-team/getData");
+                    ElNotification({
+                        title: "Berhasil",
+                        message: "Data berhasil disimpan!",
+                        type: "success",
+                    });
+                }
+            } catch (error) {
+                let errorMessage = "Terjadi error!.";
+                if (
+                    error.response &&
+                    error.response.data &&
+                    error.response.data.message
+                ) {
+                    errorMessage = error.response.data.message;
+                }
+
+                ElMessage({
+                    message: errorMessage,
+                    type: "error",
+                });
+            } finally {
+                this.getData("/add-karyawan-team/getData");
+                this.getAllData();
+                this.closeAssignModal();
+                this.loadingSimpan = false;
+            }
+        },
+        async kirimUlangUser() {
+            try {
+                this.closeAlertModal();
+                this.loadingSimpan = true;
+                const response = await axios.post(
+                    "/add-karyawan-team/kirimUlangUser",
+                    {
+                        Kode_Karyawan:
+                            this.selectedAssignEmployees.Kode_Karyawan,
+                        Username: this.isCreatedUsername(),
+                    }
+                );
+                if (response.status == 200) {
+                    this.getData("/add-karyawan-team/getData");
+                    ElNotification({
+                        title: "Berhasil",
+                        message: "Data berhasil disimpan!",
+                        type: "success",
+                    });
+                }
+            } catch (error) {
+                let errorMessage = "Terjadi error!.";
+                if (
+                    error.response &&
+                    error.response.data &&
+                    error.response.data.message
+                ) {
+                    errorMessage = error.response.data.message;
+                }
+
+                ElMessage({
+                    message: errorMessage,
+                    type: "error",
+                });
+            } finally {
+                this.getData("/add-karyawan-team/getData");
+                this.getAllData();
+                this.closeAssignModal();
+                this.loadingSimpan = false;
+            }
+        },
+        async submitApprover() {
+            this.closeAlertModal();
+
+            try {
+                this.loadingSimpan = true;
+                const response = await axios.post(
+                    "/add-karyawan-team/simpanApproval",
+                    {
+                        Requester: this.selectedAssignEmployees,
+                        Approver: this.formFields || [],
+                    }
+                );
+                if (response.status == 200) {
+                    this.getData("/add-karyawan-team/getData");
+                    ElNotification({
+                        title: "Berhasil",
+                        message: "Data berhasil disimpan!",
+                        type: "success",
+                    });
+                }
+            } catch (error) {
+                console.log(error);
+
+                ElMessage({
+                    message: error.response?.data?.message || "Terjadi error!",
+                    type: "error",
+                });
+            } finally {
+                this.getData("/add-karyawan-team/getData");
+                this.getAllData();
+                this.closeAssignModal();
+                this.loadingSimpan = false;
+            }
+        },
+        closeAlertModal() {
+            this.Pesan = null;
+            this.fnc = null;
+            this.showAlertModal = false;
+        },
+        loadExistingApprovers() {
+            const existingApprovers = this.getApproval; // Dari fungsi getApproval() yang sudah dimodifikasi
+            this.formFields = existingApprovers.map((approver) => ({
+                Nama: approver.Nama,
+                Kode_Karyawan: approver.Kode_Karyawan,
+                order_flow: approver.order_flow, // Pastikan ini ada dari getApproval()
+                showDropDown: false,
+            }));
+
+            // Jika tidak ada data, inisialisasi dengan order_flow = 1
+            if (this.formFields.length === 0) {
+                this.formFields.push({
+                    Nama: "",
+                    Kode_Karyawan: "",
+                    order_flow: 1,
+                    showDropDown: false,
+                });
+            }
+        },
+        suggestionFilter(query, currentIndex) {
+            const excludedNames = [
+                this.selectedAssignEmployees.Nama,
+                ...this.formFields
+                    .filter((_, idx) => idx !== currentIndex)
+                    .map((field) => field.Nama.trim())
+                    .filter((name) => name !== ""),
+            ];
+
+            return this.allKaryawan.filter((k) => {
+                const namaLower = k.Nama.toLowerCase();
+                const queryLower = query.toLowerCase();
+
+                // Karyawan harus:
+                // 1. Cocok dengan query pencarian
+                // 2. Tidak ada dalam daftar excludedNames
+                return (
+                    namaLower.includes(queryLower) &&
+                    !excludedNames.includes(k.Nama)
+                );
+            });
+        },
+
+        // Update method selectKaryawan untuk menerima currentIndex
+        selectKaryawan(currentIndex, karyawan) {
+            this.formFields[currentIndex].Nama = karyawan.Nama;
+            this.formFields[currentIndex].Kode_Karyawan =
+                karyawan.Kode_Karyawan;
+            this.formFields[currentIndex].showDropdown = false;
+        },
+
+        hideDropdown(idx) {
+            setTimeout(() => {
+                this.formFields[idx].showDropdown = false;
+            }, 200);
+        },
+        addField() {
+            const nextOrder =
+                this.formFields.length > 0
+                    ? Math.max(...this.formFields.map((f) => f.order_flow)) + 1
+                    : 1;
+
+            this.formFields.push({
+                Nama: "",
+                Kode_Karyawan: "",
+                order_flow: nextOrder,
+                showDropDown: false,
+            });
+        },
+        removeField(index) {
+            this.formFields.splice(index, 1);
+            this.normalizeOrderFlow(); // Normalisasi ulang urutan
+        },
+
+        addToTeam(employee) {
+            if (!this.teamList.includes(employee.Kode_Karyawan)) {
+                // Simpan nama karyawan di teamList
+                this.teamList.push(employee.Kode_Karyawan);
+
+                // Simpan di array khusus "baru ditambahkan"
+                this.newMembers.push(employee);
+            }
+        },
+        removeFromTeam(employee) {
+            const index = this.teamList.indexOf(employee.Kode_Karyawan);
+            if (index !== -1) {
+                this.teamList.splice(index, 1);
+
+                // Simpan di array khusus "baru dihapus"
+                this.removedMembers.push(employee);
+            }
+        },
+        prevAssignStep() {
+            if (this.assignStep == 2) {
+                if (
+                    this.assignStep == 2 &&
+                    this.assignSubmit == "websiteUser"
+                ) {
+                    this.AssignUsername = "";
+                    this.activePages = [];
+                    this.assignStep--;
+                }
+                if (this.assignStep == 2 && this.assignSubmit == "team") {
+                    this.newMembers = [];
+                    this.removedMembers = [];
+                    this.assignStep--;
+                }
+                if (this.assignStep == 2 && this.assignSubmit == "approver") {
+                    this.formFields = [];
+                    this.assignStep--;
+                }
+            } else {
+                this.assignStep--;
+            }
+        },
+        nextAssignStep() {
+            if (this.canProceedToNextStep()) {
+                if (this.assignStep == 1 && this.assignSubmit == "approver") {
+                    this.loadExistingApprovers();
+                    this.assignStep++;
+                } else if (
+                    this.assignStep == 1 &&
+                    this.assignSubmit == "websiteUser"
+                ) {
+                    if (this.selectedAssignEmployees.Username) {
+                        this.AssignUsername =
+                            this.selectedAssignEmployees.Username;
+                        this.loadAccess();
+                    }
+                    this.assignStep++;
+                } else {
+                    this.assignStep++;
+                }
+            } else {
+                ElMessage({
+                    message: "Tolong lengkapi dulu form nya!.",
+                    type: "warning",
+                });
+            }
+        },
+        canProceedToNextStep() {
+            if (this.assignStep === 1) {
+                return (
+                    this.assignSubmit !== null &&
+                    this.selectedAssignEmployees !== null
+                );
+            }
+            if (this.assignStep === 2) {
+                if (
+                    this.assignStep == 2 &&
+                    this.assignSubmit == "websiteUser"
+                ) {
+                    return (
+                        this.AssignUsername !== null && this.PageAccess !== []
+                    );
+                }
+
+                return this.AssignUsername !== "";
+            }
+            if (this.assignStep === 3) {
+                if (
+                    this.assignIzinType === "sakit" &&
+                    this.AssignDateRange[0] != this.AssignDateRange[1]
+                ) {
+                    return this.AssignFile !== null;
+                }
+                return true;
+            }
+            return true;
+        },
+        getInitials(name) {
+            // console.log(name);
+            return name
+                .split(" ")
+                .map((word) => word[0])
+                .join("")
+                .substring(0, 2)
+                .toUpperCase();
+        },
+
+        async getData(url = null) {
+            this.loadingData = true;
+            try {
+                const params = new URLSearchParams();
+                if (this.searchQuery) {
+                    params.append("search", this.searchQuery);
+                }
+
+                const endpoint =
+                    url || `/add-karyawan-team/getData?${params.toString()}`;
+
+                const res = await axios.get(endpoint);
+
+                console.log(res.data.data.data);
                 this.dataRecord = res.data.data.data;
                 this.totalPages = res.data.data.last_page;
                 this.lastPage = res.data.data.last_page;
@@ -1646,7 +2119,11 @@ export default {
                 this.currentPage = res.data.data.current_page;
                 this.paginate = res.data.data.links;
                 this.totalData = res.data.data.total;
-            });
+            } catch (error) {
+                console.error(error);
+            } finally {
+                this.loadingData = false; // Pasti dijalankan setelah request selesai
+            }
         },
         formatDateString(dateString) {
             if (!dateString) return "";
@@ -1707,6 +2184,125 @@ export default {
     --danger-light: #f8d7da; /* Merah muda, lebih terang untuk latar belakang atau efek disabled */
     --gray-light: #e9ecef;
     --el-slider-main-bg-color: #6366f1;
+}
+
+/* detail style */
+.detail-modal-content {
+    padding: 20px;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.detail-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.detail-label {
+    font-weight: bold;
+    color: #606266;
+}
+
+.detail-value {
+    color: #303133;
+}
+
+.highlight {
+    font-weight: bold;
+    color: #409eff;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.search-input {
+    width: 200px;
+}
+
+.scrollable-container {
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 8px;
+    border: 1px solid #ebeef5;
+    border-radius: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.team-tag,
+.approver-tag,
+.membership-tag {
+    margin: 2px;
+}
+/* akhir detail */
+.form-mark {
+    background: var(--surface);
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 0 !important;
+}
+
+.selection-actions {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--primary);
+    padding: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btn-link:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+.employee-department {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+.employee-avatar {
+    min-width: 40px;
+    max-width: 40px;
+    min-height: 35px;
+
+    max-height: 40px;
+    border-radius: 30%;
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.employee-avatar.large {
+    width: 60px;
+    height: 60px;
+    font-size: 1.1rem;
 }
 
 /* Content Container & Loading/Empty States */
@@ -1795,6 +2391,12 @@ export default {
     border-collapse: separate;
     border-spacing: 0;
     font-size: 0.875rem;
+}
+
+.employee-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 .modern-table th,
 .modern-table td {
@@ -2776,6 +3378,9 @@ export default {
 }
 
 @media (max-width: 992px) {
+    .employee-avatar {
+        width: 50px;
+    }
     .header-info {
         width: 100%;
         padding-bottom: 0.6rem;
@@ -2818,6 +3423,28 @@ export default {
 }
 
 @media (max-width: 768px) {
+    .employee-details {
+        gap: 0.15rem;
+    }
+    .employee-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 0.75rem;
+    }
+    .employee-avatar.large {
+        width: 50px;
+        height: 50px;
+        font-size: 1rem;
+    }
+    .employee-selection-item {
+        padding: 0.75rem;
+    }
+
+    .employee-avatar.large {
+        width: 50px;
+        height: 50px;
+        font-size: 1rem;
+    }
     .modern-header {
         min-height: 100px;
     }
@@ -2998,6 +3625,171 @@ export default {
     --el-slider-main-bg-color: #6366f1;
 }
 
+.selected-karyawan {
+    font-size: 1.1rem;
+    margin-bottom: 25px;
+    border-left: 4px solid #0d6efd;
+}
+
+.approver-field {
+    position: relative;
+}
+
+.form-control {
+    padding-right: 35px;
+}
+
+.dropdown-suggestion {
+    position: absolute;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.dropdown-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+    background: #f8f9fa;
+}
+
+.btn-remove {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.btn-remove:hover {
+    color: #dc3545;
+}
+
+.btn-add {
+    width: 100%;
+    padding: 8px;
+    background: #f8f9fa;
+    border: 1px dashed #adb5bd;
+    border-radius: 4px;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-add:hover {
+    background: #e9ecef;
+    border-color: #6c757d;
+}
+
+.form-actions {
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+/* Employee Selection */
+.assign-search {
+    margin-bottom: 1.5rem;
+}
+
+.closeRounded {
+    transition: all 0.3s ease;
+}
+
+.closeRounded:hover {
+    background: var(--danger);
+    color: white !important;
+}
+
+.employee-selection-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+
+.employee-selection-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.employee-selection-item:last-child {
+    border-bottom: none;
+}
+
+.employee-selection-item:hover {
+    background: var(--surface-soft);
+}
+
+.employee-selection-item.selected {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: var(--primary);
+}
+
+.employee-checkbox {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.employee-checkbox.rounded-4:hover {
+    background: var(--danger);
+    color: white;
+    border-color: var(--red);
+}
+
+.employee-selection-item.selected .employee-checkbox {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.employee-department {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+.selection-actions {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.selected-count {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 10px;
+    color: var(--primary);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
 /* info bar */
 .leave-info-panel {
 }
@@ -4327,7 +5119,7 @@ export default {
 }
 
 .modal-container.assign-modal {
-    max-width: 700px;
+    max-width: 1300px;
     max-height: 95vh;
 }
 
@@ -4390,6 +5182,10 @@ export default {
     overflow-y: auto;
     flex: 1;
 }
+
+.modal-body.approval {
+    max-height: none;
+}
 .modal-footer {
     padding: 1.5rem;
     border-top: 1px solid var(--border);
@@ -4411,6 +5207,32 @@ export default {
 .form-section {
     padding: 0.2rem;
 }
+.access-option {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.access-option:hover {
+    background-color: #f8f9fa;
+    border-color: #0d6efd !important;
+}
+
+.access-option.selected {
+    background-color: #e7f1ff;
+    border-color: #0d6efd !important;
+}
+
+.access-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+}
+
+.access-name {
+    font-weight: 500;
+}
 
 .form-group {
     margin-bottom: 1.5rem; /* Standard margin for form groups */
@@ -4419,11 +5241,23 @@ export default {
     border-radius: 12px;
     padding: 1rem;
     overflow-y: auto; /* Ensure content within is scrollable if needed */
-    max-height: 18rem; /* Cap height to prevent excessive modal height */
+    /* max-height: 18rem; Cap height to prevent excessive modal height */
 }
 
 .form-group.AssignRingkasan {
     max-height: 25rem;
+}
+.form-group.AssignApproval {
+    min-height: 10rem;
+    overflow: visible;
+}
+
+.form-group.team {
+    max-height: 45rem;
+}
+
+.form-group.user {
+    max-height: 18rem;
 }
 
 .form-group label,

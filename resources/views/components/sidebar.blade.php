@@ -20,6 +20,8 @@ Request::is('overtime') ||
 Request::is('overtimeAdmin') ||
 Request::is('absensiSales') ||
 Request::is('izinLevelUp') ||
+Request::is('izinAdmin') ||
+Request::is('add-karyawan-team') ||
 Request::is('izin')
 ;
 
@@ -96,11 +98,19 @@ Request::is('finishTicket');
                                 </a>
                             </li>
                         @endcan
+                        @can('akses-spesial', 'IzinPageAdmin')
+
+                            <li class="submenu-item {{ Request::is('izinAdmin') ? 'active' : '' }}">
+                                <a href="/izinAdmin" class="submenu-link">
+                                    <i class="bi bi-back"></i> Izin Admin
+                                </a>
+                            </li>
+                        @endcan
                         @can('akses-spesial', 'IzinPageApprover')
 
                             <li class="submenu-item {{ Request::is('izinLevelUp') ? 'active' : '' }}">
                                 <a href="/izinLevelUp" class="submenu-link">
-                                    <i class="bi bi-mailbox-flag"></i> Izin Approver
+                                    <i class="bi bi-check-circle"></i> Izin Approver
                                 </a>
                             </li>
                         @endcan
@@ -131,6 +141,13 @@ Request::is('finishTicket');
                             <li class="submenu-item {{ Request::is('swapShift') ? 'active' : '' }}">
                                 <a href="/swapShift" class="submenu-link">
                                     <i class="bi bi-shuffle"></i> Shift
+                                </a>
+                            </li>
+                        @endcan
+                        @can('akses-spesial','addKaryawanTeam')
+                            <li class="submenu-item {{ Request::is('add-karyawan-team') ? 'active' : '' }}">
+                                <a href="/add-karyawan-team" class="submenu-link">
+                                    <i class="bi bi-gear"></i> Pengaturan Tim & Pengguna
                                 </a>
                             </li>
                         @endcan

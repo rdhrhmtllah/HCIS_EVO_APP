@@ -43,7 +43,8 @@
                                             ) in IzinApprover"
                                             :key="index"
                                         >
-                                            {{ index + 1 }}. {{ data.Nama }}
+                                            {{ index + 1 }}.
+                                            {{ capitalize(data.Nama) }}
                                             <br />
                                         </span>
                                     </p>
@@ -409,6 +410,22 @@
                                     class="closeFilter p-1 rounded-3 ms-2"
                                     ><i class="bi bi-x"></i
                                 ></span>
+                            </div>
+                        </div>
+                        <div class="">
+                            <div
+                                class="filter-btn py-2 position-relative"
+                                style="width: fit-content !important"
+                            >
+                                <button
+                                    @click="openDialogExport"
+                                    class="toggle-btn active"
+                                    title="Card View"
+                                >
+                                    <i
+                                        class="bi bi-file-earmark-arrow-up d-flex justify-content-center align-items-center"
+                                    ></i>
+                                </button>
                             </div>
                         </div>
                         <!-- view Toggle -->
@@ -1499,9 +1516,10 @@
                                             <i class="bi bi-house-door"></i>
                                         </div>
                                         <div class="permission-type-content">
-                                            <h6>Tidak Masuk</h6>
+                                            <h6>Izin</h6>
                                             <p class="text-muted small">
-                                                Tidak masuk full hari
+                                                Pulang cepat, Datang terlambat
+                                                dan Tidak masuk
                                             </p>
                                         </div>
                                         <div class="permission-type-check">
@@ -1789,6 +1807,7 @@
                             class="form-group d-flex cursor-pointer justify-content-start align-items-center"
                         >
                             <div
+                                style="cursor: pointer !important"
                                 class="form-control d-flex align-items-center justify-content-center cursor-pointer"
                             >
                                 <div class="me-2">
@@ -1826,6 +1845,7 @@
                             class="form-group d-flex cursor-pointer justify-content-start align-items-center"
                         >
                             <div
+                                style="cursor: pointer !important"
                                 class="form-control d-flex align-items-center justify-content-center cursor-pointer"
                             >
                                 <div class="me-2">
@@ -1860,6 +1880,7 @@
                             class="form-group d-flex cursor-pointer justify-content-start align-items-center"
                         >
                             <div
+                                style="cursor: pointer !important"
                                 class="form-control d-flex align-items-center justify-content-center cursor-pointer"
                             >
                                 <div class="me-2">
@@ -2003,7 +2024,7 @@
                                 </div>
                             </div>
                             <small class="text-muted"
-                                >Format: PDF, JPG, PNG (maks. 5MB)</small
+                                >Format: PDF, JPG, PNG (maks. 10MB)</small
                             >
                         </div>
 
@@ -2047,7 +2068,7 @@
                                 </div>
                             </div>
                             <small class="text-muted"
-                                >Format: PDF, JPG, PNG (maks. 5MB)</small
+                                >Format: PDF, JPG, PNG (maks. 10MB)</small
                             >
                         </div>
                         <!-- <div v-else class="text-muted text-center py-4">
@@ -2261,21 +2282,50 @@
         </el-calendar>
 
         <template #footer>
-            <div class="dialog-footer gap-3 d-flex justify-content-end">
-                <el-button
-                    style="cursor: pointer !important"
-                    @click="handleCancel"
-                    class="btn-secondary p-1 rounded-3"
-                    >Batal</el-button
-                >
-                <el-button
-                    class="shiningEffect btn-success py-0 rounded-3 px-1 py-1"
-                    style="cursor: pointer !important"
-                    :disabled="!tempEndDate"
-                    @click="confirmDate('range')"
-                >
-                    Pilih Tanggal
-                </el-button>
+            <div class="dialog-footer gap-3 d-flex justify-content-between">
+                <div>
+                    <div
+                        class="px-2 rounded d-flex justify-content-center align-items-center bg-primary"
+                    >
+                        <div v-if="!tempStartDate" class="text-white">
+                            Pilih Tanggal Mulai
+                        </div>
+                        <div
+                            v-if="tempStartDate && !tempEndDate"
+                            class="text-white"
+                        >
+                            Pilih Tanggal Selesai
+                        </div>
+                        <div
+                            v-if="tempStartDate && tempEndDate"
+                            class="text-white"
+                        >
+                            {{ formatTanggalTemp(tempStartDate, tempEndDate) }}
+                        </div>
+                    </div>
+                    <div
+                        style="font-size: 0.8rem"
+                        class="text-danger text-start"
+                    >
+                        Klik 2 kali jika ingin 1 hari!
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <el-button
+                        style="cursor: pointer !important"
+                        @click="handleCancel"
+                        class="btn-secondary p-1 rounded-3"
+                        >Batal</el-button
+                    >
+                    <el-button
+                        style="cursor: pointer !important"
+                        class="btn-modern btn-success py-1 rounded-3 px-1"
+                        :disabled="!tempEndDate"
+                        @click="confirmDate('range')"
+                    >
+                        Pilih Tanggal
+                    </el-button>
+                </div>
             </div>
         </template>
     </el-dialog>
@@ -2319,21 +2369,39 @@
         </el-calendar>
 
         <template #footer>
-            <div class="dialog-footer gap-3 d-flex justify-content-end">
-                <el-button
-                    style="cursor: pointer !important"
-                    @click="handleCancel"
-                    class="btn-secondary p-1 rounded-3"
-                    >Batal</el-button
+            <div class="dialog-footer gap-3 d-flex justify-content-between">
+                <div
+                    class="px-2 rounded d-flex justify-content-center align-items-center bg-primary"
                 >
-                <el-button
-                    class="shiningEffect btn-success py-0 rounded-3 px-1 py-1"
-                    style="cursor: pointer !important"
-                    :disabled="!tempEndDate"
-                    @click="confirmDate('range')"
-                >
-                    Pilih Tanggal
-                </el-button>
+                    <div v-if="!tempStartDate" class="text-white">
+                        Pilih Tanggal Mulai
+                    </div>
+                    <div
+                        v-if="tempStartDate && !tempEndDate"
+                        class="text-white"
+                    >
+                        Pilih Tanggal Selesai
+                    </div>
+                    <div v-if="tempStartDate && tempEndDate" class="text-white">
+                        {{ formatTanggalTemp(tempStartDate, tempEndDate) }}
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <el-button
+                        style="cursor: pointer !important"
+                        @click="handleCancel"
+                        class="btn-secondary p-1 rounded-3"
+                        >Batal</el-button
+                    >
+                    <el-button
+                        style="cursor: pointer !important"
+                        class="btn-modern btn-success py-1 rounded-3 px-1"
+                        :disabled="!tempEndDate"
+                        @click="confirmDate('single')"
+                    >
+                        Pilih Tanggal
+                    </el-button>
+                </div>
             </div>
         </template>
     </el-dialog>
@@ -2346,22 +2414,25 @@
         align-center
         :lock-scroll="true"
     >
-        <el-calendar v-model="calendarDate" :disabled-date="disablePastDates">
+        <el-calendar
+            v-model="calendarDate"
+            :disabled-date="disablePastDatesSingle"
+        >
             <template #date-cell="{ data }">
                 <el-tooltip
-                    :disabled="!isSpecialDate(data.date)"
-                    :content="getSpecialDateTooltip(data.date)"
+                    :disabled="!isSpecialDateSingle(data.date)"
+                    :content="getSpecialDateTooltipSingle(data.date)"
                     placement="top"
                 >
                     <div
                         class="cell-date-wrapper"
-                        :class="getCellClass(data)"
+                        :class="getCellClassSingle(data)"
                         @click="handleDateClickSingle(data)"
                     >
                         <div
                             class="date-cell"
                             :class="{
-                                'is-disabled-custom': disablePastDates(
+                                'is-disabled-custom': disablePastDatesSingle(
                                     data.date
                                 ),
                             }"
@@ -2374,21 +2445,33 @@
         </el-calendar>
 
         <template #footer>
-            <div class="dialog-footer gap-3 d-flex justify-content-end">
-                <el-button
-                    style="cursor: pointer !important"
-                    @click="handleCancel"
-                    class="btn-secondary p-1 rounded-3"
-                    >Batal</el-button
+            <div class="dialog-footer gap-3 d-flex justify-content-between">
+                <div
+                    class="px-2 rounded d-flex justify-content-center align-items-center bg-primary"
                 >
-                <el-button
-                    style="cursor: pointer !important"
-                    class="shiningEffect btn-success py-1 rounded-3 px-1"
-                    :disabled="!tempEndDate"
-                    @click="confirmDate('single')"
-                >
-                    Pilih Tanggal
-                </el-button>
+                    <div v-if="!tempStartDate" class="text-white">
+                        Pilih Tanggal
+                    </div>
+                    <div v-else class="text-white">
+                        {{ formatTanggalTemp(tempStartDate) }}
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <el-button
+                        style="cursor: pointer !important"
+                        @click="handleCancel"
+                        class="btn-secondary p-1 rounded-3"
+                        >Batal</el-button
+                    >
+                    <el-button
+                        style="cursor: pointer !important"
+                        class="btn-modern btn-success py-1 rounded-3 px-1"
+                        :disabled="!tempStartDate"
+                        @click="confirmDate('single')"
+                    >
+                        Pilih Tanggal
+                    </el-button>
+                </div>
             </div>
         </template>
     </el-dialog>
@@ -2425,6 +2508,112 @@
                 >
                     Pilih Tanggal
                 </el-button>
+            </div>
+        </template>
+    </el-dialog>
+
+    <!-- calendar range Export -->
+    <el-dialog
+        v-model="dialogVisibleExport"
+        title="Pilih Tanggal Mulai dan Selesai"
+        width="480px"
+        align-center
+        :lock-scroll="true"
+    >
+        <el-calendar v-model="calendarDateExport">
+            <template #date-cell="{ data }">
+                <div
+                    class="cell-date-wrapper"
+                    :class="getCellClassExport(data)"
+                    @click="handleDateClickExport(data)"
+                >
+                    <div class="date-cell">
+                        {{ data.day.split("-")[2] }}
+                    </div>
+                </div>
+            </template>
+        </el-calendar>
+
+        <template #footer>
+            <div class="dialog-footer gap-3 d-flex justify-content-between">
+                <div>
+                    <div
+                        class="px-2 rounded d-flex justify-content-center align-items-center bg-primary"
+                    >
+                        <div v-if="!tempStartDateExport" class="text-white">
+                            Pilih Tanggal Mulai
+                        </div>
+                        <div
+                            v-if="tempStartDateExport && !tempEndDateExport"
+                            class="text-white"
+                        >
+                            Pilih Tanggal Selesai
+                        </div>
+                        <div
+                            v-if="tempStartDateExport && tempEndDateExport"
+                            class="text-white"
+                        >
+                            {{
+                                formatTanggalTemp(
+                                    tempStartDateExport,
+                                    tempEndDateExport
+                                )
+                            }}
+                        </div>
+                    </div>
+                    <div
+                        style="font-size: 0.8rem"
+                        class="text-danger text-start"
+                    >
+                        Klik 2 kali jika ingin 1 hari!
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <el-button
+                        style="cursor: pointer !important"
+                        @click="handleCancelExport"
+                        class="btn-secondary p-1 rounded-3"
+                        >Batal</el-button
+                    >
+                    <el-button
+                        style="cursor: pointer !important"
+                        class="btn-modern btn-success py-1 rounded-3 px-1"
+                        :disabled="!tempEndDateExport"
+                        @click="showAlertModalFC('export', 'Download')"
+                    >
+                        Pilih Tanggal
+                    </el-button>
+                </div>
+            </div>
+        </template>
+    </el-dialog>
+
+    <!-- alert modal -->
+    <el-dialog
+        v-model="showAlertModal"
+        title="Konfirmasi menyimpan data"
+        width="400px"
+        center
+        :lock-scroll="true"
+    >
+        <div class="delete-modal-content">
+            <i class="bi bi-exclamation-triangle warning-icon"></i>
+            <p>
+                {{ Pesan }}
+            </p>
+            <p class="text-danger">Tindakan ini tidak dapat dibatalkan.</p>
+        </div>
+        <template #footer>
+            <div class="delete-modal-footer">
+                <button
+                    class="btn-modern btn-secondary"
+                    @click="closeAlertModal"
+                >
+                    Batal
+                </button>
+                <button class="btn-modern btn-success" @click="fnc">
+                    {{ buttonAlert }}
+                </button>
             </div>
         </template>
     </el-dialog>
@@ -2468,6 +2657,19 @@ export default {
     },
     data() {
         return {
+            dataExport: [],
+            showAlertModal: false,
+            Pesan: "",
+            buttonAlert: "",
+            headerAlert: "",
+            fnc: null,
+
+            dialogVisibleExport: false,
+            selectedDateExport: [],
+            tempStartDateExport: null,
+            tempEndDateExport: null,
+            calendarDateExport: new Date(),
+
             TanggalSakitIzin: [],
             TanggalCuti: [],
             TanggalPulangTerlambat: [],
@@ -3315,6 +3517,365 @@ export default {
         },
     },
     methods: {
+        openDialogExport() {
+            if (this.selectedDateExport.length === 2) {
+                const [startStr, endStr] = this.selectedDateExport;
+                this.tempStartDateExport = new Date(startStr + "T00:00:00");
+                this.tempEndDateExport = new Date(endStr + "T00:00:00");
+                this.calendarDateExport = new Date(startStr + "T00:00:00");
+            } else {
+                this.tempStartDateExport = null;
+                this.tempEndDateExport = null;
+                this.calendarDateExport = new Date();
+            }
+            this.dialogVisibleExport = true;
+        },
+        async getExportData() {
+            try {
+                this.loading = true;
+                const response = await axios.get("/izin/getExport", {
+                    params: {
+                        start: this.tempStartDateExport,
+                        end: this.tempEndDateExport,
+                    },
+                });
+
+                if (response.status == 200) {
+                    this.dataExport = response.data.data;
+                    this.exportAbsensiExcel();
+                    // console.log(response.data.data);
+                } else {
+                    // console.log(response);
+                    console.log("Terjadi Error saat mengambil data!");
+                }
+            } catch (error) {
+                console.log(`Terjadi Error di : ${error}`);
+                ElMessage({
+                    showClose: true,
+                    message:
+                        "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
+                    type: "error",
+                    customStyle: {
+                        "z-index": "1050",
+                    },
+                });
+                this.closeAlertModal();
+            } finally {
+                this.closeAlertModal();
+                this.handleCancelExport();
+                this.loading = false;
+            }
+        },
+        async exportAbsensiExcel() {
+            const ExcelJS = await import("exceljs");
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet("Absensi Export");
+
+            try {
+                const headerStyle = {
+                    fill: {
+                        type: "pattern",
+                        pattern: "solid",
+                        fgColor: { argb: "ffeb9c" },
+                    },
+                    font: { bold: true },
+                    alignment: { vertical: "middle", horizontal: "center" },
+                    border: {
+                        top: { style: "thin" },
+                        left: { style: "thin" },
+                        bottom: { style: "thin" },
+                        right: { style: "thin" },
+                    },
+                };
+
+                const cellStyle = {
+                    border: {
+                        top: { style: "thin" },
+                        left: { style: "thin" },
+                        bottom: { style: "thin" },
+                        right: { style: "thin" },
+                    },
+                    alignment: { vertical: "middle", horizontal: "left" },
+                };
+
+                const centeredCellStyle = {
+                    ...cellStyle,
+                    alignment: { vertical: "middle", horizontal: "center" },
+                };
+
+                // helper untuk mapping tipe izin
+                const parseIzin = (tipe) => {
+                    if (tipe === "izinFull") return "Izin Pribadi";
+                    else if (tipe === "sakit") return "Izin Sakit";
+                    else if (tipe === "pulangCepat") return "Pulang Cepat";
+                    else if (tipe === "terlambat") return "Izin Terlambat";
+                    else if (
+                        tipe === "cuti" ||
+                        tipe === "CUTI" ||
+                        tipe === "cutiHutang"
+                    )
+                        return "Cuti";
+                    return tipe;
+                };
+
+                // Judul
+                worksheet.mergeCells("B1:I1");
+                worksheet.getCell(
+                    "B1"
+                ).value = `Pengajuan Izin ${this.capitalize(
+                    this.namaKaryawan
+                )}`;
+                worksheet.getCell("B1").style = headerStyle;
+
+                worksheet.getCell("A1").value = "Tanggal";
+                worksheet.mergeCells("A1:A2");
+                worksheet.getCell("A1").style = headerStyle;
+
+                // Header kolom
+                const headers = [
+                    "No. Transaksi",
+                    "Nama Karyawan",
+                    "Jenis Izin",
+                    "Jam",
+                    "Tanggal Mulai",
+                    "Tanggal Selesai",
+                    "Alasan",
+                    "Status",
+                ];
+                const headerRow = worksheet.getRow(2);
+                headerRow.values = [null, ...headers];
+                headerRow.eachCell((cell, colNumber) => {
+                    if (colNumber > 0) cell.style = headerStyle;
+                });
+
+                worksheet.columns = [
+                    { key: "tanggal", width: 20 },
+                    { key: "noTrans", width: 20 },
+                    { key: "nama", width: 25 },
+                    { key: "jenisIzin", width: 20 },
+                    { key: "jam", width: 15 },
+                    { key: "tglMulai", width: 15 },
+                    { key: "tglSelesai", width: 15 },
+                    { key: "alasan", width: 40 },
+                    { key: "status", width: 30 },
+                ];
+
+                // Grouping
+                let grouped = {};
+                this.dataExport.forEach((item) => {
+                    let tanggalMulai = item.Tanggal_Mulai?.split(" ")[0];
+                    let tanggalSelesai = item.Tanggal_Selesai
+                        ? item.Tanggal_Selesai.split(" ")[0]
+                        : "Tidak ada";
+                    let rangeTanggal = `${tanggalMulai} s.d. ${tanggalSelesai}`;
+
+                    if (!grouped[rangeTanggal]) grouped[rangeTanggal] = {};
+                    if (!grouped[rangeTanggal][item.No_Transaksi])
+                        grouped[rangeTanggal][item.No_Transaksi] = [];
+                    grouped[rangeTanggal][item.No_Transaksi].push(item);
+                });
+
+                // Isi data
+                let currentRowIndex = 3;
+                Object.entries(grouped).forEach(([rangeTanggal, transaksi]) => {
+                    const dateBlockStartRow = currentRowIndex;
+
+                    Object.entries(transaksi).forEach(([noTrans, details]) => {
+                        const transBlockStartRow = currentRowIndex;
+
+                        details.forEach((user) => {
+                            const row = worksheet.getRow(currentRowIndex);
+
+                            // Status handling
+                            let statusFinal = user.status;
+                            if (
+                                user.status === "Ditolak" &&
+                                user.Approver === "Sistem"
+                            ) {
+                                statusFinal = "Ditolak oleh Sistem (Expired)";
+                            }
+
+                            row.values = {
+                                nama: user.Nama,
+                                jenisIzin: parseIzin(user.Tipe_Izin),
+                                jam: user.Jam_Mulai || "-",
+                                tglMulai: user.Tanggal_Mulai?.split(" ")[0],
+                                tglSelesai: user.Tanggal_Selesai
+                                    ? user.Tanggal_Selesai.split(" ")[0]
+                                    : "Tidak ada",
+                                alasan: user.Alasan || "-",
+                                status: statusFinal,
+                            };
+
+                            row.eachCell((cell, colNumber) => {
+                                if (colNumber > 1) cell.style = cellStyle;
+                            });
+
+                            currentRowIndex++;
+                        });
+
+                        // Merge kolom "No. Transaksi"
+                        const transBlockEndRow = currentRowIndex - 1;
+                        if (transBlockStartRow <= transBlockEndRow) {
+                            worksheet.mergeCells(
+                                `B${transBlockStartRow}:B${transBlockEndRow}`
+                            );
+                            const cellB = worksheet.getCell(
+                                `B${transBlockStartRow}`
+                            );
+                            cellB.value = noTrans;
+                            cellB.style = centeredCellStyle;
+                        }
+                    });
+
+                    // Merge kolom "Tanggal"
+                    const dateBlockEndRow = currentRowIndex - 1;
+                    if (dateBlockStartRow <= dateBlockEndRow) {
+                        worksheet.mergeCells(
+                            `A${dateBlockStartRow}:A${dateBlockEndRow}`
+                        );
+                        const cellA = worksheet.getCell(
+                            `A${dateBlockStartRow}`
+                        );
+                        cellA.value = rangeTanggal;
+                        cellA.style = centeredCellStyle;
+                    }
+                });
+
+                // Download
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], {
+                    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                });
+
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = `Export_Izin_${new Date()
+                    .toISOString()
+                    .slice(0, 10)}.xlsx`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+            } catch (error) {
+                console.error(`Terjadi Error di : ${error}`);
+            } finally {
+                this.loading = false;
+            }
+        },
+        showAlertModalFC(jenis, button) {
+            if (jenis == "export") {
+                this.Pesan = `Anda yakin ingin mendownload data izin ${this.formatTanggalTemp(
+                    this.tempStartDateExport,
+                    this.tempEndDateExport
+                )} `;
+                this.buttonAlert = button;
+                this.headerAlert = "Download Export data!";
+                this.fnc = () => this.getExportData();
+            }
+            this.showAlertModal = true;
+        },
+        closeAlertModal() {
+            this.Pesan = null;
+            this.fnc = null;
+            this.showAlertModal = false;
+        },
+        handleDateClickExport(data) {
+            const clickedDate = data.date;
+            if (this.tempStartDateExport && this.tempEndDateExport) {
+                this.tempStartDateExport = clickedDate;
+                this.tempEndDateExport = null;
+            } else if (!this.tempStartDateExport) {
+                this.tempStartDateExport = clickedDate;
+            } else {
+                if (
+                    clickedDate.getTime() < this.tempStartDateExport.getTime()
+                ) {
+                    this.tempStartDateExport = clickedDate;
+                } else {
+                    this.tempEndDateExport = clickedDate;
+                }
+            }
+        },
+        getCellClassExport(data) {
+            const classes = {};
+            const dateObj = new Date(data.date);
+            const formattedDate = this.formatDateToYYYYMMDD(dateObj); // Menggunakan fungsi pembantu
+            const checkDate = new Date(formattedDate);
+            checkDate.setHours(0, 0, 0, 0);
+
+            // Logika untuk rentang tanggal yang dipilih
+            const start = this.tempStartDateExport
+                ? this.tempStartDateExport.setHours(0, 0, 0, 0)
+                : null;
+            const end = this.tempEndDateExport
+                ? this.tempEndDateExport.setHours(0, 0, 0, 0)
+                : null;
+
+            if (start && checkDate.getTime() === start)
+                classes["is-start"] = true;
+            if (end && checkDate.getTime() === end) classes["is-end"] = true;
+            if (start && end && checkDate > start && checkDate < end) {
+                classes["is-in-range"] = true;
+            }
+
+            // Logika untuk hari Minggu (Weekend)
+            const dayOfWeek = dateObj.getDay(); // 0 = Minggu
+            if (dayOfWeek === 0) {
+                classes["is-red-date"] = true;
+            }
+
+            return classes;
+        },
+        handleCancelExport() {
+            this.dialogVisibleExport = false;
+            this.selectedDateExport = [];
+            this.tempStartDateExport = null;
+            this.tempEndDateExport = null;
+        },
+        formatTanggalTemp(dateStart, dateEnd) {
+            const bulan = [
+                "Januari",
+                "Februari",
+                "Maret",
+                "April",
+                "Mei",
+                "Juni",
+                "Juli",
+                "Agustus",
+                "September",
+                "Oktober",
+                "November",
+                "Desember",
+            ];
+
+            if (!dateStart) return "";
+
+            let start = new Date(dateStart);
+            let end = dateEnd ? new Date(dateEnd) : null;
+
+            // Kalau hanya 1 tanggal
+            if (!end) {
+                return `${start.getDate()} ${
+                    bulan[start.getMonth()]
+                } ${start.getFullYear()}`;
+            }
+
+            // Kalau bulan & tahun sama
+            if (
+                start.getMonth() === end.getMonth() &&
+                start.getFullYear() === end.getFullYear()
+            ) {
+                return `${start.getDate()}-${end.getDate()} ${
+                    bulan[start.getMonth()]
+                } ${start.getFullYear()}`;
+            }
+
+            // Kalau bulan atau tahun beda
+            return `${start.getDate()} ${
+                bulan[start.getMonth()]
+            } ${start.getFullYear()} - ${end.getDate()} ${
+                bulan[end.getMonth()]
+            } ${end.getFullYear()}`;
+        },
         parseStatus(status) {
             if (!status) return "Diproses";
 
@@ -3381,6 +3942,66 @@ export default {
             // console.log(data);
             return data;
         },
+        isSpecialDateSingle(date) {
+            const formattedDate = this.formatDateToYYYYMMDD(date);
+            const checkDate = new Date(formattedDate);
+            checkDate.setHours(0, 0, 0, 0);
+
+            // 1. Cek special date
+            const isSpecial = this.specialDates.some(
+                (sd) => sd.date === formattedDate
+            );
+
+            // 2. Cek tanggal terlambat / pulang terlambat
+            let isTerlambat = false;
+            let isPulangTerlambat = false;
+
+            if (this.assignIzinType2 === "terlambat") {
+                isTerlambat = this.TanggalPulangTerlambat.some((item) => {
+                    const start = new Date(item.Tanggal_Masuk_Pulang);
+                    start.setHours(0, 0, 0, 0);
+                    return (
+                        checkDate.getTime() === start.getTime() &&
+                        item.Jenis === "terlambat"
+                    );
+                });
+            } else if (this.assignIzinType2 === "pulangCepat") {
+                isPulangTerlambat = this.TanggalPulangTerlambat.some((item) => {
+                    const start = new Date(item.Tanggal_Masuk_Pulang);
+                    start.setHours(0, 0, 0, 0);
+                    return (
+                        checkDate.getTime() === start.getTime() &&
+                        item.Jenis === "pulangCepat"
+                    );
+                });
+            }
+
+            // 3. Cek sakit / izin
+            const isSakitIzin = this.TanggalSakitIzin.some((item) => {
+                const start = new Date(item.Tanggal_Sakit_Izin_Dari);
+                const end = new Date(item.Tanggal_Sakit_Izin_Sampai);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return checkDate >= start && checkDate <= end;
+            });
+
+            // 4. Cek cuti
+            const isCuti = this.TanggalCuti.some((cuti) => {
+                const start = new Date(cuti.Tanggal_Cuti_Dari);
+                const end = new Date(cuti.Tanggal_Cuti_Sampai);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return checkDate >= start && checkDate <= end;
+            });
+
+            return (
+                isSpecial ||
+                isTerlambat ||
+                isPulangTerlambat ||
+                isSakitIzin ||
+                isCuti
+            );
+        },
         getSpecialDateTooltip(date) {
             const formattedDate = this.formatDateToYYYYMMDD(date);
             const checkDate = new Date(formattedDate);
@@ -3441,6 +4062,83 @@ export default {
             }
 
             // Jika tidak ada yang cocok, kembalikan string kosong
+            return "";
+        },
+        getSpecialDateTooltipSingle(date) {
+            const formattedDate = this.formatDateToYYYYMMDD(date);
+            const checkDate = new Date(formattedDate);
+            checkDate.setHours(0, 0, 0, 0);
+
+            // 1. Prioritas: Hari spesial yang terdaftar
+            const specialDay = this.specialDates.find(
+                (sd) => sd.date === formattedDate
+            );
+            if (specialDay) {
+                return specialDay.description;
+            }
+
+            // 2. Prioritas: Terlambat / Pulang Cepat (hanya jika assignIzinType2 sesuai)
+            if (this.assignIzinType2 === "terlambat") {
+                const isTerlambat = this.TanggalPulangTerlambat.find((item) => {
+                    const start = new Date(item.Tanggal_Masuk_Pulang);
+                    start.setHours(0, 0, 0, 0);
+                    return (
+                        checkDate.getTime() === start.getTime() &&
+                        item.Jenis === "terlambat"
+                    );
+                });
+                if (isTerlambat) {
+                    return `${this.parseIzin(isTerlambat.Jenis)} ${
+                        isTerlambat.No_Transaksi
+                    }`;
+                }
+            } else if (this.assignIzinType2 === "pulangCepat") {
+                const isPulangCepat = this.TanggalPulangTerlambat.find(
+                    (item) => {
+                        const start = new Date(item.Tanggal_Masuk_Pulang);
+                        start.setHours(0, 0, 0, 0);
+                        return (
+                            checkDate.getTime() === start.getTime() &&
+                            item.Jenis === "pulangCepat"
+                        );
+                    }
+                );
+                if (isPulangCepat) {
+                    return `${this.parseIzin(isPulangCepat.Jenis)} ${
+                        isPulangCepat.No_Transaksi
+                    }`;
+                }
+            }
+
+            // 3. Prioritas: Sakit / Izin
+            const isSakitIzin = this.TanggalSakitIzin.find((item) => {
+                const start = new Date(item.Tanggal_Sakit_Izin_Dari);
+                const end = new Date(item.Tanggal_Sakit_Izin_Sampai);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return checkDate >= start && checkDate <= end;
+            });
+            if (isSakitIzin) {
+                return `${this.parseIzin(isSakitIzin.Jenis)} ${
+                    isSakitIzin.No_Transaksi
+                }`;
+            }
+
+            // 4. Prioritas: Cuti
+            const cutiHariIni = this.TanggalCuti.find((cuti) => {
+                const start = new Date(cuti.Tanggal_Cuti_Dari);
+                const end = new Date(cuti.Tanggal_Cuti_Sampai);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return checkDate >= start && checkDate <= end;
+            });
+            if (cutiHariIni) {
+                return `${this.parseIzin(cutiHariIni.Jenis)} ${
+                    cutiHariIni.No_Transaksi
+                }`;
+            }
+
+            // Jika tidak ada yang cocok
             return "";
         },
         getClassCuti(angka) {
@@ -3790,6 +4488,7 @@ export default {
         },
         async getData() {
             try {
+                this.loading = true;
                 const response = await axios.get("/izin/getDataIzin");
 
                 if (response.status == 200) {
@@ -3920,43 +4619,47 @@ export default {
                 return dateString; // Fallback
             }
         },
-        // disablePastDates(date) {
-        //     const today = new Date();
-        //     const dayOfWeek = date.getDay();
-        //     today.setHours(0, 0, 0, 0); // Normalisasi 'hari ini' ke awal hari
-
-        //     const dateToCheck = new Date(date);
-        //     dateToCheck.setHours(0, 0, 0, 0); // Normalisasi tanggal yang dicek ke awal hari
-
-        //     // 1. Logika untuk meng-disable tanggal yang sudah lebih dari 4 hari lalu
-        //     const fourDaysAgo = new Date(today);
-        //     fourDaysAgo.setDate(today.getDate() - 4);
-        //     const isPastDate = dateToCheck.getTime() < fourDaysAgo.getTime();
-
-        //     // 2. Logika untuk meng-disable tanggal spesial (cuti, sakit, terlambat)
-        //     // Fungsi ini akan menggunakan isSpecialDate() yang sudah ada
-        //     const isSpecial = this.isSpecialDate(dateToCheck);
-        //     const minggu = dayOfWeek == 0;
-
-        //     // Kembalikan 'true' jika salah satu kondisi terpenuhi
-        //     return isPastDate || isSpecial || minggu;
-        // },
         disablePastDates(date) {
+            const today = new Date();
+            const dayOfWeek = date.getDay();
+            today.setHours(0, 0, 0, 0); // Normalisasi 'hari ini' ke awal hari
+
             const dateToCheck = new Date(date);
-            dateToCheck.setHours(0, 0, 0, 0); // Normalisasi tanggal yang dicek
+            dateToCheck.setHours(0, 0, 0, 0); // Normalisasi tanggal yang dicek ke awal hari
 
-            const startDate = new Date("2025-07-21");
-            startDate.setHours(0, 0, 0, 0); // Normalisasi tanggal mulai
+            // 1. Logika untuk meng-disable tanggal yang sudah lebih dari 4 hari lalu
+            const fourDaysAgo = new Date(today);
+            fourDaysAgo.setDate(today.getDate() - 4);
+            const isPastDate = dateToCheck.getTime() < fourDaysAgo.getTime();
 
-            const isBeforeStart = dateToCheck < startDate;
+            // 2. Logika untuk meng-disable tanggal spesial (cuti, sakit, terlambat)
+            // Fungsi ini akan menggunakan isSpecialDate() yang sudah ada
             const isSpecial = this.isSpecialDate(dateToCheck);
-            const isSunday = dateToCheck.getDay() === 0;
+            const minggu = dayOfWeek == 0;
 
-            // Kembalikan true jika:
-            // - tanggal sebelum 21 Juli
-            // - tanggal special
-            // - hari Minggu
-            return isBeforeStart || isSpecial || isSunday;
+            // Kembalikan 'true' jika salah satu kondisi terpenuhi
+            return isPastDate || isSpecial || minggu;
+        },
+        disablePastDatesSingle(date) {
+            const today = new Date();
+            const dayOfWeek = date.getDay();
+            today.setHours(0, 0, 0, 0); // Normalisasi 'hari ini' ke awal hari
+
+            const dateToCheck = new Date(date);
+            dateToCheck.setHours(0, 0, 0, 0); // Normalisasi tanggal yang dicek ke awal hari
+
+            // 1. Logika untuk meng-disable tanggal yang sudah lebih dari 4 hari lalu
+            const fourDaysAgo = new Date(today);
+            fourDaysAgo.setDate(today.getDate() - 4);
+            const isPastDate = dateToCheck.getTime() < fourDaysAgo.getTime();
+
+            // 2. Logika untuk meng-disable tanggal spesial (cuti, sakit, terlambat)
+            // Fungsi ini akan menggunakan isSpecialDate() yang sudah ada
+            const isSpecial = this.isSpecialDateSingle(dateToCheck);
+            const minggu = dayOfWeek == 0;
+
+            // Kembalikan 'true' jika salah satu kondisi terpenuhi
+            return isPastDate || isSpecial || minggu;
         },
 
         disablePastDatesCuti(date) {
@@ -4116,15 +4819,26 @@ export default {
         },
         handleDateClickSingle(data) {
             const clickedDate = data.date;
-            if (this.disablePastDates(clickedDate)) {
+
+            if (this.disablePastDatesSingle(clickedDate)) {
                 ElMessage({
                     message: "Tanggal ini tidak bisa dipilih.",
                     type: "warning",
                 });
                 return;
             }
-            this.tempStartDate = clickedDate;
-            this.tempEndDate = clickedDate;
+
+            // Toggle: kalau tanggal yang sama diklik lagi, reset
+            if (
+                this.tempStartDate &&
+                this.tempStartDate.getTime() === clickedDate.getTime()
+            ) {
+                this.tempStartDate = null;
+            } else {
+                this.tempStartDate = clickedDate;
+            }
+
+            this.tempEndDate = null;
         },
         formatDateToYYYYMMDD(date) {
             const d = new Date(date);
@@ -4220,11 +4934,83 @@ export default {
 
             return classes;
         },
+        getCellClassSingle(data) {
+            const classes = {};
+            const dateObj = new Date(data.date);
+            const formattedDate = this.formatDateToYYYYMMDD(dateObj); // Menggunakan fungsi pembantu
+            const checkDate = new Date(formattedDate);
+            checkDate.setHours(0, 0, 0, 0);
+
+            // Logika untuk rentang tanggal yang dipilih
+            const start = this.tempStartDate
+                ? this.tempStartDate.setHours(0, 0, 0, 0)
+                : null;
+            const end = this.tempEndDate
+                ? this.tempEndDate.setHours(0, 0, 0, 0)
+                : null;
+
+            if (start && checkDate.getTime() === start)
+                classes["is-start"] = true;
+            if (end && checkDate.getTime() === end) classes["is-end"] = true;
+            if (start && end && checkDate > start && checkDate < end) {
+                classes["is-in-range"] = true;
+            }
+
+            // Logika untuk tanggal yang sudah lewat (disabled)
+            if (this.disablePastDatesSingle(data.date)) {
+                classes["is-disabled-custom"] = true;
+            }
+
+            // --- Logika Penentuan Kelas untuk Tanggal Spesial ---
+            // Pastikan untuk memeriksa semua jenis tanggal spesial
+
+            // 1. Cek Hari Spesial dari specialDates
+            const isAnySpecialDate = this.specialDates.some(
+                (sd) => sd.date === formattedDate
+            );
+            if (isAnySpecialDate) {
+                classes["is-orange-date"] = true;
+            }
+
+            // 2. Cek Tanggal Cuti
+            const isCuti = this.TanggalCuti.some((cuti) => {
+                const start = new Date(cuti.Tanggal_Cuti_Dari);
+                const end = new Date(cuti.Tanggal_Cuti_Sampai);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return checkDate >= start && checkDate <= end;
+            });
+            if (isCuti) {
+                classes["is-orange-date"] = true;
+                classes["is-disabled-custom"] = true;
+            }
+
+            // 3. Cek Tanggal Sakit/Izin
+            const isSakitIzin = this.TanggalSakitIzin.some((item) => {
+                const start = new Date(item.Tanggal_Sakit_Izin_Dari);
+                const end = new Date(item.Tanggal_Sakit_Izin_Sampai);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return checkDate >= start && checkDate <= end;
+            });
+            if (isSakitIzin) {
+                classes["is-orange-date"] = true;
+                classes["is-disabled-custom"] = true;
+            }
+
+            // Logika untuk hari Minggu (Weekend)
+            const dayOfWeek = dateObj.getDay(); // 0 = Minggu
+            if (dayOfWeek === 0) {
+                classes["is-red-date"] = true;
+            }
+
+            return classes;
+        },
 
         confirmDate(jenis) {
             this.loading = true;
             if (jenis == "single") {
-                if (!this.tempEndDate) {
+                if (!this.tempStartDate) {
                     ElMessage({
                         message: "Silakan pilih tanggal izin.",
                         type: "warning",
@@ -4234,8 +5020,8 @@ export default {
                 }
 
                 this.AssignDateRange = [
-                    this.formatDateToString(this.tempEndDate),
-                    this.formatDateToString(this.tempEndDate),
+                    this.formatDateToString(this.tempStartDate),
+                    this.formatDateToString(this.tempStartDate),
                 ];
             } else {
                 if (!this.tempStartDate || !this.tempEndDate) {
@@ -4323,7 +5109,7 @@ export default {
                     "image/jpg",
                     "image/png",
                 ];
-                const maxSize = 5 * 1024 * 1024; // 5MB
+                const maxSize = 10 * 1024 * 1024; // 10MB
 
                 if (!allowedTypes.includes(file.type)) {
                     ElMessage({
@@ -4338,7 +5124,7 @@ export default {
 
                 if (file.size > maxSize) {
                     ElMessage({
-                        message: "Ukuran file terlalu besar. Maksimal 5MB.",
+                        message: "Ukuran file terlalu besar. Maksimal 10MB.",
                         type: "error",
                     });
                     this.AssignFile = null;

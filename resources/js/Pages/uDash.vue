@@ -149,7 +149,7 @@
                                             <div
                                                 class="info-value text-dark fw-bold fs-4"
                                             >
-                                                {{ totalTerlambat
+                                                {{ totalTerlambat?.toFixed(0)
                                                 }}<span
                                                     class="p-1"
                                                     style="
@@ -188,7 +188,7 @@
                                             <div
                                                 class="info-value text-dark fw-bold fs-4"
                                             >
-                                                {{ totalLembur
+                                                {{ totalLembur?.toFixed(0)
                                                 }}<span
                                                     class="p-1"
                                                     style="
@@ -546,90 +546,33 @@
                         </div>
                     </div>
                 </div>
-                <!-- LEMBUR -->
-                <div v-if="!loadingLembur" class="">
+                <!-- approver izin -->
+                <div class="">
                     <div class="card leave-requests-card">
                         <div
                             class="card-header d-flex justify-content-between align-items-center"
                         >
-                            <h5 class="mb-0">Riwayat Lembur</h5>
-                            <div class="d-flex gap-2">
-                                <button
-                                    :disabled="
-                                        paginationLembur.current_page <= 1
-                                    "
-                                    @click="
-                                        getAllIzin(
-                                            paginationLembur.prev_page_url
-                                        )
-                                    "
-                                    class="btn-modern btn-primary p-1"
-                                    style="border-radius: 8px !important"
-                                >
-                                    <i
-                                        class="bi bi-arrow-left d-flex justify-content-center align-items-center"
-                                    ></i>
-                                </button>
-                                <span
-                                    >{{ paginationLembur.current_page }} of
-                                    {{ paginationLembur.last_page }}</span
-                                >
-                                <button
-                                    :disabled="
-                                        paginationLembur.current_page ==
-                                        paginationLembur.last_page
-                                    "
-                                    @click="
-                                        getAllIzin(
-                                            paginationLembur.next_page_url
-                                        )
-                                    "
-                                    class="btn-modern btn-primary p-1"
-                                    style="border-radius: 8px !important"
-                                >
-                                    <i
-                                        class="bi bi-arrow-right d-flex justify-content-center align-items-center"
-                                    ></i>
-                                </button>
-                            </div>
+                            <h5 class="mb-0">Approver izin</h5>
                         </div>
-                        <div class="card-body" style="height: 13rem">
+                        <div class="card-body" style="max-height: 13rem">
                             <div
-                                v-for="(data, idx) in allDataLembur"
+                                v-for="(data, idx) in nama_Approver"
                                 :key="idx"
-                                class="row fs-6 mt-3"
+                                class="row fs-6 mt-3 ps-3 align-items-center justify-content-between"
                             >
                                 <div
+                                    v-tooltip="data.Nama"
                                     style="font-size: 0.9rem !important"
-                                    class="col-4 p-0 d-flex justify-content-center align-items-center"
+                                    class="col-6 p-0 d-flex justify-content-start text-start align-items-center"
                                 >
                                     {{
-                                        formatTanggal_Lembur(
-                                            data.Tanggal_Lembur_Dari,
-                                            data.Tanggal_Lembur_Sampai
-                                        )
+                                        truncateText(capitalize(data?.Nama), 30)
                                     }}
                                 </div>
-                                <div
-                                    v-tooltip="
-                                        data.Tanggal_Lembur_Dari +
-                                        '-' +
-                                        data.Tanggal_Lembur_Sampai
-                                    "
-                                    style="
-                                        font-size: 0.9rem !important;
-                                        cursor: pointer;
-                                    "
-                                    class="col-4 p-0 d-flex justify-content-center align-items-center"
-                                >
-                                    {{
-                                        truncateText(data.durasi?.toFixed(2), 4)
-                                    }}
-                                    jam
-                                </div>
+
                                 <div
                                     style="font-size: 0.7rem !important"
-                                    class="col-4 p-0 d-flex justify-content-center align-items-center"
+                                    class="col-6 p-0 d-flex justify-content-end px-2 align-items-center"
                                 >
                                     <span
                                         class=""
@@ -639,7 +582,7 @@
                                                 : 'badge-lembur'
                                         "
                                     >
-                                        {{ data.Status }}
+                                        Approver {{ data.order_flow }}
                                     </span>
                                 </div>
                             </div>
@@ -654,80 +597,97 @@
                         </div>
                     </div>
                 </div>
-                <div v-else class="skeleton-container">
+
+                <div class="">
                     <div class="card leave-requests-card">
-                        <!-- Card Header Skeleton -->
                         <div
-                            class="card-header d-flex justify-content-between align-items-center skeleton-container"
+                            class="card-header d-flex justify-content-between align-items-center"
                         >
-                            <div
-                                class="skeleton-text"
-                                style="width: 120px; height: 24px"
-                            ></div>
-                            <div class="d-flex gap-2 align-items-center">
-                                <div
-                                    class="skeleton-button"
-                                    style="
-                                        width: 32px;
-                                        height: 32px;
-                                        border-radius: 8px;
-                                    "
-                                ></div>
-                                <div
-                                    class="skeleton-text"
-                                    style="width: 60px; height: 20px"
-                                ></div>
-                                <div
-                                    class="skeleton-button"
-                                    style="
-                                        width: 32px;
-                                        height: 32px;
-                                        border-radius: 8px;
-                                    "
-                                ></div>
+                            <h5 class="mb-0">Anggota Team</h5>
+                            <div class="d-flex gap-2">
+                                <button
+                                    @click="prevPageAnggota"
+                                    class="btn-modern btn-primary p-1"
+                                    style="border-radius: 8px !important"
+                                >
+                                    <i
+                                        class="bi bi-arrow-left d-flex justify-content-center align-items-center"
+                                    ></i>
+                                </button>
+                                <span
+                                    >{{ currentPageAnggota }}
+                                    of
+                                    {{ totalPagesAnggota }}</span
+                                >
+                                <button
+                                    @click="nextPageAnggota"
+                                    class="btn-modern btn-primary p-1"
+                                    style="border-radius: 8px !important"
+                                >
+                                    <i
+                                        class="bi bi-arrow-right d-flex justify-content-center align-items-center"
+                                    ></i>
+                                </button>
                             </div>
                         </div>
-
-                        <!-- Card Body Skeleton -->
                         <div class="card-body" style="height: 13rem">
-                            <!-- Repeat skeleton rows (typically 3-5 items) -->
                             <div
-                                class="row fs-6 mt-3 skeleton-row"
-                                v-for="i in 4"
-                                :key="i"
+                                v-for="(data, idx) in paginatedAnggota"
+                                :key="idx"
+                                class="row fs-6 mt-3 ps-3"
                             >
                                 <div
-                                    class="col-4 d-flex justify-content-center align-items-center"
+                                    v-tooltip="data.Nama"
+                                    style="font-size: 0.9rem !important"
+                                    class="col-4 p-0 d-flex justify-content-start text-start align-items-center"
                                 >
-                                    <div
-                                        class="skeleton-text"
-                                        style="width: 80%; height: 16px"
-                                    ></div>
+                                    {{
+                                        truncateText(capitalize(data?.Nama), 10)
+                                    }}
                                 </div>
                                 <div
-                                    class="col-4 d-flex justify-content-center align-items-center"
+                                    v-tooltip="data.divisi"
+                                    style="
+                                        font-size: 0.9rem !important;
+                                        cursor: pointer;
+                                    "
+                                    class="col-4 p-0 d-flex justify-content-center align-items-center"
                                 >
-                                    <div
-                                        class="skeleton-text"
-                                        style="width: 90%; height: 16px"
-                                    ></div>
+                                    {{ truncateText(data.divisi, 10) }}
                                 </div>
                                 <div
-                                    class="col-4 d-flex justify-content-center align-items-center"
+                                    v-tooltip="
+                                        data.HP == '-'
+                                            ? 'silahkan hubungi admin untuk mengubah No HP'
+                                            : ''
+                                    "
+                                    style="font-size: 0.7rem !important"
+                                    class="col-4 p-0 d-flex justify-content-center align-items-center"
                                 >
-                                    <div
-                                        class="skeleton-badge"
-                                        style="
-                                            width: 70px;
-                                            height: 24px;
-                                            border-radius: 12px;
+                                    <span
+                                        class=""
+                                        :class="
+                                            data.Status == 'Disetujui'
+                                                ? 'badge-lembur-selesai'
+                                                : 'badge-lembur'
                                         "
-                                    ></div>
+                                    >
+                                        {{ data.HP }}
+                                    </span>
                                 </div>
                             </div>
+
+                            <!-- <button
+                                class="btn btn-primary w-100 mt-3"
+                                @click="newLeaveRequest"
+                            >
+                                <i class="bi bi-plus-circle"></i> Buat Pengajuan
+                                Baru
+                            </button> -->
                         </div>
                     </div>
                 </div>
+
                 <!-- <div class="card holiday-card mb-4">
                     <div
                         class="card-header d-flex justify-content-between align-items-center"
@@ -773,162 +733,188 @@
             <div class="col-lg-8 mb-1">
                 <div class="row justify-content-between">
                     <!-- Leave Requests -->
-                    <div v-if="!loadingIzin" class="col-md-6">
-                        <div class="card leave-requests-card">
-                            <div
-                                class="card-header d-flex justify-content-between align-items-center"
-                            >
-                                <h5 class="mb-0">Pengajuan Izin</h5>
-                                <div class="d-flex gap-2">
-                                    <button
-                                        :disabled="
-                                            paginationIzin.current_page <= 1
-                                        "
-                                        @click="
-                                            getAllIzin(
-                                                paginationIzin.prev_page_url
-                                            )
-                                        "
-                                        class="btn-modern btn-primary p-1"
-                                        style="border-radius: 8px !important"
-                                    >
-                                        <i
-                                            class="bi bi-arrow-left d-flex justify-content-center align-items-center"
-                                        ></i>
-                                    </button>
-                                    <span
-                                        >{{ paginationIzin.current_page }} of
-                                        {{ paginationIzin.last_page }}</span
-                                    >
-                                    <button
-                                        :disabled="
-                                            paginationIzin.current_page ==
-                                            paginationIzin.last_page
-                                        "
-                                        @click="
-                                            getAllIzin(
-                                                paginationIzin.next_page_url
-                                            )
-                                        "
-                                        class="btn-modern btn-primary p-1"
-                                        style="border-radius: 8px !important"
-                                    >
-                                        <i
-                                            class="bi bi-arrow-right d-flex justify-content-center align-items-center"
-                                        ></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div
-                                class="card-body d-flex flex-column justify-content-between"
-                                style="height: 19.5rem"
-                            >
-                                <div>
-                                    <div
-                                        class="leave-request py-3"
-                                        v-for="(request, idx) in allDataIzin"
-                                        :key="idx"
-                                    >
-                                        <div
-                                            class="request-type"
-                                            :class="
-                                                getTypeClass(request.Tipe_Izin)
+                    <div class="col-md-6">
+                        <div v-if="!loadingLembur" class="">
+                            <div class="card leave-requests-card">
+                                <div
+                                    class="card-header d-flex justify-content-between align-items-center"
+                                >
+                                    <h5 class="mb-0">Riwayat Lembur</h5>
+                                    <div class="d-flex gap-2">
+                                        <button
+                                            :disabled="
+                                                paginationLembur.current_page <=
+                                                1
+                                            "
+                                            @click="
+                                                getAllLembur(
+                                                    paginationLembur.prev_page_url
+                                                )
+                                            "
+                                            class="btn-modern btn-primary p-1"
+                                            style="
+                                                border-radius: 8px !important;
                                             "
                                         >
-                                            {{ parseIzin(request.Tipe_Izin) }}
-                                        </div>
-                                        <div class="request-dates">
+                                            <i
+                                                class="bi bi-arrow-left d-flex justify-content-center align-items-center"
+                                            ></i>
+                                        </button>
+                                        <span
+                                            >{{ paginationLembur.current_page }}
+                                            of
                                             {{
-                                                formatTanggal_Izin(
-                                                    request.Tanggal_Mulai,
-                                                    request.Tanggal_Selesai
+                                                paginationLembur.last_page
+                                            }}</span
+                                        >
+                                        <button
+                                            :disabled="
+                                                paginationLembur.current_page ==
+                                                paginationLembur.last_page
+                                            "
+                                            @click="
+                                                getAllLembur(
+                                                    paginationLembur.next_page_url
+                                                )
+                                            "
+                                            class="btn-modern btn-primary p-1"
+                                            style="
+                                                border-radius: 8px !important;
+                                            "
+                                        >
+                                            <i
+                                                class="bi bi-arrow-right d-flex justify-content-center align-items-center"
+                                            ></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body" style="height: 19.5rem">
+                                    <div
+                                        v-for="(data, idx) in allDataLembur"
+                                        :key="idx"
+                                        class="row fs-6 mt-3 px-3"
+                                    >
+                                        <div
+                                            style="font-size: 0.9rem !important"
+                                            class="col-4 p-0 d-flex justify-content-start align-items-center"
+                                        >
+                                            {{
+                                                formatTanggal_Lembur(
+                                                    data.Tanggal_Lembur_Dari,
+                                                    data.Tanggal_Lembur_Sampai
                                                 )
                                             }}
                                         </div>
                                         <div
-                                            class="request-status"
-                                            :class="'status-' + request.status"
+                                            v-tooltip="
+                                                data.Tanggal_Lembur_Dari +
+                                                '-' +
+                                                data.Tanggal_Lembur_Sampai
+                                            "
+                                            style="
+                                                font-size: 0.9rem !important;
+                                                cursor: pointer;
+                                            "
+                                            class="col-4 p-0 d-flex justify-content-center align-items-center"
                                         >
-                                            {{ request.status }}
+                                            {{
+                                                truncateText(
+                                                    data.durasi?.toFixed(2),
+                                                    4
+                                                )
+                                            }}
+                                            jam
+                                        </div>
+                                        <div
+                                            style="font-size: 0.7rem !important"
+                                            class="col-4 p-0 d-flex justify-content-center align-items-center"
+                                        >
+                                            <span
+                                                class=""
+                                                :class="
+                                                    data.Status == 'Disetujui'
+                                                        ? 'badge-lembur-selesai'
+                                                        : 'badge-lembur'
+                                                "
+                                            >
+                                                {{ data.Status }}
+                                            </span>
                                         </div>
                                     </div>
+
+                                    <!-- <button
+                                class="btn btn-primary w-100 mt-3"
+                                @click="newLeaveRequest"
+                            >
+                                <i class="bi bi-plus-circle"></i> Buat Pengajuan
+                                Baru
+                            </button> -->
                                 </div>
-                                <a
-                                    href="/izin"
-                                    class="btn-modern btn-primary d-flex justify-content-center align-items-center w-100 mt-3"
-                                >
-                                    <i
-                                        class="bi bi-plus-circle d-flex justify-content-center align-items-center me-2"
-                                    ></i>
-                                    Lihat Selengkapnya
-                                </a>
                             </div>
                         </div>
-                    </div>
-                    <div v-else class="col-md-6 skeleton-container">
-                        <div class="card leave-requests-card">
-                            <!-- Card Header Skeleton -->
-                            <div
-                                class="card-header d-flex justify-content-between align-items-center"
-                            >
+                        <div v-else class="skeleton-container">
+                            <div class="card leave-requests-card">
+                                <!-- Card Header Skeleton -->
                                 <div
-                                    class="skeleton-text"
-                                    style="width: 120px; height: 24px"
-                                ></div>
-                                <div class="d-flex gap-2 align-items-center">
-                                    <div
-                                        class="skeleton-button"
-                                        style="
-                                            width: 32px;
-                                            height: 32px;
-                                            border-radius: 8px;
-                                        "
-                                    ></div>
+                                    class="card-header d-flex justify-content-between align-items-center skeleton-container"
+                                >
                                     <div
                                         class="skeleton-text"
-                                        style="width: 60px; height: 20px"
+                                        style="width: 120px; height: 24px"
                                     ></div>
                                     <div
-                                        class="skeleton-button"
-                                        style="
-                                            width: 32px;
-                                            height: 32px;
-                                            border-radius: 8px;
-                                        "
-                                    ></div>
+                                        class="d-flex gap-2 align-items-center"
+                                    >
+                                        <div
+                                            class="skeleton-button"
+                                            style="
+                                                width: 32px;
+                                                height: 32px;
+                                                border-radius: 8px;
+                                            "
+                                        ></div>
+                                        <div
+                                            class="skeleton-text"
+                                            style="width: 60px; height: 20px"
+                                        ></div>
+                                        <div
+                                            class="skeleton-button"
+                                            style="
+                                                width: 32px;
+                                                height: 32px;
+                                                border-radius: 8px;
+                                            "
+                                        ></div>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <!-- Card Body Skeleton -->
-                            <div
-                                class="card-body d-flex flex-column justify-content-between"
-                                style="height: 19.1rem"
-                            >
-                                <!-- Leave Request Items (4-5 items typical) -->
-                                <div class="">
+                                <!-- Card Body Skeleton -->
+                                <div class="card-body" style="height: 19.5rem">
+                                    <!-- Repeat skeleton rows (typically 3-5 items) -->
                                     <div
-                                        class="leave-request-skeleton py-1"
-                                        v-for="i in 5"
+                                        class="row fs-6 mt-3 skeleton-row"
+                                        v-for="i in 4"
                                         :key="i"
                                     >
                                         <div
-                                            class="d-flex justify-content-between align-items-center mb-3"
+                                            class="col-4 d-flex justify-content-center align-items-center"
                                         >
                                             <div
-                                                class="skeleton-badge"
-                                                style="
-                                                    width: 80px;
-                                                    height: 24px;
-                                                    border-radius: 12px;
-                                                "
+                                                class="skeleton-text"
+                                                style="width: 80%; height: 16px"
                                             ></div>
+                                        </div>
+                                        <div
+                                            class="col-4 d-flex justify-content-center align-items-center"
+                                        >
                                             <div
                                                 class="skeleton-text"
-                                                style="
-                                                    width: 120px;
-                                                    height: 16px;
-                                                "
+                                                style="width: 90%; height: 16px"
                                             ></div>
+                                        </div>
+                                        <div
+                                            class="col-4 d-flex justify-content-center align-items-center"
+                                        >
                                             <div
                                                 class="skeleton-badge"
                                                 style="
@@ -940,16 +926,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- "Lihat Selengkapnya" Button Skeleton -->
-                                <div
-                                    class="skeleton-button"
-                                    style="
-                                        width: 100%;
-                                        height: 40px;
-                                        border-radius: 8px;
-                                        margin-top: 16px;
-                                    "
-                                ></div>
                             </div>
                         </div>
                     </div>
@@ -1083,7 +1059,9 @@
                                     ></i
                                     >Jadwal Shift
                                 </h5>
-                                <div class="date-range fw-bold">2025</div>
+                                <div class="date-range fw-bold">
+                                    {{ getJustYear(dataShift[0]?.Tanggal) }}
+                                </div>
                             </div>
 
                             <div class="card-body pt-4 pb-3">
@@ -1271,6 +1249,270 @@
                         </div>
                     </div>
                 </div>
+                <div class="row justify-content-between">
+                    <div v-if="!loadingIzin" class="col-md-6">
+                        <div class="card leave-requests-card">
+                            <div
+                                class="card-header d-flex justify-content-between align-items-center"
+                            >
+                                <h5 class="mb-0">Pengajuan Izin</h5>
+                                <div class="d-flex gap-2">
+                                    <button
+                                        :disabled="
+                                            paginationIzin.current_page <= 1
+                                        "
+                                        @click="
+                                            getAllIzin(
+                                                paginationIzin.prev_page_url
+                                            )
+                                        "
+                                        class="btn-modern btn-primary p-1"
+                                        style="border-radius: 8px !important"
+                                    >
+                                        <i
+                                            class="bi bi-arrow-left d-flex justify-content-center align-items-center"
+                                        ></i>
+                                    </button>
+                                    <span
+                                        >{{ paginationIzin.current_page }}
+                                        of
+                                        {{ paginationIzin.last_page }}</span
+                                    >
+                                    <button
+                                        :disabled="
+                                            paginationIzin.current_page ==
+                                            paginationIzin.last_page
+                                        "
+                                        @click="
+                                            getAllIzin(
+                                                paginationIzin.next_page_url
+                                            )
+                                        "
+                                        class="btn-modern btn-primary p-1"
+                                        style="border-radius: 8px !important"
+                                    >
+                                        <i
+                                            class="bi bi-arrow-right d-flex justify-content-center align-items-center"
+                                        ></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div
+                                class="card-body d-flex flex-column justify-content-between"
+                                style="height: 13rem"
+                            >
+                                <div>
+                                    <div
+                                        class="leave-request py-3"
+                                        v-for="(request, idx) in allDataIzin"
+                                        :key="idx"
+                                    >
+                                        <div
+                                            class="request-type"
+                                            :class="
+                                                getTypeClass(request.Tipe_Izin)
+                                            "
+                                        >
+                                            {{ parseIzin(request.Tipe_Izin) }}
+                                        </div>
+                                        <div class="request-dates">
+                                            {{
+                                                formatTanggal_Izin(
+                                                    request.Tanggal_Mulai,
+                                                    request.Tanggal_Selesai
+                                                )
+                                            }}
+                                        </div>
+                                        <div
+                                            class="request-status"
+                                            :class="'status-' + request.status"
+                                        >
+                                            {{ request.status }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="col-md-6 skeleton-container">
+                        <div class="card leave-requests-card">
+                            <!-- Card Header Skeleton -->
+                            <div
+                                class="card-header d-flex justify-content-between align-items-center"
+                            >
+                                <div
+                                    class="skeleton-text"
+                                    style="width: 120px; height: 24px"
+                                ></div>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <div
+                                        class="skeleton-button"
+                                        style="
+                                            width: 32px;
+                                            height: 32px;
+                                            border-radius: 8px;
+                                        "
+                                    ></div>
+                                    <div
+                                        class="skeleton-text"
+                                        style="width: 60px; height: 20px"
+                                    ></div>
+                                    <div
+                                        class="skeleton-button"
+                                        style="
+                                            width: 32px;
+                                            height: 32px;
+                                            border-radius: 8px;
+                                        "
+                                    ></div>
+                                </div>
+                            </div>
+
+                            <!-- Card Body Skeleton -->
+                            <div
+                                class="card-body d-flex flex-column justify-content-between"
+                                style="height: 19.1rem"
+                            >
+                                <!-- Leave Request Items (4-5 items typical) -->
+                                <div class="">
+                                    <div
+                                        class="leave-request-skeleton py-1"
+                                        v-for="i in 5"
+                                        :key="i"
+                                    >
+                                        <div
+                                            class="d-flex justify-content-between align-items-center mb-3"
+                                        >
+                                            <div
+                                                class="skeleton-badge"
+                                                style="
+                                                    width: 80px;
+                                                    height: 24px;
+                                                    border-radius: 12px;
+                                                "
+                                            ></div>
+                                            <div
+                                                class="skeleton-text"
+                                                style="
+                                                    width: 120px;
+                                                    height: 16px;
+                                                "
+                                            ></div>
+                                            <div
+                                                class="skeleton-badge"
+                                                style="
+                                                    width: 70px;
+                                                    height: 24px;
+                                                    border-radius: 12px;
+                                                "
+                                            ></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- "Lihat Selengkapnya" Button Skeleton -->
+                                <div
+                                    class="skeleton-button"
+                                    style="
+                                        width: 100%;
+                                        height: 40px;
+                                        border-radius: 8px;
+                                        margin-top: 16px;
+                                    "
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <!-- LEMBUR -->
+
+                        <div class="card leave-requests-card">
+                            <div
+                                class="card-header d-flex justify-content-between align-items-center"
+                            >
+                                <h5 class="mb-0">Tergabung pada team</h5>
+                                <div class="d-flex gap-2">
+                                    <button
+                                        @click="prevPageTergabung"
+                                        class="btn-modern btn-primary p-1"
+                                        style="border-radius: 8px !important"
+                                    >
+                                        <i
+                                            class="bi bi-arrow-left d-flex justify-content-center align-items-center"
+                                        ></i>
+                                    </button>
+                                    <span
+                                        >{{ currentPageTergabung }}
+                                        of
+                                        {{ totalPagesTergabung }}</span
+                                    >
+                                    <button
+                                        @click="nextPageTergabung"
+                                        class="btn-modern btn-primary p-1"
+                                        style="border-radius: 8px !important"
+                                    >
+                                        <i
+                                            class="bi bi-arrow-right d-flex justify-content-center align-items-center"
+                                        ></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body" style="height: 13rem">
+                                <div
+                                    v-for="(data, idx) in paginatedTergabung"
+                                    :key="idx"
+                                    class="row fs-6 mt-3 ps-3"
+                                >
+                                    <div
+                                        v-tooltip="data.Nama"
+                                        style="font-size: 0.9rem !important"
+                                        class="col-4 p-0 d-flex justify-content-start text-start align-items-center"
+                                    >
+                                        {{
+                                            truncateText(
+                                                capitalize(data?.Nama),
+                                                10
+                                            )
+                                        }}
+                                    </div>
+                                    <div
+                                        v-tooltip="data.divisi"
+                                        style="
+                                            font-size: 0.9rem !important;
+                                            cursor: pointer;
+                                        "
+                                        class="col-4 p-0 d-flex justify-content-center align-items-center"
+                                    >
+                                        {{ truncateText(data.divisi, 10) }}
+                                    </div>
+                                    <div
+                                        style="font-size: 0.7rem !important"
+                                        class="col-4 p-0 d-flex justify-content-center align-items-center"
+                                    >
+                                        <span
+                                            class=""
+                                            :class="
+                                                data.Status == 'Disetujui'
+                                                    ? 'badge-lembur-selesai'
+                                                    : 'badge-lembur'
+                                            "
+                                        >
+                                            {{ data.HP }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- <button
+                                class="btn btn-primary w-100 mt-3"
+                                @click="newLeaveRequest"
+                            >
+                                <i class="bi bi-plus-circle"></i> Buat Pengajuan
+                                Baru
+                            </button> -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1337,6 +1579,7 @@ import {
 } from "element-plus";
 import "element-plus/dist/index.css";
 import DOMPurify from "dompurify"; // Untuk sanitasi HTML (SANGAT PENTING!)
+import { capitalize } from "vue";
 
 export default {
     components: {
@@ -1363,6 +1606,10 @@ export default {
         sisaCuti: String,
         judulBerita: String,
         isiBerita: String,
+        nama_mengapprove: Array,
+        nama_Approver: Array,
+        nama_tergabung: Array,
+        nama_anggota: Array,
     },
     watch: {
         // Ini penting jika prop bisa berubah setelah komponen di-mount
@@ -1370,6 +1617,14 @@ export default {
     name: "HRISDashboard",
     data() {
         return {
+            itemPerPageCard: 5,
+
+            serachQueryTergabung: "",
+            currentPageTergabung: 1,
+
+            serachQueryAnggota: "",
+            currentPageAnggota: 1,
+
             convertedHtml: "",
             showModalBuletin: false,
 
@@ -1541,7 +1796,15 @@ export default {
                 },
 
                 {
-                    id: "leave",
+                    id: "IzinPageAdmin",
+                    label: "Izin Admin",
+                    icon: "bi bi-back",
+                    class: "btn-leave",
+                    akses: "IzinPageAdmin",
+                    url: "/izinAdmin",
+                },
+                {
+                    id: "IzinPageApprover",
                     label: "Izin Approval",
                     icon: "bi bi-ui-checks-grid",
                     class: "btn-leave",
@@ -1579,6 +1842,14 @@ export default {
                     class: "btn-shift",
                     akses: "ShiftManagementAdmin",
                     url: "/swapShiftAdmin",
+                },
+                {
+                    id: "addKaryawanTeam",
+                    label: "Setting Users",
+                    icon: "bi bi-gear",
+                    class: "btn-shift",
+                    akses: "addKaryawanTeam",
+                    url: "/add-karyawan-team",
                 },
                 {
                     id: "shift",
@@ -1680,6 +1951,59 @@ export default {
             this.weekSchedule[0];
     },
     computed: {
+        filteredAnggota() {
+            const filtered = this.nama_anggota;
+
+            // console.log(this.nama_anggota);
+
+            if (this.serachQueryAnggota) {
+                this.currentPageAnggota = 1;
+                filtered = filtered.filter((emp) => {
+                    emp.Nama.toLowerCase().includes(
+                        this.serachQueryAnggota.toLowerCase()
+                    );
+                });
+            }
+
+            return filtered;
+        },
+        paginatedAnggota() {
+            const start = (this.currentPageAnggota - 1) * this.itemPerPageCard;
+            const end = start + this.itemPerPageCard;
+            return this.filteredAnggota.slice(start, end);
+        },
+        totalPagesAnggota() {
+            return Math.ceil(
+                this.filteredAnggota.length / this.itemPerPageCard
+            );
+        },
+        filteredTergabung() {
+            const filtered = this.nama_tergabung;
+
+            // console.log(this.nama_anggota);
+
+            if (this.serachQueryTergabung) {
+                this.currentPageTergabung = 1;
+                filtered = filtered.filter((emp) => {
+                    emp.Nama.toLowerCase().includes(
+                        this.serachQueryTergabung.toLowerCase()
+                    );
+                });
+            }
+
+            return filtered;
+        },
+        paginatedTergabung() {
+            const start =
+                (this.currentPageTergabung - 1) * this.itemPerPageCard;
+            const end = start + this.itemPerPageCard;
+            return this.filteredTergabung.slice(start, end);
+        },
+        totalPagesTergabung() {
+            return Math.ceil(
+                this.filteredTergabung.length / this.itemPerPageCard
+            );
+        },
         filteredQuickActions() {
             // Normalize access page names to match case (optional)
             const normalizedAccessPages = this.accessPage.map((page) =>
@@ -1747,6 +2071,20 @@ export default {
         },
     },
     methods: {
+        nextPageTergabung() {
+            if (this.currentPageAnggota < this.totalPagesAnggota)
+                this.currentPageAnggota++;
+        },
+        prevPageTergabung() {
+            if (this.currentPageAnggota > 1) this.currentPageAnggota--;
+        },
+        nextPageAnggota() {
+            if (this.currentPageAnggota < this.totalPagesAnggota)
+                this.currentPageAnggota++;
+        },
+        prevPageAnggota() {
+            if (this.currentPageAnggota > 1) this.currentPageAnggota--;
+        },
         convertAndSanitize(markdown) {
             if (markdown) {
                 const rawHtml = marked(markdown);
@@ -1774,14 +2112,6 @@ export default {
                     .then((response) => {
                         this.allDataIzin = response.data.data;
                         this.paginationIzin = response.data;
-                        console.log(
-                            "Current Page:",
-                            this.paginationIzin.current_page
-                        );
-                        console.log(
-                            "Next Page URL:",
-                            this.paginationIzin.next_page_url
-                        );
                     })
                     .catch((error) => {
                         console.error(error);
@@ -1857,7 +2187,6 @@ export default {
                 });
                 if (response.status == 200) {
                     this.dataShift = response.data.data;
-                    console.log(this.dataShift);
                 }
             } catch (error) {
                 console.log(error);
@@ -1877,7 +2206,7 @@ export default {
                 });
                 if (response.status == 200) {
                     this.dataShift = response.data.data;
-                    console.log(this.dataShift);
+                    // console.log(this.dataShift);
                 }
             } catch (error) {
                 console.log(error);
@@ -1896,7 +2225,7 @@ export default {
                 });
                 if (response.status == 200) {
                     this.dataDateAbsen = response.data.data;
-                    console.log(this.dataDateAbsen);
+                    // console.log(this.dataDateAbsen);
                 }
             } catch (error) {
                 console.log(error);
@@ -1916,7 +2245,7 @@ export default {
                 });
                 if (response.status == 200) {
                     this.dataDateAbsen = response.data.data;
-                    console.log(this.dataDateAbsen);
+                    // console.log(this.dataDateAbsen);
                 }
             } catch (error) {
                 console.log(error);
@@ -2981,13 +3310,15 @@ export default {
                 mainShift.Jam_Masuk &&
                 mainShift.CheckIn &&
                 new Date(`1970-01-01T${formatTime(mainShift.CheckIn)}`) >
-                    new Date(`1970-01-01T${mainShift.Jam_Masuk}`);
+                    new Date(`1970-01-01T${mainShift.Jam_Masuk}`) &&
+                !mainShift.Terlambat_No_Transaksi;
 
             const isEarlyOut =
                 mainShift.Jam_Keluar &&
                 mainShift.CheckOut &&
                 new Date(`1970-01-01T${formatTime(mainShift.CheckOut)}`) <
-                    new Date(`1970-01-01T${mainShift.Jam_Keluar}`);
+                    new Date(`1970-01-01T${mainShift.Jam_Keluar}`) &&
+                !mainShift.Pulang_No_Transaksi;
 
             const isLateLeave = mainShift.Pulang_No_Transaksi;
             const hasOvertime = mainShift.Lembur_No_Transaksi;
@@ -3025,7 +3356,7 @@ export default {
                 }
                 ${
                     mainShift.Terlambat_No_Transaksi
-                        ? '<span class="attendance-badge terlambat">Terlambat</span>'
+                        ? '<span class="attendance-badge terlambat">Izin Terlambat</span>'
                         : ""
                 }
             </div>
@@ -3047,7 +3378,7 @@ export default {
                 }
                 ${
                     isLateLeave
-                        ? '<span class="attendance-badge lateleave">Telat</span>'
+                        ? '<span class="attendance-badge lateleave">Izin Awal</span>'
                         : ""
                 }
                 ${
@@ -3255,6 +3586,8 @@ export default {
         .lateleave, .attendance-badge.lateleave {
             background-color: #FEFCBF;
             color: #B7791F;
+            border-radius:12px;
+            padding: 3px 3px
         }
 
         .attendance-badge.terlambat {
@@ -4388,7 +4721,7 @@ export default {
                 const response = await axios.get("/uDash/getDateAbsen");
                 if (response.status == 200) {
                     this.dataDateAbsen = response.data.data;
-                    console.log(this.dataDateAbsen);
+                    // console.log(this.dataDateAbsen);
                 }
             } catch (error) {
                 console.log(error);
@@ -4406,8 +4739,16 @@ export default {
                     day.Nama_Shift == "OG-K2" || day.Nama_Shift == "OG-K1",
                 "bg-primary": day.Nama_Shift === "EMI*",
                 "bg-secondary": day.Nama_Shift === "Day Off",
+                "bg-primary": !(
+                    day.Nama_Shift == "NO SHIFT" ||
+                    day.Nama_Shift == "OG-K2" ||
+                    day.Nama_Shift == "OG-K1" ||
+                    day.Nama_Shift == "EMI*" ||
+                    day.Nama_Shift == "Day Off"
+                ),
             };
         },
+
         nextMonth() {
             const nextDate = new Date(
                 this.currentDate.getFullYear(),
@@ -4430,26 +4771,33 @@ export default {
                 : text;
         },
         formatTanggal_Lembur(start, end) {
-            const tanggalMulai = start.split(" ")[0]; // "2025-07-19"
-            const waktuMulai = start.split(" ")[1].substring(0, 5); // "14:30"
+            const [tanggalMulaiRaw] = start.split(" ");
+            const [tanggalSelesaiRaw] = end.split(" ");
 
-            const tanggalSelesai = end.split(" ")[0]; // "2025-07-19"
-            const waktuSelesai = end.split(" ")[1].substring(0, 5); // "21:00"
+            const mulai = new Date(tanggalMulaiRaw);
+            const selesai = new Date(tanggalSelesaiRaw);
 
-            // Jika tanggalnya sama, kembalikan hanya tanggal dan rentang waktu
-            if (tanggalMulai === tanggalSelesai) {
-                return `${tanggalMulai}`;
-            } else {
-                const date = new Date(tanggalSelesai);
-                console.log(date);
-                const finalSelesai = date?.toLocaleDateString("id-ID", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                });
-                // Jika tanggalnya berbeda, kembalikan rentang tanggal dan waktu
-                return `${tanggalMulai.split("-")[2]} - ${tanggalSelesai}`;
+            // Ambil komponen tanggal
+            const dMulai = mulai.getDate();
+            const mMulai = mulai.toLocaleString("id-ID", { month: "long" });
+            const yMulai = mulai.getFullYear();
+
+            const dSelesai = selesai.getDate();
+            const mSelesai = selesai.toLocaleString("id-ID", { month: "long" });
+            const ySelesai = selesai.getFullYear();
+
+            // Kalau sama persis → tampilkan satu tanggal
+            if (tanggalMulaiRaw === tanggalSelesaiRaw) {
+                return `${dMulai} ${mMulai} ${yMulai}`;
             }
+
+            // Kalau bulan & tahun sama → "28 - 29 Juni 2025"
+            if (mMulai === mSelesai && yMulai === ySelesai) {
+                return `${dMulai} - ${dSelesai} ${mMulai} ${yMulai}`;
+            }
+
+            // Kalau beda bulan/tahun → "28 Juni 2025 - 2 Juli 2025"
+            return `${dMulai} ${mMulai} ${yMulai} - ${dSelesai} ${mSelesai} ${ySelesai}`;
         },
         parseIzin(tipe) {
             if (tipe == "izinFull") {
@@ -4573,7 +4921,7 @@ export default {
         },
     },
     mounted() {
-        console.log(this.isiBerita);
+        // console.log(this.isiBerita);
         this.convertAndSanitize(this.isiBerita);
 
         this.showModalBuletin = true;
@@ -5406,6 +5754,11 @@ export default {
 .btn-close:hover {
     background: var(--surface-soft);
     color: var(--text);
+}
+
+.card-body {
+    overflow: auto;
+    padding: 0.5rem 1rem;
 }
 /* Akhir button */
 .card-wrap {

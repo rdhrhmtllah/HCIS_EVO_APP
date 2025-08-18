@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 class uDashController extends Controller
 {
     public function index(){
+        $Kode_KaryawanReal = Auth::user()->karyawan->Kode_Karyawan ?? null;
         try{
 
 
@@ -41,40 +42,87 @@ class uDashController extends Controller
 
             // Tentukan rentang tanggal
             // Ambil data absensi utama dari stored procedure
-            $query = "exec HRIS_SP_GET_ABSEN_NEW '001', '{$startWeek}', '{$endWeek}', '{$UserID_Absen}', ''";
+            $query = "exec HRIS_SP_GET_ABSEN_NEW_V3 '001', '{$startWeek}', '{$endWeek}', '{$UserID_Absen}', ''";
             $absen_data = collect(DB::select($query));
             // dd($absen_data);
             // Ambil semua tanggal unik dari data absen untuk dijadikan filter
             $tanggal_absens = $absen_data->pluck('Tanggal')->map(fn($date) => Carbon::parse($date)->format('Y-m-d'));
             $CHECKIN = $absen_data->pluck('CheckIn')->map(fn($date) => Carbon::parse($date)->format('Y-m-d h:i:s'));
 
-        $total_keterlambatan_detik = 0;
+            $pulang_data = DB::table('Transaksi_Terlambat_Pulang_Cepat_Detail as b')
+                ->select('a.No_Transaksi', 'b.Tanggal_Masuk_Pulang as Tanggal')
+                ->join('Transaksi_Terlambat_Pulang_Cepat as a', 'a.No_Transaksi', '=', 'b.No_Transaksi')
+                ->where('b.Kode_Karyawan', $Kode_Karyawan)
+                ->where("b.Jenis", "pulangCepat")
+                ->where('b.Flag_Approval', 'Y')
+                ->where("a.Status", null)
+                ->whereIn(DB::raw('CAST(b.Tanggal_Masuk_Pulang AS DATE)'), $tanggal_absens)
+                ->get();
 
-            $filtered_data = $absen_data->filter(function ($item) {
+            $terlambat_data = DB::table('Transaksi_Terlambat_Pulang_Cepat_Detail as b')
+                ->select('a.No_Transaksi', 'b.Tanggal_Masuk_Pulang as Tanggal', 'b.Jam')
+                ->join('Transaksi_Terlambat_Pulang_Cepat as a', 'a.No_Transaksi', '=', 'b.No_Transaksi')
+                ->where('b.Kode_Karyawan', $Kode_Karyawan)
+                ->where('b.Flag_Approval', 'Y')
+                ->where("b.Jenis", "terlambat")
+                ->where("a.Status", null)
+                ->whereIn(DB::raw('CAST(b.Tanggal_Masuk_Pulang AS DATE)'), $tanggal_absens)
+                ->get();
+
+            $total_keterlambatan_menit = 0;
+            // $dump = [];
+
+            foreach ($absen_data as $item) {
                 if (is_null($item->CheckIn)) {
-                    return false;
+                    continue;
                 }
 
-                $check_in_time = Carbon::parse($item->CheckIn)->format('H:i:s');
-                return $check_in_time > $item->Jam_Masuk;
-            });
-
-            foreach ($filtered_data as $item) {
                 $check_in_carbon = Carbon::parse($item->CheckIn);
-                $jam_masuk_value = $item->Jam_Masuk;
-                if (strlen($jam_masuk_value) === 5) { // Contoh: "08:30"
-                    $format_jam = 'H:i';
-                } else { // Contoh: "08:30:00"
-                    $format_jam = 'H:i:s';
-                }
 
-                $jam_masuk_carbon = Carbon::createFromFormat('Y-m-d ' . $format_jam, $check_in_carbon->format('Y-m-d') . ' ' . $jam_masuk_value);
-                $total_keterlambatan_detik += $check_in_carbon->diffInSeconds($jam_masuk_carbon);
+                $pengajuan_terlambat = $terlambat_data->firstWhere('Tanggal',   $item->Tanggal);
+                // $dump[] = ;
+
+                if ($pengajuan_terlambat && !empty($pengajuan_terlambat?->Jam)) {
+                    // dd('$check_in_carbon');
+                    // dd($pengajuan_terlambat);
+                    $format_jam = strlen($pengajuan_terlambat->Jam) === 5 ? 'H:i' : 'H:i:s';
+                    $jam_toleransi_carbon = Carbon::createFromFormat(
+                        'Y-m-d ' . $format_jam,
+                        $check_in_carbon->format('Y-m-d') . ' ' . $pengajuan_terlambat->Jam
+                    );
+
+                    if ($check_in_carbon > $jam_toleransi_carbon) {
+                        $check_in_no_seconds = $check_in_carbon->copy()->seconds(0);
+                        $jam_toleransi_no_seconds = $jam_toleransi_carbon->copy()->seconds(0);
+
+                        $total_keterlambatan_menit += $check_in_no_seconds->diffInMinutes($jam_toleransi_no_seconds);
+                    }
+
+                } else {
+                    $jam_masuk_value = $item->Jam_Masuk ?? "00:00";
+                    $format_jam = strlen($jam_masuk_value) === 5 ? 'H:i' : 'H:i:s';
+                    $jam_masuk_carbon = Carbon::createFromFormat(
+                        'Y-m-d ' . $format_jam,
+                        $check_in_carbon->format('Y-m-d') . ' ' . $jam_masuk_value
+                    );
+                    // dd($jam_masuk_carbon);
+                    // $dump[] = $jam_masuk_carbon;
+
+                    if ($check_in_carbon > $jam_masuk_carbon) {
+                            $check_in_no_seconds = $check_in_carbon->copy()->seconds(0);
+                            $jam_masuk_no_seconds = $jam_masuk_carbon->copy()->seconds(0);
+
+                            $total_keterlambatan_menit += $check_in_no_seconds->diffInMinutes($jam_masuk_no_seconds);
+                        }
+
+                }
             }
 
-                // Konversi total detik menjadi jam desimal
-                    // $total_keterlambatan_jam = round($total_keterlambatan_detik / 3600, 2);
-                    $total_keterlambatan_menit = round($total_keterlambatan_detik / 60, 2);
+            // Konversi ke menit
+            // dd($total_keterlambatan_menit);
+            // $total_keterlambatan_menit = round($total_keterlambatan_detik / 60, 2);
+
+
 
                 // --- Pre-load Semua Data Transaksi dalam Beberapa Query ---
 
@@ -88,6 +136,7 @@ class uDashController extends Controller
                         ->orWhereIn(DB::raw('CAST(b.Tanggal_Lembur_Sampai AS DATE)'), $tanggal_absens);
                 })
                 ->get();
+                // dd($lembur_data);
 
                 $tanggal_lembur_valid = $lembur_data->pluck('mulai')->map(fn($date) => Carbon::parse($date)->toDateString())->toArray();
 
@@ -106,7 +155,7 @@ class uDashController extends Controller
                 // dd($filtered_data_lembur);
 
                 // --- Langkah 3: Jumlahkan total menit lembur dari data yang sudah difilter ---
-                $total_lembur_menit = $filtered_data_lembur->sum('Overtime');
+                $total_lembur_menit = $filtered_data_lembur->sum('Overtime_Real');
 
                 // Konversi ke jam desimal
                 $total_lembur_jam = round($total_lembur_menit / 60, 2);
@@ -124,8 +173,7 @@ class uDashController extends Controller
                 });
 
                 $tanggalBesok  = Carbon::tomorrow();
-                // dd($tanggalBesok);
-                $queryBesok = "exec HRIS_SP_GET_ABSEN_NEW '001', '{$tanggalBesok}', '{$tanggalBesok}', '{$UserID_Absen}', ''";
+                $queryBesok = "exec HRIS_SP_GET_ABSEN_NEW_V3 '001', '{$tanggalBesok}', '{$tanggalBesok}', '{$UserID_Absen}', ''";
                 $absen_besok_raw = DB::Select($queryBesok);
                 $absen_besok = collect($absen_besok_raw)->first();
                 // dd($absen_besok->Nama_Shift);
@@ -147,34 +195,77 @@ class uDashController extends Controller
                             ->orderBy("Id_News", 'desc')
                             ->first();
 
+
+                $nama_anggota = DB::table('HRIS_Karyawan_Team as t')
+                    ->join('Karyawan as k', 't.Kode_Karyawan', '=', 'k.Kode_Karyawan')
+                    ->join('View_Divisi_Sub_Divisi as d', 'k.ID_Divisi_Sub_Divisi', '=', 'd.ID_DIVISI_SUB_DIVISI')
+                    ->where('t.Kode_Karyawan_Team', $Kode_KaryawanReal)
+                    ->select('k.Nama', 'k.HP', 'd.nama_divisi as divisi')
+                    ->groupBy('k.HP', 'd.nama_divisi ', 'k.Nama')
+                    ->get();
+
+                $nama_tergabung = DB::table('HRIS_Karyawan_Team as t')
+                    ->join('Karyawan as k', 't.Kode_Karyawan_Team', '=', 'k.Kode_Karyawan')
+                    ->join('View_Divisi_Sub_Divisi as d', 'k.ID_Divisi_Sub_Divisi', '=', 'd.ID_DIVISI_SUB_DIVISI')
+                    ->where('t.Kode_Karyawan', $Kode_KaryawanReal)
+                    ->select('k.Nama', 'k.HP', 'd.nama_divisi as divisi')
+                    ->groupBy('k.Nama', 'k.HP', 'd.nama_divisi')
+                    ->where("t.Kode_Karyawan_Team" ,'<>', $Kode_KaryawanReal)
+                    ->where("t.Kode_Karyawan_Team" ,'<>', 'RIDHO RAHMAT')
+                    ->get();
+
+                $nama_Approver =DB::table('HRIS_Approval_Flow as t')
+                    ->join('Karyawan as k', 't.Kode_Karyawan', '=', 'k.Kode_Karyawan')
+                    ->where('t.Kode_Karyawan_Requester', $Kode_KaryawanReal)
+                    ->select('k.Nama', 't.order_flow')
+                    ->groupBy('k.Nama', 't.order_flow')
+                    ->where("t.Kode_Karyawan" ,'<>', $Kode_KaryawanReal)
+                    ->get();
+
+                $nama_mengapprove =DB::table('HRIS_Approval_Flow as t')
+                    ->join('Karyawan as k', 't.Kode_Karyawan_Requester', '=', 'k.Kode_Karyawan')
+                    ->where('t.Kode_Karyawan', $Kode_KaryawanReal)
+                    ->select('k.Nama')
+                    ->groupBy('k.Nama')
+                    ->where("t.Kode_Karyawan_Requester" ,'<>', $Kode_KaryawanReal)
+                    ->get();
+
+                // dd($nama_anggota);
+
+
+
+
+
             return inertia('uDash', [
                 'title' => $title,
-                'accessPage' => $accessPage,
+                'accessPage' => $accessPage?? [],
                 'namaKaryawan' =>$namaKaryawan,
-                'shiftHariIni' => $absen_hari_ini->Nama_Shift,
-                'Jam_Masuk' => $absen_hari_ini->Jam_Masuk,
-                'Jam_Keluar'=> $absen_hari_ini->Jam_Keluar,
-                'shiftBesok' => $absen_besok->Nama_Shift,
-                'totalTerlambat' => $total_keterlambatan_menit,
-                'totalLembur' => $total_lembur_jam,
-                'sisaCuti' => $sisaCuti,
+                'shiftHariIni' => $absen_hari_ini->Nama_Shift?? 'NO SHIFT',
+                'Jam_Masuk' => $absen_hari_ini->Jam_Masuk ?? '00:00',
+                'Jam_Keluar'=> $absen_hari_ini->Jam_Keluar?? '00:00',
+                'shiftBesok' => $absen_besok->Nama_Shift?? 'NO SHIFT',
+                'totalTerlambat' => $total_keterlambatan_menit?? 0,
+                'totalLembur' => $total_lembur_jam?? 0,
+                'sisaCuti' => $sisaCuti?? 0,
                 'judulBerita' => $berita->Judul,
-                'isiBerita' =>$berita->Content
+                'isiBerita' =>$berita->Content,
+                'nama_anggota' =>$nama_anggota,
+                'nama_tergabung'=> $nama_tergabung,
+                'nama_Approver' => $nama_Approver,
+                'nama_mengapprove' => $nama_mengapprove
 
 
             ]);
         }catch (\Throwable $e) {
-            Log::channel('uDashLog')->error('Gagal menampilkan page Dashboard: ' . $e->getMessage());
+            Log::channel('uDashLog')->error('Gagal menampilkan page Dashboard: ' . $e->getMessage().'Karyawan : '. $Kode_KaryawanReal);
             Alert::error('error', 'Terjadi Error saat menampilkan page Dashboard!');
-            return back();
+            return abort(500);
         }
     }
 
     public function getDateAbsen(Request $request){
         // Dapatkan data karyawan yang sedang login
         try{
-
-
             $UserID_Absen = Auth::user()->karyawan->UserID_Absen;
             $Kode_Karyawan = Auth::user()->karyawan->Kode_Karyawan;
             $requestDate = $request->tanggal;
@@ -194,7 +285,7 @@ class uDashController extends Controller
             // Tentukan rentang tanggal
 
             // Ambil data absensi utama dari stored procedure
-            $query = "exec HRIS_SP_GET_ABSEN_NEW '001', '{$startWeek}', '{$endWeek}', '{$UserID_Absen}', ''";
+            $query = "exec HRIS_SP_GET_ABSEN_NEW_V3 '001', '{$startWeek}', '{$endWeek}', '{$UserID_Absen}', ''";
             $absen_data = collect(DB::select($query));
 
             // Ambil semua tanggal unik dari data absen untuk dijadikan filter
@@ -253,6 +344,7 @@ class uDashController extends Controller
                         ->orWhereIn(DB::raw('CAST(b.Tanggal_Cuti_Sampai AS DATE)'), $tanggal_absens);
                 })
                 ->get();
+
             $cutiHutang_data = DB::table('Transaksi_Cuti_Detail as b')
                 ->select('a.No_Transaksi', 'b.Tanggal_Cuti_dari as mulai', 'b.Tanggal_Cuti_Sampai as selesai')
                 ->join('Transaksi_Cuti as a', 'a.No_Transaksi', '=', 'b.No_Transaksi')
@@ -304,8 +396,17 @@ class uDashController extends Controller
                 $izin = $izin_data->where('mulai', '<=', $tanggal_formatted)->where('selesai', '>=', $tanggal_formatted)->first();
                 $cuti = $cuti_data->where('mulai', '<=', $tanggal_formatted)->where('selesai', '>=', $tanggal_formatted)->first();
                 $cutiHutang = $cutiHutang_data->where('mulai', '<=', $tanggal_formatted)->where('selesai', '>=', $tanggal_formatted)->first();
-                $pulang = $pulang_data->where('Tanggal', $tanggal_formatted)->first();
-                $terlambat = $terlambat_data->where('Tanggal', $tanggal_formatted)->first();
+                $pulang = $pulang_data
+                    ->first(function ($row) use ($tanggal_formatted) {
+                        return Carbon::parse($row->Tanggal)->format('Y-m-d') === $tanggal_formatted;
+                    });
+
+                $terlambat = $terlambat_data
+                    ->first(function ($row) use ($tanggal_formatted) {
+                        return Carbon::parse($row->Tanggal)->format('Y-m-d') === $tanggal_formatted;
+                    });
+                // dd($tanggal_formatted);
+
 
                 return [
                     'Nama_Shift' => $item->Nama_Shift,
@@ -373,7 +474,7 @@ class uDashController extends Controller
             // Tentukan rentang tanggal
 
             // Ambil data absensi utama dari stored procedure
-            $query = "exec HRIS_SP_GET_ABSEN_NEW '001', '{$startWeek}', '{$endWeek}', '{$UserID_Absen}', ''";
+            $query = "exec HRIS_SP_GET_ABSEN_NEW_V3 '001', '{$startWeek}', '{$endWeek}', '{$UserID_Absen}', ''";
 
             $absen_data = collect(DB::select($query))->map(function($item) {
                 return[
@@ -819,7 +920,7 @@ class uDashController extends Controller
         try{
 
 
-            $perPage = 5;
+            $perPage = 7;
             $currentPage = request()->get('page', 1);
             $UserID_Absen = Auth::user()->karyawan->UserID_Absen;
             $Kode_Karyawan = Auth::user()->karyawan->Kode_Karyawan;
@@ -846,7 +947,7 @@ class uDashController extends Controller
             $startWeek = Carbon::parse($tanggal_Lembur->first())->format('Y-m-d');
             $endWeek = Carbon::parse($tanggal_Lembur->last())->format('Y-m-d');
 
-            $query = "exec HRIS_SP_GET_ABSEN_NEW '001', '{$startWeek}', '{$endWeek}', '{$UserID_Absen}', ''";
+            $query = "exec HRIS_SP_GET_ABSEN_NEW_V3 '001', '{$startWeek}', '{$endWeek}', '{$UserID_Absen}', ''";
             $absen_data = collect(DB::select($query));
             // dd($absen_data);
            $RawData = $data->map(function ($lembur) use ($absen_data) {
@@ -875,7 +976,7 @@ class uDashController extends Controller
                     ->filter(function ($item) use ($tanggalLembur) {
                         return Carbon::parse($item->Tanggal)->format('Y-m-d') === $tanggalLembur;
                     })
-                    ->first()?->CheckOut;
+                    ->first()?->CheckOut ?? Carbon::parse($lembur->Tanggal_Lembur_Sampai);
 
                 $durasi = Carbon::parse($lembur->Tanggal_Lembur_Dari)->diffInMinutes(Carbon::parse($jamAktual)) / 60;
 
@@ -931,7 +1032,7 @@ class uDashController extends Controller
             }
 
             // Ambil data absensi utama dari stored procedure
-            $query = "exec HRIS_SP_GET_ABSEN_NEW '001', '{$startWeek}', '{$endWeek}', '{$UserID_Absen}', ''";
+            $query = "exec HRIS_SP_GET_ABSEN_NEW_V3 '001', '{$startWeek}', '{$endWeek}', '{$UserID_Absen}', ''";
             $absen_data = collect(DB::select($query));
 
             // Ambil semua tanggal unik dari data absen untuk dijadikan filter

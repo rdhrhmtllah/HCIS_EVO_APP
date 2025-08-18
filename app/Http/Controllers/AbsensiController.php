@@ -120,6 +120,7 @@ class AbsensiController extends Controller
 
             $query = DB::table('HRIS_Approval_Request as a')
                 ->join('HRIS_Approval_Flow as b', 'a.Flow_Id', '=', 'b.id')
+                ->whereNull("b.Status")
                 ->where('a.No_Transaksi', $No_Transaksi)
                 ->where('a.Kode_Karyawan', $requester)
                 ->where('b.Kode_Karyawan', $approver);
@@ -229,6 +230,7 @@ class AbsensiController extends Controller
                         // dd("hidup jokowi");
                         $flowSekarang =  DB::table('HRIS_Approval_Request as a')
                         ->join('HRIS_Approval_Flow as b', 'a.Flow_Id', '=', 'b.id')
+                        ->whereNull("b.Status")
                         ->where('a.No_Transaksi', $No_Transaksi)
                         ->where('a.Kode_Karyawan', $requester)
                         ->where('b.Kode_Karyawan', $approver)->first();
@@ -252,6 +254,7 @@ class AbsensiController extends Controller
 
                             $maxAngkaOrder = DB::table('HRIS_Approval_Request as a')
                             ->join('HRIS_Approval_Flow as b', 'a.Flow_Id', '=', 'b.id')
+                            ->whereNull("b.Status")
                             ->where('a.No_Transaksi', $No_Transaksi)
                             ->where('a.Kode_Karyawan', $requester)
                             ->max('order_flow');
@@ -424,6 +427,7 @@ class AbsensiController extends Controller
                                 $nextFlow =  DB::table('HRIS_Approval_Request as a')
                                 ->select("b.Kode_Karyawan")
                                 ->join('HRIS_Approval_Flow as b', 'a.Flow_Id', '=', 'b.id')
+                                ->whereNull("b.Status")
                                 ->where('a.No_Transaksi', $No_Transaksi)
                                 ->where('a.Kode_Karyawan', $requester)
                                 ->where("b.order_flow", $flowSekarang->order_flow + 1)->first();
@@ -491,6 +495,7 @@ class AbsensiController extends Controller
                                         if($response){
                                             DB::table('HRIS_Approval_Request as a')
                                                 ->join('HRIS_Approval_Flow as b', 'a.Flow_Id', '=', 'b.id')
+                                                ->whereNull("b.Status")
                                                 ->where("a.No_Transaksi", $No_Transaksi)
                                                 ->where("b.Kode_Karyawan", $nextApprover->Kode_Karyawan)
                                                 ->update(['a.angka_wa' => DB::raw('COALESCE(angka_wa, 0) + 1')]);
@@ -569,11 +574,11 @@ class AbsensiController extends Controller
         }
     }
 
-    public function getDataIzin(){
+    public function getDataIzinAdmin(){
         try{
             $Kode_Karyawan = Auth::user()->karyawan->Kode_Karyawan;
             $query ="
-             WITH
+                        WITH
                         cte AS (
                           SELECT
                             CAST(CONCAT(CAST(cti.Tanggal AS DATE),' ', cti.Jam) AS DATETIME) AS tanggal_create,
@@ -585,6 +590,7 @@ class AbsensiController extends Controller
                             ct.Tanggal_Cuti_Sampai AS Tanggal_Selesai,
                             ct.Alasan,
                             ct.filePath as Lampiran,
+							(select Nama from Karyawan z where z.Kode_Karyawan = ct.Kode_Karyawan) as nama_requester,
                             ISNULL(
                                 (
                                 SELECT
@@ -596,6 +602,7 @@ class AbsensiController extends Controller
                                     ar.No_Transaksi = ct.No_Transaksi
                                     AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
                                     AND ar.Flag_Approval IS NOT NULL
+                                    --AND af.Status is NULL
                                 ORDER BY
                                     af.order_flow DESC
                                 ),
@@ -612,6 +619,7 @@ class AbsensiController extends Controller
                                     a.id = b.Flow_Id
                                     and b.No_Transaksi = ct.No_Transaksi
                                     and a.Kode_Karyawan_Requester = b.Kode_Karyawan
+                                    --and a.Status is NULL
                                 order by
                                     a.order_flow desc
                                 ),
@@ -633,6 +641,7 @@ class AbsensiController extends Controller
                                     AND ar.Kode_Karyawan = k.Kode_Karyawan
 									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
                                     AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
                                     ORDER BY
                                     af.order_flow
                                 ),
@@ -653,6 +662,7 @@ class AbsensiController extends Controller
 
 									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
                                     AND ar.Flag_Approval = 'T'
+                                    --AND af.Status is NULL
                                 ORDER BY
                                     af.order_flow
                                 )
@@ -669,6 +679,7 @@ class AbsensiController extends Controller
                                     ar.No_Transaksi = ct.No_Transaksi
 									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
                                     AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
                                     ORDER BY
                                     af.order_flow
                                 ),
@@ -698,14 +709,14 @@ class AbsensiController extends Controller
                                 where
                                 a.No_Transaksi = ct.No_Transaksi
 								and a.Kode_Karyawan = b.Kode_Karyawan_Requester
+                                --and b.Status is NULL
                             ) AS STATUSLIST
                             FROM
                             Karyawan AS k
                             INNER JOIN Transaksi_Cuti_Detail AS ct ON k.Kode_Karyawan = ct.Kode_Karyawan
                             INNER JOIN Transaksi_Cuti AS cti ON ct.No_Transaksi = cti.No_Transaksi
                             WHERE
-                            k.Kode_Karyawan = ?
-                            and cti.Status is null
+                             cti.Status is null
                             UNION ALL
                             -- Query untuk Transaksi_Sakit_Izin_Detail
                             SELECT
@@ -718,6 +729,7 @@ class AbsensiController extends Controller
                             tsi.Tanggal_Sakit_Izin_Sampai AS Tanggal_Selesai,
                             tsi.Alasan,
                             tsi.filePath as Lampiran,
+							(select Nama from Karyawan z where z.Kode_Karyawan = tsi.Kode_Karyawan) as nama_requester,
                             ISNULL(
                                 (
                                 SELECT
@@ -728,7 +740,7 @@ class AbsensiController extends Controller
                                 WHERE
                                     ar.No_Transaksi = tsi.No_Transaksi
 									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
-
+                                    AND af.Status is null
                                     AND ar.Flag_Approval IS NOT NULL
                                 ORDER BY
                                     af.order_flow DESC
@@ -746,6 +758,7 @@ class AbsensiController extends Controller
                                     a.id = b.Flow_Id
                                     and b.No_Transaksi = tsi.No_Transaksi
 									and a.Kode_Karyawan_Requester = b.Kode_Karyawan
+                                    --and a.Status is Null
                                 order by
                                     a.order_flow desc
                                 ),
@@ -767,6 +780,7 @@ class AbsensiController extends Controller
                                     AND ar.Kode_Karyawan = k.Kode_Karyawan
 									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
                                     AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
                                     ORDER BY
                                     af.order_flow
                                 ),
@@ -787,6 +801,7 @@ class AbsensiController extends Controller
 
 									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
                                     AND ar.Flag_Approval = 'T'
+                                    --AND af.Status is NULL
                                 ORDER BY
                                     af.order_flow
                                 )
@@ -803,6 +818,7 @@ class AbsensiController extends Controller
                                     ar.No_Transaksi = tsi.No_Transaksi
 									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
                                     AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
                                     ORDER BY
                                     af.order_flow
                                 ),
@@ -832,14 +848,14 @@ class AbsensiController extends Controller
                                 where
                                 a.No_Transaksi = tsi.No_Transaksi
 								and a.Kode_Karyawan = b.Kode_Karyawan_Requester
+                               -- and b.Status is NULL
                             ) AS STATUSLIST
                             FROM
                             Karyawan AS k
                             INNER JOIN Transaksi_Sakit_Izin_Detail AS tsi ON k.Kode_Karyawan = tsi.Kode_Karyawan
                             INNER JOIN Transaksi_Sakit_Izin AS tsip ON tsi.No_Transaksi = tsip.No_Transaksi
                             WHERE
-                            k.Kode_Karyawan = ?
-                            and tsip.Status is null
+                             tsip.Status is null
                             UNION ALL -- Gunakan UNION ALL jika Anda tidak perlu menghilangkan duplikat
                             SELECT
                             CAST(CONCAT(CAST(ttpp.Tanggal AS DATE),' ', ttpp.Jam) AS DATETIME) AS tanggal_create,
@@ -851,6 +867,8 @@ class AbsensiController extends Controller
                             NULL AS Tanggal_Selesai,
                             ttp.Alasan,
                             ttp.filePath as Lampiran,
+							(select Nama from Karyawan z where z.Kode_Karyawan = ttp.Kode_Karyawan) as nama_requester,
+
                             ISNULL(
                                 (
                                 SELECT
@@ -863,6 +881,7 @@ class AbsensiController extends Controller
                                     AND ar.Kode_Karyawan = k.Kode_Karyawan
 									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
                                     AND ar.Flag_Approval IS NOT NULL
+                                    --AND af.Status is NULL
                                 ORDER BY
                                     af.order_flow DESC
                                 ),
@@ -879,6 +898,7 @@ class AbsensiController extends Controller
                                     a.id = b.Flow_Id
                                     and b.No_Transaksi = ttp.No_Transaksi
 									and a.Kode_Karyawan_Requester = b.Kode_Karyawan
+                                    --and a.Status is NULL
                                 order by
                                     a.order_flow desc
                                 ),
@@ -900,6 +920,7 @@ class AbsensiController extends Controller
                                     AND ar.Kode_Karyawan = k.Kode_Karyawan
 									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
                                     AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
                                     ORDER BY
                                     af.order_flow
                                 ),
@@ -920,6 +941,7 @@ class AbsensiController extends Controller
 
 									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
                                     AND ar.Flag_Approval = 'T'
+                                    --AND af.Status is NULL
                                 ORDER BY
                                     af.order_flow
                                 )
@@ -936,6 +958,7 @@ class AbsensiController extends Controller
                                     ar.No_Transaksi = ttp.No_Transaksi
 									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
                                     AND ar.Flag_Approval IS NULL
+                                    ---AND af.Status is NULL
                                     ORDER BY
                                     af.order_flow
                                 ),
@@ -965,13 +988,14 @@ class AbsensiController extends Controller
                                 where
                                 a.No_Transaksi = ttp.No_Transaksi
 								and a.Kode_Karyawan = b.Kode_Karyawan_Requester
+                                --and b.Status is NULL
                             ) AS STATUSLIST
                             FROM
                             Karyawan AS k
                             INNER JOIN Transaksi_Terlambat_Pulang_Cepat_Detail AS ttp ON k.Kode_Karyawan = ttp.Kode_Karyawan
                             INNER JOIN Transaksi_Terlambat_Pulang_Cepat AS ttpp ON ttp.No_Transaksi = ttpp.No_Transaksi
                             WHERE
-                            k.Kode_Karyawan = ? and ttpp.Status is null
+                           ttpp.Status is null
                         )
                         SELECT
                         *
@@ -982,7 +1006,7 @@ class AbsensiController extends Controller
                         ORDER BY
                         tanggal_create desc
             ";
-            $result = DB::select($query, [$Kode_Karyawan, $Kode_Karyawan, $Kode_Karyawan]);
+            $result = DB::select($query);
             $dataFinal =  collect($result)->map(function ($item) {
                 if (!empty($item->Kode_Karyawan)) {
                     $item->Kode_Karyawan = Crypt::encryptString($item->Kode_Karyawan);
@@ -994,45 +1018,45 @@ class AbsensiController extends Controller
 
 
 
-        $dataCuti= (object) [
-            'Sisa_Cuti' => (int) Auth::user()->karyawan->sisa_cuti(),
-            'Hutang_Cuti'=>(int) Auth::user()->karyawan->hutang_cuti()
+            $dataCuti= (object) [
+                'Sisa_Cuti' => (int) Auth::user()->karyawan->sisa_cuti(),
+                'Hutang_Cuti'=>(int) Auth::user()->karyawan->hutang_cuti()
 
-        ];
-        // dd($dataCuti);
-        $TanggalCutiSudahDipakai = DB::table('Transaksi_Cuti_Detail as a')
-                                    ->join("Transaksi_Cuti as b", "a.No_Transaksi", '=', 'b.No_Transaksi')
+            ];
+            // dd($dataCuti);
+            $TanggalCutiSudahDipakai = DB::table('Transaksi_Cuti_Detail as a')
+                                        ->join("Transaksi_Cuti as b", "a.No_Transaksi", '=', 'b.No_Transaksi')
+                                        ->whereNull("b.Status")
+                                        ->where("a.Kode_Karyawan", $Kode_Karyawan)
+                                        ->where(function($query) {
+                                            $query->where("a.Flag_Approval", "<>", "T")
+                                            ->orWhereNull('a.Flag_Approval');
+
+                                        })
+                                        ->get();
+
+
+            $TanggalSakitIzinSudahDipakai =  DB::table('Transaksi_Sakit_Izin_Detail as a')
+                                    ->join("Transaksi_Sakit_Izin as b", "a.No_Transaksi", '=', 'b.No_Transaksi')
                                     ->whereNull("b.Status")
-                                    ->where("a.Kode_Karyawan", $Kode_Karyawan)
+                                    ->where("Kode_Karyawan", $Kode_Karyawan)
+                                    ->where(function($query) {
+                                            $query->where("a.Flag_Approval", "<>", "T")
+                                            ->orWhereNull('a.Flag_Approval');
+
+                                        })
+                                    ->get();
+            // dd($TanggalSakitIzinSudahDipakai);
+            $TanggalPulangCepatSudahDipakai =  DB::table('Transaksi_Terlambat_Pulang_Cepat_Detail as a')
+                                    ->join("Transaksi_Terlambat_Pulang_Cepat as b", "a.No_Transaksi", '=', 'b.No_Transaksi')
+                                    ->whereNull("b.Status")
+                                    ->where("Kode_Karyawan", $Kode_Karyawan)
                                     ->where(function($query) {
                                         $query->where("a.Flag_Approval", "<>", "T")
                                         ->orWhereNull('a.Flag_Approval');
 
                                     })
                                     ->get();
-
-
-        $TanggalSakitIzinSudahDipakai =  DB::table('Transaksi_Sakit_Izin_Detail as a')
-                                ->join("Transaksi_Sakit_Izin as b", "a.No_Transaksi", '=', 'b.No_Transaksi')
-                                ->whereNull("b.Status")
-                                ->where("Kode_Karyawan", $Kode_Karyawan)
-                                 ->where(function($query) {
-                                        $query->where("a.Flag_Approval", "<>", "T")
-                                        ->orWhereNull('a.Flag_Approval');
-
-                                    })
-                                ->get();
-        // dd($TanggalSakitIzinSudahDipakai);
-        $TanggalPulangCepatSudahDipakai =  DB::table('Transaksi_Terlambat_Pulang_Cepat_Detail as a')
-                                ->join("Transaksi_Terlambat_Pulang_Cepat as b", "a.No_Transaksi", '=', 'b.No_Transaksi')
-                                ->whereNull("b.Status")
-                                ->where("Kode_Karyawan", $Kode_Karyawan)
-                                ->where(function($query) {
-                                    $query->where("a.Flag_Approval", "<>", "T")
-                                    ->orWhereNull('a.Flag_Approval');
-
-                                })
-                                ->get();
 
 
             $HariLibur = collect(DB::table('HRIS_Hari_Libur')->get())->map(function ($item){
@@ -1066,524 +1090,2425 @@ class AbsensiController extends Controller
         }
     }
 
+    public function getDataIzin(){
+        try{
+            $Kode_Karyawan = Auth::user()->karyawan->Kode_Karyawan;
+            $query ="
+             WITH
+                        cte AS (
+                          SELECT
+                            CAST(CONCAT(CAST(cti.Tanggal AS DATE),' ', cti.Jam) AS DATETIME) AS tanggal_create,
+                            k.Kode_Karyawan,
+                            k.Nama,
+                            ct.No_Transaksi,
+                            ct.Jenis as Tipe_Izin,
+                            ct.Tanggal_Cuti_Dari AS Tanggal_Mulai,
+                            ct.Tanggal_Cuti_Sampai AS Tanggal_Selesai,
+                            ct.Alasan,
+                            ct.filePath as Lampiran,
+                            ISNULL(
+                                (
+                                SELECT
+                                    TOP 1 af.order_flow
+                                FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE
+                                    ar.No_Transaksi = ct.No_Transaksi
+                                    AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NOT NULL
+                                    --AND af.Status is NULL
+                                ORDER BY
+                                    af.order_flow DESC
+                                ),
+                                0
+                            ) as currentFlow,
+                            ISNULL(
+                                (
+                                select
+                                    top 1 order_flow
+                                from
+                                    HRIS_Approval_Flow a,
+                                    HRIS_Approval_Request b
+                                where
+                                    a.id = b.Flow_Id
+                                    and b.No_Transaksi = ct.No_Transaksi
+                                    and a.Kode_Karyawan_Requester = b.Kode_Karyawan
+                                    --and a.Status is NULL
+                                order by
+                                    a.order_flow desc
+                                ),
+                                0
+                            ) as MaxFlow,
+                            CASE
+                                WHEN ct.Flag_Approval = 'Y' THEN 'Selesai'
+                                WHEN ct.Flag_Approval = 'T' THEN 'Ditolak'
+                                WHEN ct.Flag_Approval = 'P' THEN 'Ditolak'
+                                ELSE ISNULL(
+                                (
+                                    SELECT
+                                    TOP 1 'Diproses'
+                                    FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    WHERE
+                                    ar.No_Transaksi = ct.No_Transaksi
+                                    AND ar.Kode_Karyawan = k.Kode_Karyawan
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
+                                    ORDER BY
+                                    af.order_flow
+                                ),
+                                'NO'
+                                )
+                            END as status,
+                            CASE
+                                WHEN ct.Flag_Approval = 'Y' THEN 'DiSetujui'
+                                WHEN ct.Flag_Approval = 'P' THEN 'Sistem'
+                                WHEN ct.Flag_Approval = 'T' THEN (
+                                select
+                                    top 1 af.Kode_Karyawan
+                                FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE
+                                    ar.No_Transaksi = ct.No_Transaksi
+
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval = 'T'
+                                    --AND af.Status is NULL
+                                ORDER BY
+                                    af.order_flow
+                                )
+                                ELSE ISNULL(
+                                (
+                                    SELECT
+                                    TOP 1 ka.Nama
+                                    FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    JOIN
+                                        Karyawan ka ON af.Kode_Karyawan = ka.Kode_Karyawan
+                                    WHERE
+                                    ar.No_Transaksi = ct.No_Transaksi
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
+                                    ORDER BY
+                                    af.order_flow
+                                ),
+                                null
+                                )
+                            END AS Approver,
+                            NULL AS Jam_Mulai,
+                            (
+                                select
+                                STRING_AGG(
+                                    CONCAT(
+                                    b.Kode_Karyawan,
+                                    ': ',
+                                    CASE
+                                        WHEN a.Flag_Approval IS NOT NULL THEN a.Flag_Approval
+                                        ELSE 'N'
+                                    END
+                                    ),
+                                    ', '
+                                ) WITHIN GROUP (
+                                    ORDER BY
+                                    b.order_flow
+                                ) AS StatusList
+                                from
+                                HRIS_Approval_Request a
+                                JOIN HRIS_Approval_Flow b ON a.Flow_Id = b.id
+                                where
+                                a.No_Transaksi = ct.No_Transaksi
+								and a.Kode_Karyawan = b.Kode_Karyawan_Requester
+                                --and b.Status is NULL
+                            ) AS STATUSLIST
+                            FROM
+                            Karyawan AS k
+                            INNER JOIN Transaksi_Cuti_Detail AS ct ON k.Kode_Karyawan = ct.Kode_Karyawan
+                            INNER JOIN Transaksi_Cuti AS cti ON ct.No_Transaksi = cti.No_Transaksi
+                            WHERE
+                            k.Kode_Karyawan = ?
+                            and cti.Status is null
+                            UNION ALL
+                            -- Query untuk Transaksi_Sakit_Izin_Detail
+                            SELECT
+                            CAST(CONCAT(CAST(tsip.Tanggal AS DATE),' ', tsip.Jam) AS DATETIME) AS tanggal_create,
+                            k.Kode_Karyawan,
+                            k.Nama,
+                            tsi.No_Transaksi,
+                            tsi.Jenis as Tipe_Izin,
+                            tsi.Tanggal_Sakit_Izin_Dari AS Tanggal_Mulai,
+                            tsi.Tanggal_Sakit_Izin_Sampai AS Tanggal_Selesai,
+                            tsi.Alasan,
+                            tsi.filePath as Lampiran,
+                            ISNULL(
+                                (
+                                SELECT
+                                    TOP 1 af.order_flow
+                                FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE
+                                    ar.No_Transaksi = tsi.No_Transaksi
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND af.Status is null
+                                    AND ar.Flag_Approval IS NOT NULL
+                                ORDER BY
+                                    af.order_flow DESC
+                                ),
+                                0
+                            ) as currentFlow,
+                            ISNULL(
+                                (
+                                select
+                                    top 1 order_flow
+                                from
+                                    HRIS_Approval_Flow a,
+                                    HRIS_Approval_Request b
+                                where
+                                    a.id = b.Flow_Id
+                                    and b.No_Transaksi = tsi.No_Transaksi
+									and a.Kode_Karyawan_Requester = b.Kode_Karyawan
+                                    --and a.Status is Null
+                                order by
+                                    a.order_flow desc
+                                ),
+                                0
+                            ) as MaxFlow,
+                            CASE
+                                WHEN tsi.Flag_Approval = 'Y' THEN 'Selesai'
+                                WHEN tsi.Flag_Approval = 'T' THEN 'Ditolak'
+                                WHEN tsi.Flag_Approval = 'P' THEN 'Ditolak'
+                                ELSE ISNULL(
+                                (
+                                    SELECT
+                                    TOP 1 'Diproses'
+                                    FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    WHERE
+                                    ar.No_Transaksi = tsi.No_Transaksi
+                                    AND ar.Kode_Karyawan = k.Kode_Karyawan
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
+                                    ORDER BY
+                                    af.order_flow
+                                ),
+                                'NO'
+                                )
+                            END as status,
+                            CASE
+                                WHEN tsi.Flag_Approval = 'Y' THEN 'DiSetujui'
+                                WHEN tsi.Flag_Approval = 'P' THEN 'Sistem'
+                                WHEN tsi.Flag_Approval = 'T' THEN (
+                                select
+                                    top 1 af.Kode_Karyawan
+                                FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE
+                                    ar.No_Transaksi = tsi.No_Transaksi
+
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval = 'T'
+                                    --AND af.Status is NULL
+                                ORDER BY
+                                    af.order_flow
+                                )
+                                ELSE ISNULL(
+                                (
+                                    SELECT
+                                    TOP 1 ka.Nama
+                                    FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    JOIN
+                                        Karyawan ka ON af.Kode_Karyawan = ka.Kode_Karyawan
+                                    WHERE
+                                    ar.No_Transaksi = tsi.No_Transaksi
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
+                                    ORDER BY
+                                    af.order_flow
+                                ),
+                                null
+                                )
+                            END AS Approver,
+                            NULL AS Jam_Mulai,
+                            (
+                                select
+                                STRING_AGG(
+                                    CONCAT(
+                                    b.Kode_Karyawan,
+                                    ': ',
+                                    CASE
+                                        WHEN a.Flag_Approval IS NOT NULL THEN a.Flag_Approval
+                                        ELSE 'N'
+                                    END
+                                    ),
+                                    ', '
+                                ) WITHIN GROUP (
+                                    ORDER BY
+                                    b.order_flow
+                                ) AS StatusList
+                                from
+                                HRIS_Approval_Request a
+                                JOIN HRIS_Approval_Flow b ON a.Flow_Id = b.id
+                                where
+                                a.No_Transaksi = tsi.No_Transaksi
+								and a.Kode_Karyawan = b.Kode_Karyawan_Requester
+                               -- and b.Status is NULL
+                            ) AS STATUSLIST
+                            FROM
+                            Karyawan AS k
+                            INNER JOIN Transaksi_Sakit_Izin_Detail AS tsi ON k.Kode_Karyawan = tsi.Kode_Karyawan
+                            INNER JOIN Transaksi_Sakit_Izin AS tsip ON tsi.No_Transaksi = tsip.No_Transaksi
+                            WHERE
+                            k.Kode_Karyawan = ?
+                            and tsip.Status is null
+                            UNION ALL -- Gunakan UNION ALL jika Anda tidak perlu menghilangkan duplikat
+                            SELECT
+                            CAST(CONCAT(CAST(ttpp.Tanggal AS DATE),' ', ttpp.Jam) AS DATETIME) AS tanggal_create,
+                            k.Kode_Karyawan,
+                            k.Nama,
+                            ttp.No_Transaksi,
+                            ttp.Jenis as Tipe_Izin,
+                            ttp.Tanggal_Masuk_Pulang AS Tanggal_Mulai,
+                            NULL AS Tanggal_Selesai,
+                            ttp.Alasan,
+                            ttp.filePath as Lampiran,
+                            ISNULL(
+                                (
+                                SELECT
+                                    TOP 1 af.order_flow
+                                FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE
+                                    ar.No_Transaksi = ttp.No_Transaksi
+                                    AND ar.Kode_Karyawan = k.Kode_Karyawan
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NOT NULL
+                                    --AND af.Status is NULL
+                                ORDER BY
+                                    af.order_flow DESC
+                                ),
+                                0
+                            ) as currentFlow,
+                            ISNULL(
+                                (
+                                select
+                                    top 1 order_flow
+                                from
+                                    HRIS_Approval_Flow a,
+                                    HRIS_Approval_Request b
+                                where
+                                    a.id = b.Flow_Id
+                                    and b.No_Transaksi = ttp.No_Transaksi
+									and a.Kode_Karyawan_Requester = b.Kode_Karyawan
+                                    --and a.Status is NULL
+                                order by
+                                    a.order_flow desc
+                                ),
+                                0
+                            ) as MaxFlow,
+                            CASE
+                                WHEN ttp.Flag_Approval = 'Y' THEN 'Selesai'
+                                WHEN ttp.Flag_Approval = 'T' THEN 'Ditolak'
+                                WHEN ttp.Flag_Approval = 'P' THEN 'Ditolak'
+                                ELSE ISNULL(
+                                (
+                                    SELECT
+                                    TOP 1 'Diproses'
+                                    FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    WHERE
+                                    ar.No_Transaksi = ttp.No_Transaksi
+                                    AND ar.Kode_Karyawan = k.Kode_Karyawan
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
+                                    ORDER BY
+                                    af.order_flow
+                                ),
+                                'NO'
+                                )
+                            END as status,
+                            CASE
+                                WHEN ttp.Flag_Approval = 'Y' THEN 'DiSetujui'
+                                WHEN ttp.Flag_Approval = 'P' THEN 'Sistem'
+                                WHEN ttp.Flag_Approval = 'T' THEN (
+                                select
+                                    top 1 af.Kode_Karyawan
+                                FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE
+                                    ar.No_Transaksi = ttp.No_Transaksi
+
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval = 'T'
+                                    --AND af.Status is NULL
+                                ORDER BY
+                                    af.order_flow
+                                )
+                                ELSE ISNULL(
+                                (
+                                    SELECT
+                                    TOP 1 ka.Nama
+                                    FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    JOIN
+                                        Karyawan ka ON af.Kode_Karyawan = ka.Kode_Karyawan
+                                    WHERE
+                                    ar.No_Transaksi = ttp.No_Transaksi
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    ---AND af.Status is NULL
+                                    ORDER BY
+                                    af.order_flow
+                                ),
+                                null
+                                )
+                            END AS Approver,
+                            ttp.Jam AS Jam_Mulai,
+                            (
+                                select
+                                STRING_AGG(
+                                    CONCAT(
+                                    b.Kode_Karyawan,
+                                    ': ',
+                                    CASE
+                                        WHEN a.Flag_Approval IS NOT NULL THEN a.Flag_Approval
+                                        ELSE 'N'
+                                    END
+                                    ),
+                                    ', '
+                                ) WITHIN GROUP (
+                                    ORDER BY
+                                    b.order_flow
+                                ) AS StatusList
+                                from
+                                HRIS_Approval_Request a
+                                JOIN HRIS_Approval_Flow b ON a.Flow_Id = b.id
+                                where
+                                a.No_Transaksi = ttp.No_Transaksi
+								and a.Kode_Karyawan = b.Kode_Karyawan_Requester
+                                --and b.Status is NULL
+                            ) AS STATUSLIST
+                            FROM
+                            Karyawan AS k
+                            INNER JOIN Transaksi_Terlambat_Pulang_Cepat_Detail AS ttp ON k.Kode_Karyawan = ttp.Kode_Karyawan
+                            INNER JOIN Transaksi_Terlambat_Pulang_Cepat AS ttpp ON ttp.No_Transaksi = ttpp.No_Transaksi
+                            WHERE
+                            k.Kode_Karyawan = ? and ttpp.Status is null
+                        )
+                        SELECT
+                        *
+                        FROM
+                        cte
+                        where
+                        MaxFlow <> 0
+                        ORDER BY
+                        tanggal_create desc
+            ";
+            $result = DB::select($query, [$Kode_Karyawan, $Kode_Karyawan, $Kode_Karyawan]);
+            $dataFinal =  collect($result)->map(function ($item) {
+                if (!empty($item->Kode_Karyawan)) {
+                    $item->Kode_Karyawan = Crypt::encryptString($item->Kode_Karyawan);
+
+                }
+
+                return $item;
+            });
+
+
+
+            $dataCuti= (object) [
+                'Sisa_Cuti' => (int) Auth::user()->karyawan->sisa_cuti(),
+                'Hutang_Cuti'=>(int) Auth::user()->karyawan->hutang_cuti()
+
+            ];
+            // dd($dataCuti);
+            $TanggalCutiSudahDipakai = DB::table('Transaksi_Cuti_Detail as a')
+                                        ->join("Transaksi_Cuti as b", "a.No_Transaksi", '=', 'b.No_Transaksi')
+                                        ->whereNull("b.Status")
+                                        ->where("a.Kode_Karyawan", $Kode_Karyawan)
+                                        ->where(function($query) {
+                                            $query->where("a.Flag_Approval", "<>", "T")
+                                            ->orWhereNull('a.Flag_Approval');
+
+                                        })
+                                        ->get();
+
+
+            $TanggalSakitIzinSudahDipakai =  DB::table('Transaksi_Sakit_Izin_Detail as a')
+                                    ->join("Transaksi_Sakit_Izin as b", "a.No_Transaksi", '=', 'b.No_Transaksi')
+                                    ->whereNull("b.Status")
+                                    ->where("Kode_Karyawan", $Kode_Karyawan)
+                                    ->where(function($query) {
+                                            $query->where("a.Flag_Approval", "<>", "T")
+                                            ->orWhereNull('a.Flag_Approval');
+
+                                        })
+                                    ->get();
+            // dd($TanggalSakitIzinSudahDipakai);
+            $TanggalPulangCepatSudahDipakai =  DB::table('Transaksi_Terlambat_Pulang_Cepat_Detail as a')
+                                    ->join("Transaksi_Terlambat_Pulang_Cepat as b", "a.No_Transaksi", '=', 'b.No_Transaksi')
+                                    ->whereNull("b.Status")
+                                    ->where("Kode_Karyawan", $Kode_Karyawan)
+                                    ->where(function($query) {
+                                        $query->where("a.Flag_Approval", "<>", "T")
+                                        ->orWhereNull('a.Flag_Approval');
+
+                                    })
+                                    ->get();
+
+
+            $HariLibur = collect(DB::table('HRIS_Hari_Libur')->get())->map(function ($item){
+                if(!empty($item->Tanggal)){
+                    $item->date = Carbon::parse($item->Tanggal)->format('Y-m-d');
+                }
+                if(!empty($item->Nama_Hari_Libur)){
+                    // Assuming Nama_Hari_Libur is also a date string that needs formatting.
+                    // If it's not a date, this line will cause an error.
+                    $item->description = $item->Nama_Hari_Libur;
+                }
+                return $item; // It is important to return the modified item
+            });
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Berhasil mengambil data',
+                'data' => $dataFinal,
+                'dataCuti' => $dataCuti,
+                'TanggalCuti' => $TanggalCutiSudahDipakai,
+                'TanggalSakitIzin' => $TanggalSakitIzinSudahDipakai,
+                'TanggalPulangTerlambat' => $TanggalPulangCepatSudahDipakai,
+                'HariLibur' => $HariLibur
+            ]);
+        }catch(\Throwable $e){
+            Log::channel('izinLog')->error('Gagal Menambil data getDataIzin'.$e->getMessage());
+            return response()->json([
+                'status' => 404,
+                'message' => 'Terjadi kesalahan coba lagi beberapa saat..'
+            ], 404);
+        }
+    }
+
+    public function getExportDH(Request $request){
+          try{
+            $start = Carbon::parse($request->start)->startOfDay(); // 2025-08-19 00:00:00
+            $end   = Carbon::parse($request->end)->endOfDay();     // 2025-08-19 23:59:59
+
+            $Kode_Karyawan = Auth::user()->karyawan->Kode_Karyawan;
+
+           $query = "
+                WITH BaseData_Terpulang AS (
+                    SELECT
+                        CAST(CONCAT(CAST(fa.Tanggal AS DATE),' ', fa.Jam) AS DATETIME) AS tanggal_create,
+                        d.Kode_Karyawan AS Approver_Kode_Karyawan,
+                        (select Nama from Karyawan where Kode_Karyawan = f.Kode_Karyawan) as requester_Nama,
+                        g.ID_Divisi AS Division_ID_From_View,
+                        k.ID_Level AS Level_ID_From_View,
+                        d.id AS Flow_Id,
+                        d.order_flow,
+                        e.No_Transaksi,
+                        e.Flag_Approval AS Current_Flag_Approval,
+                        f.Kode_Karyawan AS Requester_Kode_Karyawan,
+                        f.Jenis AS Request_Jenis,
+                        CASE
+                            WHEN f.Flag_Approval = 'Y' THEN 'Disetujui'
+                            WHEN f.Flag_Approval = 'T' THEN 'Ditolak'
+                            WHEN f.Flag_Approval = 'P' THEN 'Ditolak'
+                            ELSE ISNULL(
+                                (
+                                    SELECT TOP 1 'Diproses'
+                                    FROM HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    WHERE ar.No_Transaksi = f.No_Transaksi
+                                    AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    ORDER BY af.order_flow
+                                ),
+                                'NO'
+                            )
+                        END as status,
+                        CASE
+                            WHEN f.Flag_Approval = 'Y' THEN 'Disetujui'
+                            WHEN f.Flag_Approval = 'P' THEN 'Sistem'
+                            WHEN f.Flag_Approval = 'T' THEN (
+                                select top 1 a.Nama
+                                FROM HRIS_Approval_Request ar
+                                JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE ar.No_Transaksi = f.No_Transaksi
+                                AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+                                AND ar.Flag_Approval = 'T'
+                                ORDER BY af.order_flow
+                            )
+                            ELSE ISNULL(
+                                (
+                                    SELECT TOP 1 ka.Nama
+                                    FROM HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    JOIN Karyawan ka ON af.Kode_Karyawan = ka.Kode_Karyawan
+                                    WHERE ar.No_Transaksi = f.No_Transaksi
+                                    AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    ORDER BY af.order_flow
+                                ),
+                                null
+                            )
+                        END AS Approver,
+                        format(f.Tanggal_Masuk_Pulang, 'dd MMMM yyyy') + ' ' + LEFT(CONVERT(varchar, CAST(f.Jam AS time), 108), 5) AS TanggalIzin,
+                        f.filePath,
+                        f.Alasan AS Request_Alasan,
+                        ISNULL(
+                            (
+                                SELECT TOP 1 af.order_flow
+                                FROM HRIS_Approval_Request ar
+                                JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE ar.No_Transaksi = f.No_Transaksi
+                                AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                AND ar.Flag_Approval IS NOT NULL
+                                ORDER BY af.order_flow DESC
+                            ),
+                            0
+                        ) as currentFlow,
+                        ISNULL(
+                            (
+                                select top 1 order_flow
+                                from HRIS_Approval_Flow a,
+                                    HRIS_Approval_Request b
+                                where a.id = b.Flow_Id
+                                and b.No_Transaksi = f.No_Transaksi
+                                order by a.order_flow desc
+                            ),
+                            0
+                        ) as MaxFlow,
+                        (
+                            select STRING_AGG(
+                                CONCAT(b.Kode_Karyawan, ': ',
+                                    CASE WHEN a.Flag_Approval IS NOT NULL THEN a.Flag_Approval ELSE 'N' END),
+                                ', '
+                            ) WITHIN GROUP (ORDER BY b.order_flow) AS StatusList
+                            from HRIS_Approval_Request a
+                            JOIN HRIS_Approval_Flow b ON a.Flow_Id = b.id
+                            where a.No_Transaksi = f.No_Transaksi
+                            AND a.Kode_Karyawan = b.Kode_Karyawan_Requester
+                        ) AS STATUSLIST,
+
+                        -- START / END sebagai DATETIME (untuk overlap)
+                        CAST(f.Tanggal_Masuk_Pulang AS DATETIME) AS TanggalIzin_Start,
+                        CAST(f.Tanggal_Masuk_Pulang AS DATETIME) AS TanggalIzin_End
+                    FROM
+                        Karyawan AS a
+                        INNER JOIN HRIS_Approval_Flow AS d ON d.Kode_Karyawan = a.Kode_Karyawan
+                        INNER JOIN View_Divisi_Sub_Divisi AS g ON g.ID_DIVISI_SUB_DIVISI  = a.ID_Divisi_Sub_Divisi
+                        INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan AS k ON k.ID_Level_Jabatan = a.ID_Level_Jabatan
+                        INNER JOIN HRIS_Approval_Request AS e ON d.id = e.Flow_Id
+                        INNER JOIN Transaksi_Terlambat_Pulang_Cepat_Detail AS f ON e.No_Transaksi = f.No_Transaksi and d.Kode_Karyawan = a.Kode_Karyawan
+                        INNER JOIN Transaksi_Terlambat_Pulang_Cepat AS fa ON fa.No_Transaksi = f.No_Transaksi
+                    WHERE
+                        d.Kode_Karyawan = ?
+                        and fa.Status is null
+                ),
+                BaseData_Cuti AS (
+                    SELECT
+                        CAST(CONCAT(CAST(fa.Tanggal AS DATE),' ', fa.Jam) AS DATETIME) AS tanggal_create,
+                        d.Kode_Karyawan AS Approver_Kode_Karyawan,
+                        (select Nama from Karyawan where Kode_Karyawan = f.Kode_Karyawan) as requester_Nama,
+                        g.ID_Divisi AS Division_ID_From_View,
+                        k.ID_Level AS Level_ID_From_View,
+                        d.id AS Flow_Id,
+                        d.order_flow,
+                        e.No_Transaksi,
+                        e.Flag_Approval AS Current_Flag_Approval,
+                        f.Kode_Karyawan AS Requester_Kode_Karyawan,
+                        f.Jenis AS Request_Jenis,
+                        CASE
+                            WHEN f.Flag_Approval = 'Y' THEN 'Selesai'
+                            WHEN f.Flag_Approval = 'T' THEN 'Ditolak'
+                            WHEN f.Flag_Approval = 'P' THEN 'Ditolak'
+                            ELSE ISNULL(
+                                (
+                                    SELECT TOP 1 'Diproses'
+                                    FROM HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    WHERE ar.No_Transaksi = f.No_Transaksi
+                                    AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    ORDER BY af.order_flow
+                                ),
+                                'NO'
+                            )
+                        END as status,
+                        CASE
+                            WHEN f.Flag_Approval = 'Y' THEN 'DiSetujui'
+                            WHEN f.Flag_Approval = 'P' THEN 'Sistem'
+                            WHEN f.Flag_Approval = 'T' THEN (
+                                select top 1 a.Nama
+                                FROM HRIS_Approval_Request ar
+                                JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE ar.No_Transaksi = f.No_Transaksi
+                                AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+                                AND ar.Flag_Approval = 'T'
+                                ORDER BY af.order_flow
+                            )
+                            ELSE ISNULL(
+                                (
+                                    SELECT TOP 1 ka.Nama
+                                    FROM HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    JOIN Karyawan ka ON af.Kode_Karyawan = ka.Kode_Karyawan
+                                    WHERE ar.No_Transaksi = f.No_Transaksi
+                                    AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    ORDER BY af.order_flow
+                                ),
+                                null
+                            )
+                        END AS Approver,
+                        CASE
+                            WHEN FORMAT(f.Tanggal_Cuti_Dari, 'dd MMMM yyyy') = FORMAT(f.Tanggal_Cuti_Sampai, 'dd MMMM yyyy')
+                            THEN FORMAT(f.Tanggal_Cuti_Dari, 'dd MMMM yyyy')
+                            ELSE FORMAT(f.Tanggal_Cuti_Dari, 'dd') + '-' + FORMAT(f.Tanggal_Cuti_Sampai, 'dd MMMM yyyy')
+                        END AS TanggalIzin,
+                        f.filePath,
+                        f.Alasan AS Request_Alasan,
+                        ISNULL(
+                            (
+                                SELECT TOP 1 af.order_flow
+                                FROM HRIS_Approval_Request ar
+                                JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE ar.No_Transaksi = f.No_Transaksi
+                                AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                AND ar.Flag_Approval IS NOT NULL
+                                ORDER BY af.order_flow DESC
+                            ),
+                            0
+                        ) as currentFlow,
+                        ISNULL(
+                            (
+                                select top 1 order_flow
+                                from HRIS_Approval_Flow a,
+                                    HRIS_Approval_Request b
+                                where a.id = b.Flow_Id
+                                and b.No_Transaksi = f.No_Transaksi
+                                and a.Kode_Karyawan_Requester = b.Kode_Karyawan
+                                order by a.order_flow desc
+                            ),
+                            0
+                        ) as MaxFlow,
+                        (
+                            select STRING_AGG(
+                                CONCAT(b.Kode_Karyawan, ': ',
+                                    CASE WHEN a.Flag_Approval IS NOT NULL THEN a.Flag_Approval ELSE 'N' END),
+                                ', '
+                            ) WITHIN GROUP (ORDER BY b.order_flow) AS StatusList
+                            from HRIS_Approval_Request a
+                            JOIN HRIS_Approval_Flow b ON a.Flow_Id = b.id
+                            where a.No_Transaksi = f.No_Transaksi
+                            and a.Kode_Karyawan = b.Kode_Karyawan_Requester
+                        ) AS STATUSLIST,
+
+                        -- START/END cuti sebagai DATETIME
+                        CAST(f.Tanggal_Cuti_Dari AS DATETIME) AS TanggalIzin_Start,
+                        CAST(ISNULL(f.Tanggal_Cuti_Sampai, f.Tanggal_Cuti_Dari) AS DATETIME) AS TanggalIzin_End
+                    FROM
+                        Karyawan AS a
+                        INNER JOIN HRIS_Approval_Flow AS d ON d.Kode_Karyawan = a.Kode_Karyawan
+                        INNER JOIN View_Divisi_Sub_Divisi AS g ON g.ID_DIVISI_SUB_DIVISI  = a.ID_Divisi_Sub_Divisi
+                        INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan AS k ON k.ID_Level_Jabatan = a.ID_Level_Jabatan
+                        INNER JOIN HRIS_Approval_Request AS e ON d.id = e.Flow_Id
+                        INNER JOIN Transaksi_Cuti_Detail AS f ON e.No_Transaksi = f.No_Transaksi
+                        INNER JOIN Transaksi_Cuti AS fa ON fa.No_Transaksi = f.No_Transaksi
+                    WHERE
+                        d.Kode_Karyawan = ?
+                        and fa.Status is null
+                ),
+                BaseData_Sakit AS (
+                    SELECT
+                        CAST(CONCAT(CAST(fa.Tanggal AS DATE),' ', fa.Jam) AS DATETIME) AS tanggal_create,
+                        d.Kode_Karyawan AS Approver_Kode_Karyawan,
+                        (select Nama from Karyawan where Kode_Karyawan = f.Kode_Karyawan) as requester_Nama,
+                        g.ID_Divisi AS Division_ID_From_View,
+                        k.ID_Level AS Level_ID_From_View,
+                        d.id AS Flow_Id,
+                        d.order_flow,
+                        e.No_Transaksi,
+                        e.Flag_Approval AS Current_Flag_Approval,
+                        f.Kode_Karyawan AS Requester_Kode_Karyawan,
+                        f.Jenis AS Request_Jenis,
+                        CASE
+                            WHEN f.Flag_Approval = 'Y' THEN 'Selesai'
+                            WHEN f.Flag_Approval = 'T' THEN 'Ditolak'
+                            WHEN f.Flag_Approval = 'P' THEN 'Ditolak'
+                            ELSE ISNULL(
+                                (
+                                    SELECT TOP 1 'Diproses'
+                                    FROM HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    WHERE ar.No_Transaksi = f.No_Transaksi
+                                    AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    ORDER BY af.order_flow
+                                ),
+                                'NO'
+                            )
+                        END as status,
+                        CASE
+                            WHEN f.Flag_Approval = 'Y' THEN 'DiSetujui'
+                            WHEN f.Flag_Approval = 'P' THEN 'Sistem'
+                            WHEN f.Flag_Approval = 'T' THEN (
+                                select top 1 a.Nama
+                                FROM HRIS_Approval_Request ar
+                                JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE ar.No_Transaksi = f.No_Transaksi
+                                AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+                                AND ar.Flag_Approval = 'T'
+                                ORDER BY af.order_flow
+                            )
+                            ELSE ISNULL(
+                                (
+                                    SELECT TOP 1 ka.Nama
+                                    FROM HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    JOIN Karyawan ka ON af.Kode_Karyawan = ka.Kode_Karyawan
+                                    WHERE ar.No_Transaksi = f.No_Transaksi
+                                    AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    ORDER BY af.order_flow
+                                ),
+                                null
+                            )
+                        END AS Approver,
+                        CASE
+                            WHEN FORMAT(f.Tanggal_Sakit_Izin_Dari, 'dd MMMM yyyy') = FORMAT(f.Tanggal_Sakit_Izin_Sampai, 'dd MMMM yyyy')
+                            THEN FORMAT(f.Tanggal_Sakit_Izin_Dari, 'dd MMMM yyyy')
+                            ELSE FORMAT(f.Tanggal_Sakit_Izin_Dari, 'dd') + '-' + FORMAT(f.Tanggal_Sakit_Izin_Sampai, 'dd MMMM yyyy')
+                        END AS TanggalIzin,
+                        f.filePath,
+                        f.Alasan AS Request_Alasan,
+                        ISNULL(
+                            (
+                                SELECT TOP 1 af.order_flow
+                                FROM HRIS_Approval_Request ar
+                                JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE ar.No_Transaksi = f.No_Transaksi
+                                AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                AND ar.Flag_Approval IS NOT NULL
+                                ORDER BY af.order_flow DESC
+                            ),
+                            0
+                        ) as currentFlow,
+                        ISNULL(
+                            (
+                                select top 1 order_flow
+                                from HRIS_Approval_Flow a,
+                                    HRIS_Approval_Request b
+                                where a.id = b.Flow_Id
+                                and b.No_Transaksi = f.No_Transaksi
+                                and a.Kode_Karyawan_Requester = b.Kode_Karyawan
+                                order by a.order_flow desc
+                            ),
+                            0
+                        ) as MaxFlow,
+                        (
+                            select STRING_AGG(
+                                CONCAT(b.Kode_Karyawan, ': ',
+                                    CASE WHEN a.Flag_Approval IS NOT NULL THEN a.Flag_Approval ELSE 'N' END),
+                                ', '
+                            ) WITHIN GROUP (ORDER BY b.order_flow) AS StatusList
+                            from HRIS_Approval_Request a
+                            JOIN HRIS_Approval_Flow b ON a.Flow_Id = b.id
+                            where a.No_Transaksi = f.No_Transaksi
+                            AND a.Kode_Karyawan = b.Kode_Karyawan_Requester
+                        ) AS STATUSLIST,
+
+                        -- START/END sakit sebagai DATETIME
+                        CAST(f.Tanggal_Sakit_Izin_Dari AS DATETIME) AS TanggalIzin_Start,
+                        CAST(ISNULL(f.Tanggal_Sakit_Izin_Sampai, f.Tanggal_Sakit_Izin_Dari) AS DATETIME) AS TanggalIzin_End
+                    FROM
+                        Karyawan AS a
+                        INNER JOIN HRIS_Approval_Flow AS d ON d.Kode_Karyawan = a.Kode_Karyawan
+                        INNER JOIN View_Divisi_Sub_Divisi AS g ON g.ID_DIVISI_SUB_DIVISI  = a.ID_Divisi_Sub_Divisi
+                        INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan AS k ON k.ID_Level_Jabatan = a.ID_Level_Jabatan
+                        INNER JOIN HRIS_Approval_Request AS e ON d.id = e.Flow_Id
+                        INNER JOIN Transaksi_Sakit_Izin_Detail AS f ON e.No_Transaksi = f.No_Transaksi and d.Kode_Karyawan = a.Kode_Karyawan
+                        INNER JOIN Transaksi_Sakit_Izin AS fa ON fa.No_Transaksi = f.No_Transaksi
+                    WHERE
+                        d.Kode_Karyawan = ?
+                        and fa.Status is null
+                ),
+                ApprovalStepValidation AS (
+                    SELECT
+                        bd.*,
+                        TRY_CAST(bd.order_flow AS INT) AS Numeric_Order_Flow,
+                        PrevApproval.Flag_Approval AS Previous_Step_Flag_Approval
+                    FROM
+                        (SELECT * FROM BaseData_Terpulang
+                        UNION ALL
+                        SELECT * FROM BaseData_Sakit
+                        UNION ALL
+                        SELECT * FROM BaseData_Cuti
+                        ) AS bd
+                        LEFT JOIN HRIS_Approval_Flow AS prev_flow
+                            ON prev_flow.Kode_Karyawan_Requester = bd.Requester_Kode_Karyawan
+                            AND prev_flow.order_flow = TRY_CAST(bd.order_flow AS INT) - 1
+                            AND TRY_CAST(bd.order_flow AS INT) > 1
+                        LEFT JOIN HRIS_Approval_Request AS PrevApproval
+                            ON PrevApproval.Flow_Id = prev_flow.id
+                            AND PrevApproval.No_Transaksi = bd.No_Transaksi
+                )
+                SELECT
+                    apv.tanggal_create,
+                    apv.No_Transaksi,
+                    apv.Approver_Kode_Karyawan,
+                    apv.requester_Nama,
+                    apv.Requester_Kode_Karyawan,
+                    apv.Request_Jenis as Tipe_Izin,
+                    apv.Request_Alasan as Alasan,
+                    apv.TanggalIzin,
+                    apv.filePath as Lampiran,
+                    apv.STATUSLIST,
+                    apv.MaxFlow,
+                    apv.currentFlow,
+                    apv.status,
+                    apv.Approver,
+                    apv.Current_Flag_Approval AS Status_Approval_Saat_Ini,
+                    apv.Previous_Step_Flag_Approval AS Status_Approval_Langkah_Sebelumnya,
+                    apv.order_flow
+                FROM ApprovalStepValidation AS apv
+                WHERE
+                    apv.Approver_Kode_Karyawan = ?
+                    AND (
+                        apv.Numeric_Order_Flow = 1
+                        OR (
+                            apv.Numeric_Order_Flow > 1
+                            AND apv.Previous_Step_Flag_Approval = 'Y'
+                        )
+                    )
+
+                    -- overlap check yang lebih robust:
+                   AND (
+    CAST(apv.TanggalIzin_Start AS DATETIME) <= CAST(DATEADD(SECOND, 86399, ? ) AS DATETIME) -- filter_end + 23:59:59
+    AND CAST(apv.TanggalIzin_End   AS DATETIME) >= CAST(? AS DATETIME)  -- filter_start
+)
+
+                ORDER BY apv.tanggal_create desc
+            ";
+
+
+
+     $params = [
+    $Kode_Karyawan, // BaseData_Terpulang WHERE d.Kode_Karyawan = ?
+    $Kode_Karyawan, // BaseData_Cuti   WHERE d.Kode_Karyawan = ?
+    $Kode_Karyawan, // BaseData_Sakit  WHERE d.Kode_Karyawan = ?
+    $Kode_Karyawan, // main WHERE apv.Approver_Kode_Karyawan = ?
+
+    $end,  // untuk CAST(? AS DATETIME) di kondisi pertama (apv.TanggalIzin_Start <= ?)
+    $start // untuk CAST(? AS DATETIME) di kondisi kedua (apv.TanggalIzin_End >= ?)
+];
+
+$result = DB::select($query, $params);
+            $dataFinal = collect($result)->map(function ($item) {
+                if (!empty($item->Approver_Kode_Karyawan)) {
+                    $item->Approver_Kode_Karyawan = Crypt::encryptString($item->Approver_Kode_Karyawan);
+                }
+                if (!empty($item->Requester_Kode_Karyawan)) {
+                    $item->Requester_Kode_Karyawan = Crypt::encryptString($item->Requester_Kode_Karyawan);
+                }
+                return $item;
+            });
+
+            // dd($dataFinal);
+            return response()->json([
+                'status' => 200,
+                'message' => 'Berhasil mengambil data',
+                'data' => $dataFinal
+            ]);
+        }catch(\Throwable $e){
+            Log::channel('izinLog')->error('Gagal Menambil data getDataIzinDH'.$e->getMessage());
+            return response()->json([
+                'status' => 404,
+                'message' => 'Terjadi kesalahan coba lagi beberapa saat..'
+            ], 404);
+        }
+    }
+
+    public function getExport(Request $request){
+        try{
+            $start = Carbon::parse($request->start);
+            $end = Carbon::parse($request->end);
+            $Kode_Karyawan = Auth::user()->karyawan->Kode_Karyawan;
+            $query ="
+             WITH
+                        cte AS (
+                          SELECT
+                            CAST(CONCAT(CAST(cti.Tanggal AS DATE),' ', cti.Jam) AS DATETIME) AS tanggal_create,
+                            k.Kode_Karyawan,
+                            k.Nama,
+                            ct.No_Transaksi,
+                            ct.Jenis as Tipe_Izin,
+                            ct.Tanggal_Cuti_Dari AS Tanggal_Mulai,
+                            ct.Tanggal_Cuti_Sampai AS Tanggal_Selesai,
+                            ct.Alasan,
+                            ct.filePath as Lampiran,
+                            ISNULL(
+                                (
+                                SELECT
+                                    TOP 1 af.order_flow
+                                FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE
+                                    ar.No_Transaksi = ct.No_Transaksi
+                                    AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NOT NULL
+                                    --AND af.Status is NULL
+                                ORDER BY
+                                    af.order_flow DESC
+                                ),
+                                0
+                            ) as currentFlow,
+                            ISNULL(
+                                (
+                                select
+                                    top 1 order_flow
+                                from
+                                    HRIS_Approval_Flow a,
+                                    HRIS_Approval_Request b
+                                where
+                                    a.id = b.Flow_Id
+                                    and b.No_Transaksi = ct.No_Transaksi
+                                    and a.Kode_Karyawan_Requester = b.Kode_Karyawan
+                                    --and a.Status is NULL
+                                order by
+                                    a.order_flow desc
+                                ),
+                                0
+                            ) as MaxFlow,
+                            CASE
+                                WHEN ct.Flag_Approval = 'Y' THEN 'Selesai'
+                                WHEN ct.Flag_Approval = 'T' THEN 'Ditolak'
+                                WHEN ct.Flag_Approval = 'P' THEN 'Ditolak'
+                                ELSE ISNULL(
+                                (
+                                    SELECT
+                                    TOP 1 'Diproses'
+                                    FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    WHERE
+                                    ar.No_Transaksi = ct.No_Transaksi
+                                    AND ar.Kode_Karyawan = k.Kode_Karyawan
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
+                                    ORDER BY
+                                    af.order_flow
+                                ),
+                                'NO'
+                                )
+                            END as status,
+                            CASE
+                                WHEN ct.Flag_Approval = 'Y' THEN 'DiSetujui'
+                                WHEN ct.Flag_Approval = 'P' THEN 'Sistem'
+                                WHEN ct.Flag_Approval = 'T' THEN (
+                                select
+                                    top 1 af.Kode_Karyawan
+                                FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE
+                                    ar.No_Transaksi = ct.No_Transaksi
+
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval = 'T'
+                                    --AND af.Status is NULL
+                                ORDER BY
+                                    af.order_flow
+                                )
+                                ELSE ISNULL(
+                                (
+                                    SELECT
+                                    TOP 1 ka.Nama
+                                    FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    JOIN
+                                        Karyawan ka ON af.Kode_Karyawan = ka.Kode_Karyawan
+                                    WHERE
+                                    ar.No_Transaksi = ct.No_Transaksi
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
+                                    ORDER BY
+                                    af.order_flow
+                                ),
+                                null
+                                )
+                            END AS Approver,
+                            NULL AS Jam_Mulai,
+                            (
+                                select
+                                STRING_AGG(
+                                    CONCAT(
+                                    b.Kode_Karyawan,
+                                    ': ',
+                                    CASE
+                                        WHEN a.Flag_Approval IS NOT NULL THEN a.Flag_Approval
+                                        ELSE 'N'
+                                    END
+                                    ),
+                                    ', '
+                                ) WITHIN GROUP (
+                                    ORDER BY
+                                    b.order_flow
+                                ) AS StatusList
+                                from
+                                HRIS_Approval_Request a
+                                JOIN HRIS_Approval_Flow b ON a.Flow_Id = b.id
+                                where
+                                a.No_Transaksi = ct.No_Transaksi
+								and a.Kode_Karyawan = b.Kode_Karyawan_Requester
+                                --and b.Status is NULL
+                            ) AS STATUSLIST
+                            FROM
+                            Karyawan AS k
+                            INNER JOIN Transaksi_Cuti_Detail AS ct ON k.Kode_Karyawan = ct.Kode_Karyawan
+                            INNER JOIN Transaksi_Cuti AS cti ON ct.No_Transaksi = cti.No_Transaksi
+                            WHERE
+                            k.Kode_Karyawan = ?
+                            and cti.Status is null
+                            UNION ALL
+                            -- Query untuk Transaksi_Sakit_Izin_Detail
+                            SELECT
+                            CAST(CONCAT(CAST(tsip.Tanggal AS DATE),' ', tsip.Jam) AS DATETIME) AS tanggal_create,
+                            k.Kode_Karyawan,
+                            k.Nama,
+                            tsi.No_Transaksi,
+                            tsi.Jenis as Tipe_Izin,
+                            tsi.Tanggal_Sakit_Izin_Dari AS Tanggal_Mulai,
+                            tsi.Tanggal_Sakit_Izin_Sampai AS Tanggal_Selesai,
+                            tsi.Alasan,
+                            tsi.filePath as Lampiran,
+                            ISNULL(
+                                (
+                                SELECT
+                                    TOP 1 af.order_flow
+                                FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE
+                                    ar.No_Transaksi = tsi.No_Transaksi
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND af.Status is null
+                                    AND ar.Flag_Approval IS NOT NULL
+                                ORDER BY
+                                    af.order_flow DESC
+                                ),
+                                0
+                            ) as currentFlow,
+                            ISNULL(
+                                (
+                                select
+                                    top 1 order_flow
+                                from
+                                    HRIS_Approval_Flow a,
+                                    HRIS_Approval_Request b
+                                where
+                                    a.id = b.Flow_Id
+                                    and b.No_Transaksi = tsi.No_Transaksi
+									and a.Kode_Karyawan_Requester = b.Kode_Karyawan
+                                    --and a.Status is Null
+                                order by
+                                    a.order_flow desc
+                                ),
+                                0
+                            ) as MaxFlow,
+                            CASE
+                                WHEN tsi.Flag_Approval = 'Y' THEN 'Selesai'
+                                WHEN tsi.Flag_Approval = 'T' THEN 'Ditolak'
+                                WHEN tsi.Flag_Approval = 'P' THEN 'Ditolak'
+                                ELSE ISNULL(
+                                (
+                                    SELECT
+                                    TOP 1 'Diproses'
+                                    FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    WHERE
+                                    ar.No_Transaksi = tsi.No_Transaksi
+                                    AND ar.Kode_Karyawan = k.Kode_Karyawan
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
+                                    ORDER BY
+                                    af.order_flow
+                                ),
+                                'NO'
+                                )
+                            END as status,
+                            CASE
+                                WHEN tsi.Flag_Approval = 'Y' THEN 'DiSetujui'
+                                WHEN tsi.Flag_Approval = 'P' THEN 'Sistem'
+                                WHEN tsi.Flag_Approval = 'T' THEN (
+                                select
+                                    top 1 af.Kode_Karyawan
+                                FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE
+                                    ar.No_Transaksi = tsi.No_Transaksi
+
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval = 'T'
+                                    --AND af.Status is NULL
+                                ORDER BY
+                                    af.order_flow
+                                )
+                                ELSE ISNULL(
+                                (
+                                    SELECT
+                                    TOP 1 ka.Nama
+                                    FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    JOIN
+                                        Karyawan ka ON af.Kode_Karyawan = ka.Kode_Karyawan
+                                    WHERE
+                                    ar.No_Transaksi = tsi.No_Transaksi
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
+                                    ORDER BY
+                                    af.order_flow
+                                ),
+                                null
+                                )
+                            END AS Approver,
+                            NULL AS Jam_Mulai,
+                            (
+                                select
+                                STRING_AGG(
+                                    CONCAT(
+                                    b.Kode_Karyawan,
+                                    ': ',
+                                    CASE
+                                        WHEN a.Flag_Approval IS NOT NULL THEN a.Flag_Approval
+                                        ELSE 'N'
+                                    END
+                                    ),
+                                    ', '
+                                ) WITHIN GROUP (
+                                    ORDER BY
+                                    b.order_flow
+                                ) AS StatusList
+                                from
+                                HRIS_Approval_Request a
+                                JOIN HRIS_Approval_Flow b ON a.Flow_Id = b.id
+                                where
+                                a.No_Transaksi = tsi.No_Transaksi
+								and a.Kode_Karyawan = b.Kode_Karyawan_Requester
+                               -- and b.Status is NULL
+                            ) AS STATUSLIST
+                            FROM
+                            Karyawan AS k
+                            INNER JOIN Transaksi_Sakit_Izin_Detail AS tsi ON k.Kode_Karyawan = tsi.Kode_Karyawan
+                            INNER JOIN Transaksi_Sakit_Izin AS tsip ON tsi.No_Transaksi = tsip.No_Transaksi
+                            WHERE
+                            k.Kode_Karyawan = ?
+                            and tsip.Status is null
+                            UNION ALL -- Gunakan UNION ALL jika Anda tidak perlu menghilangkan duplikat
+                            SELECT
+                            CAST(CONCAT(CAST(ttpp.Tanggal AS DATE),' ', ttpp.Jam) AS DATETIME) AS tanggal_create,
+                            k.Kode_Karyawan,
+                            k.Nama,
+                            ttp.No_Transaksi,
+                            ttp.Jenis as Tipe_Izin,
+                            ttp.Tanggal_Masuk_Pulang AS Tanggal_Mulai,
+                            NULL AS Tanggal_Selesai,
+                            ttp.Alasan,
+                            ttp.filePath as Lampiran,
+                            ISNULL(
+                                (
+                                SELECT
+                                    TOP 1 af.order_flow
+                                FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE
+                                    ar.No_Transaksi = ttp.No_Transaksi
+                                    AND ar.Kode_Karyawan = k.Kode_Karyawan
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NOT NULL
+                                    --AND af.Status is NULL
+                                ORDER BY
+                                    af.order_flow DESC
+                                ),
+                                0
+                            ) as currentFlow,
+                            ISNULL(
+                                (
+                                select
+                                    top 1 order_flow
+                                from
+                                    HRIS_Approval_Flow a,
+                                    HRIS_Approval_Request b
+                                where
+                                    a.id = b.Flow_Id
+                                    and b.No_Transaksi = ttp.No_Transaksi
+									and a.Kode_Karyawan_Requester = b.Kode_Karyawan
+                                    --and a.Status is NULL
+                                order by
+                                    a.order_flow desc
+                                ),
+                                0
+                            ) as MaxFlow,
+                            CASE
+                                WHEN ttp.Flag_Approval = 'Y' THEN 'Selesai'
+                                WHEN ttp.Flag_Approval = 'T' THEN 'Ditolak'
+                                WHEN ttp.Flag_Approval = 'P' THEN 'Ditolak'
+                                ELSE ISNULL(
+                                (
+                                    SELECT
+                                    TOP 1 'Diproses'
+                                    FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    WHERE
+                                    ar.No_Transaksi = ttp.No_Transaksi
+                                    AND ar.Kode_Karyawan = k.Kode_Karyawan
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
+                                    ORDER BY
+                                    af.order_flow
+                                ),
+                                'NO'
+                                )
+                            END as status,
+                            CASE
+                                WHEN ttp.Flag_Approval = 'Y' THEN 'DiSetujui'
+                                WHEN ttp.Flag_Approval = 'P' THEN 'Sistem'
+                                WHEN ttp.Flag_Approval = 'T' THEN (
+                                select
+                                    top 1 af.Kode_Karyawan
+                                FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE
+                                    ar.No_Transaksi = ttp.No_Transaksi
+
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval = 'T'
+                                    --AND af.Status is NULL
+                                ORDER BY
+                                    af.order_flow
+                                )
+                                ELSE ISNULL(
+                                (
+                                    SELECT
+                                    TOP 1 ka.Nama
+                                    FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    JOIN
+                                        Karyawan ka ON af.Kode_Karyawan = ka.Kode_Karyawan
+                                    WHERE
+                                    ar.No_Transaksi = ttp.No_Transaksi
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    ---AND af.Status is NULL
+                                    ORDER BY
+                                    af.order_flow
+                                ),
+                                null
+                                )
+                            END AS Approver,
+                            ttp.Jam AS Jam_Mulai,
+                            (
+                                select
+                                STRING_AGG(
+                                    CONCAT(
+                                    b.Kode_Karyawan,
+                                    ': ',
+                                    CASE
+                                        WHEN a.Flag_Approval IS NOT NULL THEN a.Flag_Approval
+                                        ELSE 'N'
+                                    END
+                                    ),
+                                    ', '
+                                ) WITHIN GROUP (
+                                    ORDER BY
+                                    b.order_flow
+                                ) AS StatusList
+                                from
+                                HRIS_Approval_Request a
+                                JOIN HRIS_Approval_Flow b ON a.Flow_Id = b.id
+                                where
+                                a.No_Transaksi = ttp.No_Transaksi
+								and a.Kode_Karyawan = b.Kode_Karyawan_Requester
+                                --and b.Status is NULL
+                            ) AS STATUSLIST
+                            FROM
+                            Karyawan AS k
+                            INNER JOIN Transaksi_Terlambat_Pulang_Cepat_Detail AS ttp ON k.Kode_Karyawan = ttp.Kode_Karyawan
+                            INNER JOIN Transaksi_Terlambat_Pulang_Cepat AS ttpp ON ttp.No_Transaksi = ttpp.No_Transaksi
+                            WHERE
+                            k.Kode_Karyawan = ? and ttpp.Status is null
+                        )
+                       SELECT *
+                        FROM cte
+                        WHERE MaxFlow <> 0
+                        AND (
+                                -- Kalau Tanggal_Selesai NULL, cek hanya di tanggal mulai
+                                (CAST(Tanggal_Selesai AS DATETIME) IS NULL
+                                    AND CAST(Tanggal_Mulai AS DATETIME) BETWEEN ? AND ?)
+
+                                -- Kalau ada tanggal selesai, cek overlap interval
+                                OR (Tanggal_Selesai IS NOT NULL
+                                    AND CAST(Tanggal_Mulai AS DATETIME) <= ?
+                                    AND CAST(Tanggal_Selesai AS DATETIME) >= ?)
+                            )
+                        ORDER BY Tanggal_Mulai;
+            ";
+            $result = DB::select($query, [$Kode_Karyawan, $Kode_Karyawan, $Kode_Karyawan, $start, $end, $end, $start]);
+            $dataFinal =  collect($result)->map(function ($item) {
+                if (!empty($item->Kode_Karyawan)) {
+                    $item->Kode_Karyawan = Crypt::encryptString($item->Kode_Karyawan);
+
+                }
+
+                return $item;
+            });
+
+
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Berhasil mengambil data',
+                'data' => $dataFinal
+
+            ]);
+        }catch(\Throwable $e){
+            Log::channel('izinLog')->error('Gagal Menambil data getDataIzin'.$e->getMessage());
+            return response()->json([
+                'status' => 404,
+                'message' => 'Terjadi kesalahan coba lagi beberapa saat..'
+            ], 404);
+        }
+    }
+
+
+    public function getExportAdmin(Request $request){
+         try{
+            $start = Carbon::parse($request->start);
+            $end = Carbon::parse($request->end);
+            $Kode_Karyawan = Auth::user()->karyawan->Kode_Karyawan;
+            $query ="
+                        WITH
+                        cte AS (
+                          SELECT
+                            CAST(CONCAT(CAST(cti.Tanggal AS DATE),' ', cti.Jam) AS DATETIME) AS tanggal_create,
+                            k.Kode_Karyawan,
+                            k.Nama,
+                            ct.No_Transaksi,
+                            ct.Jenis as Tipe_Izin,
+                            ct.Tanggal_Cuti_Dari AS Tanggal_Mulai,
+                            ct.Tanggal_Cuti_Sampai AS Tanggal_Selesai,
+                            ct.Alasan,
+                            ct.filePath as Lampiran,
+							(select Nama from Karyawan z where z.Kode_Karyawan = ct.Kode_Karyawan) as nama_requester,
+                            ISNULL(
+                                (
+                                SELECT
+                                    TOP 1 af.order_flow
+                                FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE
+                                    ar.No_Transaksi = ct.No_Transaksi
+                                    AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NOT NULL
+                                    --AND af.Status is NULL
+                                ORDER BY
+                                    af.order_flow DESC
+                                ),
+                                0
+                            ) as currentFlow,
+                            ISNULL(
+                                (
+                                select
+                                    top 1 order_flow
+                                from
+                                    HRIS_Approval_Flow a,
+                                    HRIS_Approval_Request b
+                                where
+                                    a.id = b.Flow_Id
+                                    and b.No_Transaksi = ct.No_Transaksi
+                                    and a.Kode_Karyawan_Requester = b.Kode_Karyawan
+                                    --and a.Status is NULL
+                                order by
+                                    a.order_flow desc
+                                ),
+                                0
+                            ) as MaxFlow,
+                            CASE
+                                WHEN ct.Flag_Approval = 'Y' THEN 'Selesai'
+                                WHEN ct.Flag_Approval = 'T' THEN 'Ditolak'
+                                WHEN ct.Flag_Approval = 'P' THEN 'Ditolak'
+                                ELSE ISNULL(
+                                (
+                                    SELECT
+                                    TOP 1 'Diproses'
+                                    FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    WHERE
+                                    ar.No_Transaksi = ct.No_Transaksi
+                                    AND ar.Kode_Karyawan = k.Kode_Karyawan
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
+                                    ORDER BY
+                                    af.order_flow
+                                ),
+                                'NO'
+                                )
+                            END as status,
+                            CASE
+                                WHEN ct.Flag_Approval = 'Y' THEN 'DiSetujui'
+                                WHEN ct.Flag_Approval = 'P' THEN 'Sistem'
+                                WHEN ct.Flag_Approval = 'T' THEN (
+                                select
+                                    top 1 af.Kode_Karyawan
+                                FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE
+                                    ar.No_Transaksi = ct.No_Transaksi
+
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval = 'T'
+                                    --AND af.Status is NULL
+                                ORDER BY
+                                    af.order_flow
+                                )
+                                ELSE ISNULL(
+                                (
+                                    SELECT
+                                    TOP 1 ka.Nama
+                                    FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    JOIN
+                                        Karyawan ka ON af.Kode_Karyawan = ka.Kode_Karyawan
+                                    WHERE
+                                    ar.No_Transaksi = ct.No_Transaksi
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
+                                    ORDER BY
+                                    af.order_flow
+                                ),
+                                null
+                                )
+                            END AS Approver,
+                            NULL AS Jam_Mulai,
+                            (
+                                select
+                                STRING_AGG(
+                                    CONCAT(
+                                    b.Kode_Karyawan,
+                                    ': ',
+                                    CASE
+                                        WHEN a.Flag_Approval IS NOT NULL THEN a.Flag_Approval
+                                        ELSE 'N'
+                                    END
+                                    ),
+                                    ', '
+                                ) WITHIN GROUP (
+                                    ORDER BY
+                                    b.order_flow
+                                ) AS StatusList
+                                from
+                                HRIS_Approval_Request a
+                                JOIN HRIS_Approval_Flow b ON a.Flow_Id = b.id
+                                where
+                                a.No_Transaksi = ct.No_Transaksi
+								and a.Kode_Karyawan = b.Kode_Karyawan_Requester
+                                --and b.Status is NULL
+                            ) AS STATUSLIST
+                            FROM
+                            Karyawan AS k
+                            INNER JOIN Transaksi_Cuti_Detail AS ct ON k.Kode_Karyawan = ct.Kode_Karyawan
+                            INNER JOIN Transaksi_Cuti AS cti ON ct.No_Transaksi = cti.No_Transaksi
+                            WHERE
+                             cti.Status is null
+                            UNION ALL
+                            -- Query untuk Transaksi_Sakit_Izin_Detail
+                            SELECT
+                            CAST(CONCAT(CAST(tsip.Tanggal AS DATE),' ', tsip.Jam) AS DATETIME) AS tanggal_create,
+                            k.Kode_Karyawan,
+                            k.Nama,
+                            tsi.No_Transaksi,
+                            tsi.Jenis as Tipe_Izin,
+                            tsi.Tanggal_Sakit_Izin_Dari AS Tanggal_Mulai,
+                            tsi.Tanggal_Sakit_Izin_Sampai AS Tanggal_Selesai,
+                            tsi.Alasan,
+                            tsi.filePath as Lampiran,
+							(select Nama from Karyawan z where z.Kode_Karyawan = tsi.Kode_Karyawan) as nama_requester,
+                            ISNULL(
+                                (
+                                SELECT
+                                    TOP 1 af.order_flow
+                                FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE
+                                    ar.No_Transaksi = tsi.No_Transaksi
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND af.Status is null
+                                    AND ar.Flag_Approval IS NOT NULL
+                                ORDER BY
+                                    af.order_flow DESC
+                                ),
+                                0
+                            ) as currentFlow,
+                            ISNULL(
+                                (
+                                select
+                                    top 1 order_flow
+                                from
+                                    HRIS_Approval_Flow a,
+                                    HRIS_Approval_Request b
+                                where
+                                    a.id = b.Flow_Id
+                                    and b.No_Transaksi = tsi.No_Transaksi
+									and a.Kode_Karyawan_Requester = b.Kode_Karyawan
+                                    --and a.Status is Null
+                                order by
+                                    a.order_flow desc
+                                ),
+                                0
+                            ) as MaxFlow,
+                            CASE
+                                WHEN tsi.Flag_Approval = 'Y' THEN 'Selesai'
+                                WHEN tsi.Flag_Approval = 'T' THEN 'Ditolak'
+                                WHEN tsi.Flag_Approval = 'P' THEN 'Ditolak'
+                                ELSE ISNULL(
+                                (
+                                    SELECT
+                                    TOP 1 'Diproses'
+                                    FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    WHERE
+                                    ar.No_Transaksi = tsi.No_Transaksi
+                                    AND ar.Kode_Karyawan = k.Kode_Karyawan
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
+                                    ORDER BY
+                                    af.order_flow
+                                ),
+                                'NO'
+                                )
+                            END as status,
+                            CASE
+                                WHEN tsi.Flag_Approval = 'Y' THEN 'DiSetujui'
+                                WHEN tsi.Flag_Approval = 'P' THEN 'Sistem'
+                                WHEN tsi.Flag_Approval = 'T' THEN (
+                                select
+                                    top 1 af.Kode_Karyawan
+                                FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE
+                                    ar.No_Transaksi = tsi.No_Transaksi
+
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval = 'T'
+                                    --AND af.Status is NULL
+                                ORDER BY
+                                    af.order_flow
+                                )
+                                ELSE ISNULL(
+                                (
+                                    SELECT
+                                    TOP 1 ka.Nama
+                                    FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    JOIN
+                                        Karyawan ka ON af.Kode_Karyawan = ka.Kode_Karyawan
+                                    WHERE
+                                    ar.No_Transaksi = tsi.No_Transaksi
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
+                                    ORDER BY
+                                    af.order_flow
+                                ),
+                                null
+                                )
+                            END AS Approver,
+                            NULL AS Jam_Mulai,
+                            (
+                                select
+                                STRING_AGG(
+                                    CONCAT(
+                                    b.Kode_Karyawan,
+                                    ': ',
+                                    CASE
+                                        WHEN a.Flag_Approval IS NOT NULL THEN a.Flag_Approval
+                                        ELSE 'N'
+                                    END
+                                    ),
+                                    ', '
+                                ) WITHIN GROUP (
+                                    ORDER BY
+                                    b.order_flow
+                                ) AS StatusList
+                                from
+                                HRIS_Approval_Request a
+                                JOIN HRIS_Approval_Flow b ON a.Flow_Id = b.id
+                                where
+                                a.No_Transaksi = tsi.No_Transaksi
+								and a.Kode_Karyawan = b.Kode_Karyawan_Requester
+                               -- and b.Status is NULL
+                            ) AS STATUSLIST
+                            FROM
+                            Karyawan AS k
+                            INNER JOIN Transaksi_Sakit_Izin_Detail AS tsi ON k.Kode_Karyawan = tsi.Kode_Karyawan
+                            INNER JOIN Transaksi_Sakit_Izin AS tsip ON tsi.No_Transaksi = tsip.No_Transaksi
+                            WHERE
+                             tsip.Status is null
+                            UNION ALL -- Gunakan UNION ALL jika Anda tidak perlu menghilangkan duplikat
+                            SELECT
+                            CAST(CONCAT(CAST(ttpp.Tanggal AS DATE),' ', ttpp.Jam) AS DATETIME) AS tanggal_create,
+                            k.Kode_Karyawan,
+                            k.Nama,
+                            ttp.No_Transaksi,
+                            ttp.Jenis as Tipe_Izin,
+                            ttp.Tanggal_Masuk_Pulang AS Tanggal_Mulai,
+                            NULL AS Tanggal_Selesai,
+                            ttp.Alasan,
+                            ttp.filePath as Lampiran,
+							(select Nama from Karyawan z where z.Kode_Karyawan = ttp.Kode_Karyawan) as nama_requester,
+
+                            ISNULL(
+                                (
+                                SELECT
+                                    TOP 1 af.order_flow
+                                FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE
+                                    ar.No_Transaksi = ttp.No_Transaksi
+                                    AND ar.Kode_Karyawan = k.Kode_Karyawan
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NOT NULL
+                                    --AND af.Status is NULL
+                                ORDER BY
+                                    af.order_flow DESC
+                                ),
+                                0
+                            ) as currentFlow,
+                            ISNULL(
+                                (
+                                select
+                                    top 1 order_flow
+                                from
+                                    HRIS_Approval_Flow a,
+                                    HRIS_Approval_Request b
+                                where
+                                    a.id = b.Flow_Id
+                                    and b.No_Transaksi = ttp.No_Transaksi
+									and a.Kode_Karyawan_Requester = b.Kode_Karyawan
+                                    --and a.Status is NULL
+                                order by
+                                    a.order_flow desc
+                                ),
+                                0
+                            ) as MaxFlow,
+                            CASE
+                                WHEN ttp.Flag_Approval = 'Y' THEN 'Selesai'
+                                WHEN ttp.Flag_Approval = 'T' THEN 'Ditolak'
+                                WHEN ttp.Flag_Approval = 'P' THEN 'Ditolak'
+                                ELSE ISNULL(
+                                (
+                                    SELECT
+                                    TOP 1 'Diproses'
+                                    FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    WHERE
+                                    ar.No_Transaksi = ttp.No_Transaksi
+                                    AND ar.Kode_Karyawan = k.Kode_Karyawan
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    --AND af.Status is NULL
+                                    ORDER BY
+                                    af.order_flow
+                                ),
+                                'NO'
+                                )
+                            END as status,
+                            CASE
+                                WHEN ttp.Flag_Approval = 'Y' THEN 'DiSetujui'
+                                WHEN ttp.Flag_Approval = 'P' THEN 'Sistem'
+                                WHEN ttp.Flag_Approval = 'T' THEN (
+                                select
+                                    top 1 af.Kode_Karyawan
+                                FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                WHERE
+                                    ar.No_Transaksi = ttp.No_Transaksi
+
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval = 'T'
+                                    --AND af.Status is NULL
+                                ORDER BY
+                                    af.order_flow
+                                )
+                                ELSE ISNULL(
+                                (
+                                    SELECT
+                                    TOP 1 ka.Nama
+                                    FROM
+                                    HRIS_Approval_Request ar
+                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    JOIN
+                                        Karyawan ka ON af.Kode_Karyawan = ka.Kode_Karyawan
+                                    WHERE
+                                    ar.No_Transaksi = ttp.No_Transaksi
+									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                    AND ar.Flag_Approval IS NULL
+                                    ---AND af.Status is NULL
+                                    ORDER BY
+                                    af.order_flow
+                                ),
+                                null
+                                )
+                            END AS Approver,
+                            ttp.Jam AS Jam_Mulai,
+                            (
+                                select
+                                STRING_AGG(
+                                    CONCAT(
+                                    b.Kode_Karyawan,
+                                    ': ',
+                                    CASE
+                                        WHEN a.Flag_Approval IS NOT NULL THEN a.Flag_Approval
+                                        ELSE 'N'
+                                    END
+                                    ),
+                                    ', '
+                                ) WITHIN GROUP (
+                                    ORDER BY
+                                    b.order_flow
+                                ) AS StatusList
+                                from
+                                HRIS_Approval_Request a
+                                JOIN HRIS_Approval_Flow b ON a.Flow_Id = b.id
+                                where
+                                a.No_Transaksi = ttp.No_Transaksi
+								and a.Kode_Karyawan = b.Kode_Karyawan_Requester
+                                --and b.Status is NULL
+                            ) AS STATUSLIST
+                            FROM
+                            Karyawan AS k
+                            INNER JOIN Transaksi_Terlambat_Pulang_Cepat_Detail AS ttp ON k.Kode_Karyawan = ttp.Kode_Karyawan
+                            INNER JOIN Transaksi_Terlambat_Pulang_Cepat AS ttpp ON ttp.No_Transaksi = ttpp.No_Transaksi
+                            WHERE
+                           ttpp.Status is null
+                        )
+                       SELECT *
+                        FROM cte
+                        WHERE MaxFlow <> 0
+                        AND (
+                                -- Kalau Tanggal_Selesai NULL, cek hanya di tanggal mulai
+                                (CAST(Tanggal_Selesai AS DATETIME) IS NULL
+                                    AND CAST(Tanggal_Mulai AS DATETIME) BETWEEN ? AND ?)
+
+                                -- Kalau ada tanggal selesai, cek overlap interval
+                                OR (Tanggal_Selesai IS NOT NULL
+                                    AND CAST(Tanggal_Mulai AS DATETIME) <= ?
+                                    AND CAST(Tanggal_Selesai AS DATETIME) >= ?)
+                            )
+                        ORDER BY Tanggal_Mulai;
+            ";
+            $result = DB::select($query, [$start, $end, $end, $start ]);
+            $dataFinal =  collect($result)->map(function ($item) {
+                if (!empty($item->Kode_Karyawan)) {
+                    $item->Kode_Karyawan = Crypt::encryptString($item->Kode_Karyawan);
+
+                }
+
+                return $item;
+            });
+
+            // dd($dataFinal);
+            return response()->json([
+                'status' => 200,
+                'message' => 'Berhasil mengambil data',
+                'data' => $dataFinal,
+
+            ]);
+        }catch(\Throwable $e){
+            Log::channel('izinLog')->error('Gagal Menambil data getDataIzin'.$e->getMessage());
+            return response()->json([
+                'status' => 404,
+                'message' => 'Terjadi kesalahan coba lagi beberapa saat..'
+            ], 404);
+        }
+    }
+
     public function getDataIzinDH(){
         try{
 
-        $Kode_Karyawan = Auth::user()->karyawan->Kode_Karyawan;
+            $Kode_Karyawan = Auth::user()->karyawan->Kode_Karyawan;
 
-        $query = "
-          	WITH BaseData_Terpulang AS (
-            SELECT
-                CAST(CONCAT(CAST(fa.Tanggal AS DATE),' ', fa.Jam) AS DATETIME) AS tanggal_create,
-                d.Kode_Karyawan AS Approver_Kode_Karyawan,
-                 (select Nama from Karyawan where Kode_Karyawan = f.Kode_Karyawan) as requester_Nama,
-                g.ID_Divisi AS Division_ID_From_View,
-                k.ID_Level AS Level_ID_From_View,
-                d.id AS Flow_Id,
-                d.order_flow,
-                e.No_Transaksi,
-                e.Flag_Approval AS Current_Flag_Approval,
-                f.Kode_Karyawan AS Requester_Kode_Karyawan,
-                f.Jenis AS Request_Jenis,
-                 CASE
-                                WHEN f.Flag_Approval = 'Y' THEN 'Disetujui'
-                                WHEN f.Flag_Approval = 'T' THEN 'Ditolak'
-                                WHEN f.Flag_Approval = 'P' THEN 'Ditolak'
-                                ELSE ISNULL(
-                                (
-                                    SELECT
-                                    TOP 1 'Diproses'
-                                    FROM
-                                    HRIS_Approval_Request ar
-                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
-                                    WHERE
-                                    ar.No_Transaksi = f.No_Transaksi
-									AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
-
-                                    AND ar.Flag_Approval IS NULL
-                                    ORDER BY
-                                    af.order_flow
-                                ),
-                                'NO'
-                                )
-                            END as status,
-                            CASE
-                                WHEN f.Flag_Approval = 'Y' THEN 'Disetujui'
-                                WHEN f.Flag_Approval = 'P' THEN 'Sistem'
-                                WHEN f.Flag_Approval = 'T' THEN (
-                                select
-                                    top 1 a.Nama
-                                FROM
-                                    HRIS_Approval_Request ar
-                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
-                                WHERE
-                                    ar.No_Transaksi = f.No_Transaksi
-									AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
-
-                                    AND ar.Flag_Approval = 'T'
-                                ORDER BY
-                                    af.order_flow
-                                )
-                                ELSE ISNULL(
-                                (
-                                    SELECT
-                                    TOP 1 ka.Nama
-                                    FROM
-                                    HRIS_Approval_Request ar
-                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
-                                    JOIN
-                                        Karyawan ka ON af.Kode_Karyawan = ka.Kode_Karyawan
-                                    WHERE
-                                    ar.No_Transaksi = f.No_Transaksi
-									AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
-                                    AND ar.Flag_Approval IS NULL
-                                    ORDER BY
-                                    af.order_flow
-                                ),
-                                null
-                                )
-                            END AS Approver,
-                format(f.Tanggal_Masuk_Pulang, 'dd MMMM yyyy') + ' ' +  LEFT(CONVERT(varchar, CAST(f.Jam AS time), 108), 5) AS TanggalIzin,
-                f.filePath,
-
-                f.Alasan AS Request_Alasan,
-                 ISNULL(
-                                (
-                                SELECT
-                                    TOP 1 af.order_flow
-                                FROM
-                                    HRIS_Approval_Request ar
-                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
-                                WHERE
-                                    ar.No_Transaksi = f.No_Transaksi
-
-									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
-
-
-                                    AND ar.Flag_Approval IS NOT NULL
-                                ORDER BY
-                                    af.order_flow DESC
-                                ),
-                                0
-                            ) as currentFlow,
-                            ISNULL(
-                                (
-                                select
-                                    top 1 order_flow
-                                from
-                                    HRIS_Approval_Flow a,
-                                    HRIS_Approval_Request b
-                                where
-                                    a.id = b.Flow_Id
-                                    and b.No_Transaksi = f.No_Transaksi
-                                order by
-                                    a.order_flow desc
-                                ),
-                                0
-                            ) as MaxFlow,
-                  (
-                                select
-                                STRING_AGG(
-                                    CONCAT(
-                                    b.Kode_Karyawan,
-                                    ': ',
-                                    CASE
-                                        WHEN a.Flag_Approval IS NOT NULL THEN a.Flag_Approval
-                                        ELSE 'N'
-                                    END
+            $query = "
+                WITH BaseData_Terpulang AS (
+                SELECT
+                    CAST(CONCAT(CAST(fa.Tanggal AS DATE),' ', fa.Jam) AS DATETIME) AS tanggal_create,
+                    d.Kode_Karyawan AS Approver_Kode_Karyawan,
+                    (select Nama from Karyawan where Kode_Karyawan = f.Kode_Karyawan) as requester_Nama,
+                    g.ID_Divisi AS Division_ID_From_View,
+                    k.ID_Level AS Level_ID_From_View,
+                    d.id AS Flow_Id,
+                    d.order_flow,
+                    e.No_Transaksi,
+                    e.Flag_Approval AS Current_Flag_Approval,
+                    f.Kode_Karyawan AS Requester_Kode_Karyawan,
+                    f.Jenis AS Request_Jenis,
+                    CASE
+                                    WHEN f.Flag_Approval = 'Y' THEN 'Disetujui'
+                                    WHEN f.Flag_Approval = 'T' THEN 'Ditolak'
+                                    WHEN f.Flag_Approval = 'P' THEN 'Ditolak'
+                                    ELSE ISNULL(
+                                    (
+                                        SELECT
+                                        TOP 1 'Diproses'
+                                        FROM
+                                        HRIS_Approval_Request ar
+                                        JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                        WHERE
+                                        ar.No_Transaksi = f.No_Transaksi
+                                        AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+                                        --AND af.Status is Null
+                                        AND ar.Flag_Approval IS NULL
+                                        ORDER BY
+                                        af.order_flow
                                     ),
-                                    ', '
-                                ) WITHIN GROUP (
+                                    'NO'
+                                    )
+                                END as status,
+                                CASE
+                                    WHEN f.Flag_Approval = 'Y' THEN 'Disetujui'
+                                    WHEN f.Flag_Approval = 'P' THEN 'Sistem'
+                                    WHEN f.Flag_Approval = 'T' THEN (
+                                    select
+                                        top 1 a.Nama
+                                    FROM
+                                        HRIS_Approval_Request ar
+                                        JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    WHERE
+                                        ar.No_Transaksi = f.No_Transaksi
+                                        AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+                                        --AND af.Status is NULL
+                                        AND ar.Flag_Approval = 'T'
                                     ORDER BY
-                                    b.order_flow
-                                ) AS StatusList
-                                from
-                                HRIS_Approval_Request a
-                                JOIN HRIS_Approval_Flow b ON a.Flow_Id = b.id
-                                where
-                                a.No_Transaksi = f.No_Transaksi
-								AND a.Kode_Karyawan = b.Kode_Karyawan_Requester
-                            ) AS STATUSLIST
-            FROM
-                 Karyawan AS a
+                                        af.order_flow
+                                    )
+                                    ELSE ISNULL(
+                                    (
+                                        SELECT
+                                        TOP 1 ka.Nama
+                                        FROM
+                                        HRIS_Approval_Request ar
+                                        JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                        JOIN
+                                            Karyawan ka ON af.Kode_Karyawan = ka.Kode_Karyawan
+                                        WHERE
+                                        ar.No_Transaksi = f.No_Transaksi
+                                        AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+                                        AND ar.Flag_Approval IS NULL
+                                        --AND af.Status is NULL
+                                        ORDER BY
+                                        af.order_flow
+                                    ),
+                                    null
+                                    )
+                                END AS Approver,
+                    format(f.Tanggal_Masuk_Pulang, 'dd MMMM yyyy') + ' ' +  LEFT(CONVERT(varchar, CAST(f.Jam AS time), 108), 5) AS TanggalIzin,
+                    f.filePath,
 
-                INNER JOIN HRIS_Approval_Flow AS d ON d.Kode_Karyawan = a.Kode_Karyawan
-				INNER JOIN View_Divisi_Sub_Divisi AS g ON g.ID_DIVISI_SUB_DIVISI  = a.ID_Divisi_Sub_Divisi
-				INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan AS k ON k.ID_Level_Jabatan = a.ID_Level_Jabatan
-                INNER JOIN HRIS_Approval_Request AS e ON d.id = e.Flow_Id
-                INNER JOIN Transaksi_Terlambat_Pulang_Cepat_Detail AS f ON e.No_Transaksi = f.No_Transaksi and d.Kode_Karyawan = a.Kode_Karyawan
-                INNER JOIN Transaksi_Terlambat_Pulang_Cepat AS fa ON fa.No_Transaksi = f.No_Transaksi
+                    f.Alasan AS Request_Alasan,
+                    ISNULL(
+                                    (
+                                    SELECT
+                                        TOP 1 af.order_flow
+                                    FROM
+                                        HRIS_Approval_Request ar
+                                        JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    WHERE
+                                        ar.No_Transaksi = f.No_Transaksi
+
+                                        AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                        --AND af.Status is NULL
+
+                                        AND ar.Flag_Approval IS NOT NULL
+                                    ORDER BY
+                                        af.order_flow DESC
+                                    ),
+                                    0
+                                ) as currentFlow,
+                                ISNULL(
+                                    (
+                                    select
+                                        top 1 order_flow
+                                    from
+                                        HRIS_Approval_Flow a,
+                                        HRIS_Approval_Request b
+                                    where
+                                        a.id = b.Flow_Id
+                                        and b.No_Transaksi = f.No_Transaksi
+                                        --and a.Status is NULL
+                                    order by
+                                        a.order_flow desc
+                                    ),
+                                    0
+                                ) as MaxFlow,
+                    (
+                                    select
+                                    STRING_AGG(
+                                        CONCAT(
+                                        b.Kode_Karyawan,
+                                        ': ',
+                                        CASE
+                                            WHEN a.Flag_Approval IS NOT NULL THEN a.Flag_Approval
+                                            ELSE 'N'
+                                        END
+                                        ),
+                                        ', '
+                                    ) WITHIN GROUP (
+                                        ORDER BY
+                                        b.order_flow
+                                    ) AS StatusList
+                                    from
+                                    HRIS_Approval_Request a
+                                    JOIN HRIS_Approval_Flow b ON a.Flow_Id = b.id
+                                    where
+                                    a.No_Transaksi = f.No_Transaksi
+                                    AND a.Kode_Karyawan = b.Kode_Karyawan_Requester
+                                    --AND b.Status is NULL
+                                ) AS STATUSLIST
+                FROM
+                    Karyawan AS a
+
+                    INNER JOIN HRIS_Approval_Flow AS d ON d.Kode_Karyawan = a.Kode_Karyawan
+                    INNER JOIN View_Divisi_Sub_Divisi AS g ON g.ID_DIVISI_SUB_DIVISI  = a.ID_Divisi_Sub_Divisi
+                    INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan AS k ON k.ID_Level_Jabatan = a.ID_Level_Jabatan
+                    INNER JOIN HRIS_Approval_Request AS e ON d.id = e.Flow_Id
+                    INNER JOIN Transaksi_Terlambat_Pulang_Cepat_Detail AS f ON e.No_Transaksi = f.No_Transaksi and d.Kode_Karyawan = a.Kode_Karyawan
+                    INNER JOIN Transaksi_Terlambat_Pulang_Cepat AS fa ON fa.No_Transaksi = f.No_Transaksi
+                    WHERE
+                    d.Kode_Karyawan = ?
+                    and fa.Status is null
+                    --and d.Status is NULL
+            ),
+            BaseData_Cuti AS (
+                SELECT
+                    CAST(CONCAT(CAST(fa.Tanggal AS DATE),' ', fa.Jam) AS DATETIME) AS tanggal_create,
+                    d.Kode_Karyawan AS Approver_Kode_Karyawan,
+                    (select Nama from Karyawan where Kode_Karyawan = f.Kode_Karyawan) as requester_Nama,
+                    g.ID_Divisi AS Division_ID_From_View,
+                    k.ID_Level AS Level_ID_From_View,
+                    d.id AS Flow_Id,
+                    d.order_flow,
+                    e.No_Transaksi,
+                    e.Flag_Approval AS Current_Flag_Approval,
+                    f.Kode_Karyawan AS Requester_Kode_Karyawan,
+
+                    f.Jenis AS Request_Jenis,
+                    CASE
+                                    WHEN f.Flag_Approval = 'Y' THEN 'Selesai'
+                                    WHEN f.Flag_Approval = 'T' THEN 'Ditolak'
+                                    WHEN f.Flag_Approval = 'P' THEN 'Ditolak'
+                                    ELSE ISNULL(
+                                    (
+                                        SELECT
+                                        TOP 1 'Diproses'
+                                        FROM
+                                        HRIS_Approval_Request ar
+                                        JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                        WHERE
+                                        ar.No_Transaksi = f.No_Transaksi
+                                        AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+                                        --AND af.Status is NULL
+                                        AND ar.Flag_Approval IS NULL
+                                        ORDER BY
+                                        af.order_flow
+                                    ),
+                                    'NO'
+                                    )
+                                END as status,
+                                CASE
+                                    WHEN f.Flag_Approval = 'Y' THEN 'DiSetujui'
+                                    WHEN f.Flag_Approval = 'P' THEN 'Sistem'
+                                    WHEN f.Flag_Approval = 'T' THEN (
+                                    select
+                                        top 1 a.Nama
+                                    FROM
+                                        HRIS_Approval_Request ar
+                                        JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    WHERE
+                                        ar.No_Transaksi = f.No_Transaksi
+                                        AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+                                        --AND af.Status is NULL
+                                        AND ar.Flag_Approval = 'T'
+                                    ORDER BY
+                                        af.order_flow
+                                    )
+                                    ELSE ISNULL(
+                                    (
+                                        SELECT
+                                        TOP 1 ka.Nama
+                                        FROM
+                                        HRIS_Approval_Request ar
+                                        JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                        JOIN
+                                            Karyawan ka ON af.Kode_Karyawan = ka.Kode_Karyawan
+                                        WHERE
+                                        ar.No_Transaksi = f.No_Transaksi
+                                        AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+                                        AND ar.Flag_Approval IS NULL
+                                        --AND af.Status is NULL
+                                        ORDER BY
+                                        af.order_flow
+                                    ),
+                                    null
+                                    )
+                                END AS Approver,
+                    CASE
+                        WHEN FORMAT(f.Tanggal_Cuti_Dari, 'dd MMMM yyyy') = FORMAT(f.Tanggal_Cuti_Sampai, 'dd MMMM yyyy')
+                        THEN FORMAT(f.Tanggal_Cuti_Dari, 'dd MMMM yyyy')
+                        ELSE
+                            FORMAT(f.Tanggal_Cuti_Dari, 'dd') + '-' + FORMAT(f.Tanggal_Cuti_Sampai, 'dd MMMM yyyy')
+                    END AS TanggalIzin,
+                    f.filePath,
+                    f.Alasan AS Request_Alasan,
+                    ISNULL(
+                                    (
+                                    SELECT
+                                        TOP 1 af.order_flow
+                                    FROM
+                                        HRIS_Approval_Request ar
+                                        JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    WHERE
+                                        ar.No_Transaksi = f.No_Transaksi
+                                        AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+                                        --AND af.Status is NULL
+                                        AND ar.Flag_Approval IS NOT NULL
+                                    ORDER BY
+                                        af.order_flow DESC
+                                    ),
+                                    0
+                                ) as currentFlow,
+                                ISNULL(
+                                    (
+                                    select
+                                        top 1 order_flow
+                                    from
+                                        HRIS_Approval_Flow a,
+                                        HRIS_Approval_Request b
+                                    where
+                                        a.id = b.Flow_Id
+                                        and b.No_Transaksi = f.No_Transaksi
+                                        and a.Kode_Karyawan_Requester = b.Kode_Karyawan
+                                        --and a.Status is NULL
+                                    order by
+                                        a.order_flow desc
+                                    ),
+                                    0
+                                ) as MaxFlow,
+                    (
+                                    select
+                                    STRING_AGG(
+                                        CONCAT(
+                                        b.Kode_Karyawan,
+                                        ': ',
+                                        CASE
+                                            WHEN a.Flag_Approval IS NOT NULL THEN a.Flag_Approval
+                                            ELSE 'N'
+                                        END
+                                        ),
+                                        ', '
+                                    ) WITHIN GROUP (
+                                        ORDER BY
+                                        b.order_flow
+                                    ) AS StatusList
+                                    from
+                                    HRIS_Approval_Request a
+                                    JOIN HRIS_Approval_Flow b ON a.Flow_Id = b.id
+                                    where
+                                    a.No_Transaksi = f.No_Transaksi
+                                    and a.Kode_Karyawan = b.Kode_Karyawan_Requester
+                                    --and b.Status is NULL
+                                ) AS STATUSLIST
+                FROM
+                    Karyawan AS a
+
+                    INNER JOIN HRIS_Approval_Flow AS d ON d.Kode_Karyawan = a.Kode_Karyawan
+                    INNER JOIN View_Divisi_Sub_Divisi AS g ON g.ID_DIVISI_SUB_DIVISI  = a.ID_Divisi_Sub_Divisi
+                    INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan AS k ON k.ID_Level_Jabatan = a.ID_Level_Jabatan
+                    INNER JOIN HRIS_Approval_Request AS e ON d.id = e.Flow_Id
+                    INNER JOIN Transaksi_Cuti_Detail AS f ON e.No_Transaksi = f.No_Transaksi
+                    INNER JOIN Transaksi_Cuti AS fa ON fa.No_Transaksi = f.No_Transaksi
                 WHERE
-                d.Kode_Karyawan = ?
-                and fa.Status is null
-        ),
-        BaseData_Cuti AS (
-            SELECT
-                CAST(CONCAT(CAST(fa.Tanggal AS DATE),' ', fa.Jam) AS DATETIME) AS tanggal_create,
-                d.Kode_Karyawan AS Approver_Kode_Karyawan,
-                 (select Nama from Karyawan where Kode_Karyawan = f.Kode_Karyawan) as requester_Nama,
-                g.ID_Divisi AS Division_ID_From_View,
-                k.ID_Level AS Level_ID_From_View,
-                d.id AS Flow_Id,
-                d.order_flow,
-                e.No_Transaksi,
-                e.Flag_Approval AS Current_Flag_Approval,
-                f.Kode_Karyawan AS Requester_Kode_Karyawan,
+                    d.Kode_Karyawan = ?
+                    and fa.Status is null
+                --and d.Status is NULL
 
-                f.Jenis AS Request_Jenis,
-                 CASE
-                                WHEN f.Flag_Approval = 'Y' THEN 'Selesai'
-                                WHEN f.Flag_Approval = 'T' THEN 'Ditolak'
-                                WHEN f.Flag_Approval = 'P' THEN 'Ditolak'
-                                ELSE ISNULL(
-                                (
-                                    SELECT
-                                    TOP 1 'Diproses'
-                                    FROM
-                                    HRIS_Approval_Request ar
-                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
-                                    WHERE
-                                    ar.No_Transaksi = f.No_Transaksi
-									AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+            ),
+            BaseData_Sakit AS (
+                SELECT
+                    CAST(CONCAT(CAST(fa.Tanggal AS DATE),' ', fa.Jam) AS DATETIME) AS tanggal_create,
+                    d.Kode_Karyawan AS Approver_Kode_Karyawan,
+                    (select Nama from Karyawan where Kode_Karyawan = f.Kode_Karyawan) as requester_Nama,
+                    g.ID_Divisi AS Division_ID_From_View,
+                    k.ID_Level AS Level_ID_From_View,
+                    d.id AS Flow_Id,
+                    d.order_flow,
+                    e.No_Transaksi,
+                    e.Flag_Approval AS Current_Flag_Approval,
+                    f.Kode_Karyawan AS Requester_Kode_Karyawan,
 
-                                    AND ar.Flag_Approval IS NULL
-                                    ORDER BY
-                                    af.order_flow
-                                ),
-                                'NO'
-                                )
-                            END as status,
-                            CASE
-                                WHEN f.Flag_Approval = 'Y' THEN 'DiSetujui'
-                                WHEN f.Flag_Approval = 'P' THEN 'Sistem'
-                                WHEN f.Flag_Approval = 'T' THEN (
-                                select
-                                    top 1 a.Nama
-                                FROM
-                                    HRIS_Approval_Request ar
-                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
-                                WHERE
-                                    ar.No_Transaksi = f.No_Transaksi
-									AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
-
-                                    AND ar.Flag_Approval = 'T'
-                                ORDER BY
-                                    af.order_flow
-                                )
-                                ELSE ISNULL(
-                                (
-                                    SELECT
-                                    TOP 1 ka.Nama
-                                    FROM
-                                    HRIS_Approval_Request ar
-                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
-                                    JOIN
-                                        Karyawan ka ON af.Kode_Karyawan = ka.Kode_Karyawan
-                                    WHERE
-                                    ar.No_Transaksi = f.No_Transaksi
-									AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
-                                    AND ar.Flag_Approval IS NULL
-                                    ORDER BY
-                                    af.order_flow
-                                ),
-                                null
-                                )
-                            END AS Approver,
-                CASE
-                    WHEN FORMAT(f.Tanggal_Cuti_Dari, 'dd MMMM yyyy') = FORMAT(f.Tanggal_Cuti_Sampai, 'dd MMMM yyyy')
-                    THEN FORMAT(f.Tanggal_Cuti_Dari, 'dd MMMM yyyy')
-                    ELSE
-                        FORMAT(f.Tanggal_Cuti_Dari, 'dd') + '-' + FORMAT(f.Tanggal_Cuti_Sampai, 'dd MMMM yyyy')
-                END AS TanggalIzin,
-                f.filePath,
-                f.Alasan AS Request_Alasan,
-                 ISNULL(
-                                (
-                                SELECT
-                                    TOP 1 af.order_flow
-                                FROM
-                                    HRIS_Approval_Request ar
-                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
-                                WHERE
-                                      ar.No_Transaksi = f.No_Transaksi
-									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
-
-                                    AND ar.Flag_Approval IS NOT NULL
-                                ORDER BY
-                                    af.order_flow DESC
-                                ),
-                                0
-                            ) as currentFlow,
-                            ISNULL(
-                                (
-                                select
-                                    top 1 order_flow
-                                from
-                                    HRIS_Approval_Flow a,
-                                    HRIS_Approval_Request b
-                                where
-                                    a.id = b.Flow_Id
-                                    and b.No_Transaksi = f.No_Transaksi
-									and a.Kode_Karyawan_Requester = b.Kode_Karyawan
-                                order by
-                                    a.order_flow desc
-                                ),
-                                0
-                            ) as MaxFlow,
-                  (
-                                select
-                                STRING_AGG(
-                                    CONCAT(
-                                    b.Kode_Karyawan,
-                                    ': ',
-                                    CASE
-                                        WHEN a.Flag_Approval IS NOT NULL THEN a.Flag_Approval
-                                        ELSE 'N'
-                                    END
+                    f.Jenis AS Request_Jenis,
+                    CASE
+                                    WHEN f.Flag_Approval = 'Y' THEN 'Selesai'
+                                    WHEN f.Flag_Approval = 'T' THEN 'Ditolak'
+                                    WHEN f.Flag_Approval = 'P' THEN 'Ditolak'
+                                    ELSE ISNULL(
+                                    (
+                                        SELECT
+                                        TOP 1 'Diproses'
+                                        FROM
+                                        HRIS_Approval_Request ar
+                                        JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                        WHERE
+                                        ar.No_Transaksi = f.No_Transaksi
+                                        AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+                                        --AND af.Status is NULL
+                                        AND ar.Flag_Approval IS NULL
+                                        ORDER BY
+                                        af.order_flow
                                     ),
-                                    ', '
-                                ) WITHIN GROUP (
-                                    ORDER BY
-                                    b.order_flow
-                                ) AS StatusList
-                                from
-                                HRIS_Approval_Request a
-                                JOIN HRIS_Approval_Flow b ON a.Flow_Id = b.id
-                                where
-                                a.No_Transaksi = f.No_Transaksi
-								and a.Kode_Karyawan = b.Kode_Karyawan_Requester
-                            ) AS STATUSLIST
-            FROM
-                 Karyawan AS a
-
-                INNER JOIN HRIS_Approval_Flow AS d ON d.Kode_Karyawan = a.Kode_Karyawan
-				INNER JOIN View_Divisi_Sub_Divisi AS g ON g.ID_DIVISI_SUB_DIVISI  = a.ID_Divisi_Sub_Divisi
-				INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan AS k ON k.ID_Level_Jabatan = a.ID_Level_Jabatan
-                INNER JOIN HRIS_Approval_Request AS e ON d.id = e.Flow_Id
-                INNER JOIN Transaksi_Cuti_Detail AS f ON e.No_Transaksi = f.No_Transaksi
-                INNER JOIN Transaksi_Cuti AS fa ON fa.No_Transaksi = f.No_Transaksi
-            WHERE
-                d.Kode_Karyawan = ?
-                and fa.Status is null
-
-        ),
-        BaseData_Sakit AS (
-            SELECT
-                CAST(CONCAT(CAST(fa.Tanggal AS DATE),' ', fa.Jam) AS DATETIME) AS tanggal_create,
-                d.Kode_Karyawan AS Approver_Kode_Karyawan,
-                (select Nama from Karyawan where Kode_Karyawan = f.Kode_Karyawan) as requester_Nama,
-                g.ID_Divisi AS Division_ID_From_View,
-                k.ID_Level AS Level_ID_From_View,
-                d.id AS Flow_Id,
-                d.order_flow,
-                e.No_Transaksi,
-                e.Flag_Approval AS Current_Flag_Approval,
-                f.Kode_Karyawan AS Requester_Kode_Karyawan,
-
-                f.Jenis AS Request_Jenis,
-                 CASE
-                                WHEN f.Flag_Approval = 'Y' THEN 'Selesai'
-                                WHEN f.Flag_Approval = 'T' THEN 'Ditolak'
-                                WHEN f.Flag_Approval = 'P' THEN 'Ditolak'
-                                ELSE ISNULL(
-                                (
-                                    SELECT
-                                    TOP 1 'Diproses'
+                                    'NO'
+                                    )
+                                END as status,
+                                CASE
+                                    WHEN f.Flag_Approval = 'Y' THEN 'DiSetujui'
+                                    WHEN f.Flag_Approval = 'P' THEN 'Sistem'
+                                    WHEN f.Flag_Approval = 'T' THEN (
+                                    select
+                                        top 1 a.Nama
                                     FROM
-                                    HRIS_Approval_Request ar
-                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                        HRIS_Approval_Request ar
+                                        JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
                                     WHERE
-                                    ar.No_Transaksi = f.No_Transaksi
-									AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
-
-                                    AND ar.Flag_Approval IS NULL
+                                        ar.No_Transaksi = f.No_Transaksi
+                                        AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+                                        --AND af.Status is NULL
+                                        AND ar.Flag_Approval = 'T'
                                     ORDER BY
-                                    af.order_flow
-                                ),
-                                'NO'
-                                )
-                            END as status,
-                            CASE
-                                WHEN f.Flag_Approval = 'Y' THEN 'DiSetujui'
-                                WHEN f.Flag_Approval = 'P' THEN 'Sistem'
-                                WHEN f.Flag_Approval = 'T' THEN (
-                                select
-                                    top 1 a.Nama
-                                FROM
-                                    HRIS_Approval_Request ar
-                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
-                                WHERE
-                                    ar.No_Transaksi = f.No_Transaksi
-									AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
-
-                                    AND ar.Flag_Approval = 'T'
-                                ORDER BY
-                                    af.order_flow
-                                )
-                                ELSE ISNULL(
-                                (
-                                    SELECT
-                                    TOP 1 ka.Nama
-                                    FROM
-                                    HRIS_Approval_Request ar
-                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
-                                    JOIN
-                                        Karyawan ka ON af.Kode_Karyawan = ka.Kode_Karyawan
-                                    WHERE
-                                    ar.No_Transaksi = f.No_Transaksi
-									AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
-                                    AND ar.Flag_Approval IS NULL
-                                    ORDER BY
-                                    af.order_flow
-                                ),
-                                null
-                                )
-                            END AS Approver,
-                CASE
-                    WHEN FORMAT(f.Tanggal_Sakit_Izin_Dari, 'dd MMMM yyyy') = FORMAT(f.Tanggal_Sakit_Izin_Sampai, 'dd MMMM yyyy')
-                    THEN FORMAT(f.Tanggal_Sakit_Izin_Dari, 'dd MMMM yyyy')
-                    ELSE
-                        FORMAT(f.Tanggal_Sakit_Izin_Dari, 'dd') + '-' + FORMAT(f.Tanggal_Sakit_Izin_Sampai, 'dd MMMM yyyy')
-                END AS TanggalIzin,
-                f.filePath,
-                f.Alasan AS Request_Alasan,
-                 ISNULL(
-                                (
-                                SELECT
-                                    TOP 1 af.order_flow
-                                FROM
-                                    HRIS_Approval_Request ar
-                                    JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
-                                WHERE
-                                      ar.No_Transaksi = f.No_Transaksi
-									AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
-
-                                    AND ar.Flag_Approval IS NOT NULL
-                                ORDER BY
-                                    af.order_flow DESC
-                                ),
-                                0
-                            ) as currentFlow,
-                            ISNULL(
-                                (
-                                select
-                                    top 1 order_flow
-                                from
-                                    HRIS_Approval_Flow a,
-                                    HRIS_Approval_Request b
-                                where
-                                    a.id = b.Flow_Id
-                                    and b.No_Transaksi = f.No_Transaksi
-									and a.Kode_Karyawan_Requester = b.Kode_Karyawan
-                                order by
-                                    a.order_flow desc
-                                ),
-                                0
-                            ) as MaxFlow,
-                  (
-                                select
-                                STRING_AGG(
-                                    CONCAT(
-                                    b.Kode_Karyawan,
-                                    ': ',
-                                    CASE
-                                        WHEN a.Flag_Approval IS NOT NULL THEN a.Flag_Approval
-                                        ELSE 'N'
-                                    END
+                                        af.order_flow
+                                    )
+                                    ELSE ISNULL(
+                                    (
+                                        SELECT
+                                        TOP 1 ka.Nama
+                                        FROM
+                                        HRIS_Approval_Request ar
+                                        JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                        JOIN
+                                            Karyawan ka ON af.Kode_Karyawan = ka.Kode_Karyawan
+                                        WHERE
+                                        ar.No_Transaksi = f.No_Transaksi
+                                        AND ar.Kode_Karyawan  = af.Kode_Karyawan_Requester
+                                        AND ar.Flag_Approval IS NULL
+                                        --AND af.Status is NULL
+                                        ORDER BY
+                                        af.order_flow
                                     ),
-                                    ', '
-                                ) WITHIN GROUP (
+                                    null
+                                    )
+                                END AS Approver,
+                    CASE
+                        WHEN FORMAT(f.Tanggal_Sakit_Izin_Dari, 'dd MMMM yyyy') = FORMAT(f.Tanggal_Sakit_Izin_Sampai, 'dd MMMM yyyy')
+                        THEN FORMAT(f.Tanggal_Sakit_Izin_Dari, 'dd MMMM yyyy')
+                        ELSE
+                            FORMAT(f.Tanggal_Sakit_Izin_Dari, 'dd') + '-' + FORMAT(f.Tanggal_Sakit_Izin_Sampai, 'dd MMMM yyyy')
+                    END AS TanggalIzin,
+                    f.filePath,
+                    f.Alasan AS Request_Alasan,
+                    ISNULL(
+                                    (
+                                    SELECT
+                                        TOP 1 af.order_flow
+                                    FROM
+                                        HRIS_Approval_Request ar
+                                        JOIN HRIS_Approval_Flow af ON ar.Flow_Id = af.id
+                                    WHERE
+                                        ar.No_Transaksi = f.No_Transaksi
+                                        AND ar.Kode_Karyawan = af.Kode_Karyawan_Requester
+
+                                        AND ar.Flag_Approval IS NOT NULL
+                                        --AND af.Status is NULL
                                     ORDER BY
-                                    b.order_flow
-                                ) AS StatusList
-                                from
-                                HRIS_Approval_Request a
-                                JOIN HRIS_Approval_Flow b ON a.Flow_Id = b.id
+                                        af.order_flow DESC
+                                    ),
+                                    0
+                                ) as currentFlow,
+                                ISNULL(
+                                    (
+                                    select
+                                        top 1 order_flow
+                                    from
+                                        HRIS_Approval_Flow a,
+                                        HRIS_Approval_Request b
+                                    where
+                                        a.id = b.Flow_Id
+                                        and b.No_Transaksi = f.No_Transaksi
+                                        and a.Kode_Karyawan_Requester = b.Kode_Karyawan
+                                        --and a.Status is NULL
+                                    order by
+                                        a.order_flow desc
+                                    ),
+                                    0
+                                ) as MaxFlow,
+                    (
+                                    select
+                                    STRING_AGG(
+                                        CONCAT(
+                                        b.Kode_Karyawan,
+                                        ': ',
+                                        CASE
+                                            WHEN a.Flag_Approval IS NOT NULL THEN a.Flag_Approval
+                                            ELSE 'N'
+                                        END
+                                        ),
+                                        ', '
+                                    ) WITHIN GROUP (
+                                        ORDER BY
+                                        b.order_flow
+                                    ) AS StatusList
+                                    from
+                                    HRIS_Approval_Request a
+                                    JOIN HRIS_Approval_Flow b ON a.Flow_Id = b.id
 
-                                where
-                                a.No_Transaksi = f.No_Transaksi
-								AND a.Kode_Karyawan = b.Kode_Karyawan_Requester
-                            ) AS STATUSLIST
-            FROM
-                 Karyawan AS a
+                                    where
+                                    a.No_Transaksi = f.No_Transaksi
+                                    AND a.Kode_Karyawan = b.Kode_Karyawan_Requester
+                                    --AND b.Status is NULL
+                                ) AS STATUSLIST
+                FROM
+                    Karyawan AS a
 
-                INNER JOIN HRIS_Approval_Flow AS d ON d.Kode_Karyawan = a.Kode_Karyawan
-				INNER JOIN View_Divisi_Sub_Divisi AS g ON g.ID_DIVISI_SUB_DIVISI  = a.ID_Divisi_Sub_Divisi
-				INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan AS k ON k.ID_Level_Jabatan = a.ID_Level_Jabatan
-                INNER JOIN HRIS_Approval_Request AS e ON d.id = e.Flow_Id
-                INNER JOIN Transaksi_Sakit_Izin_Detail AS f ON e.No_Transaksi = f.No_Transaksi and d.Kode_Karyawan = a.Kode_Karyawan
-                INNER JOIN Transaksi_Sakit_Izin AS fa ON fa.No_Transaksi = f.No_Transaksi
-            WHERE
-                d.Kode_Karyawan = ?
-                and fa.Status is null
+                    INNER JOIN HRIS_Approval_Flow AS d ON d.Kode_Karyawan = a.Kode_Karyawan
+                    INNER JOIN View_Divisi_Sub_Divisi AS g ON g.ID_DIVISI_SUB_DIVISI  = a.ID_Divisi_Sub_Divisi
+                    INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan AS k ON k.ID_Level_Jabatan = a.ID_Level_Jabatan
+                    INNER JOIN HRIS_Approval_Request AS e ON d.id = e.Flow_Id
+                    INNER JOIN Transaksi_Sakit_Izin_Detail AS f ON e.No_Transaksi = f.No_Transaksi and d.Kode_Karyawan = a.Kode_Karyawan
+                    INNER JOIN Transaksi_Sakit_Izin AS fa ON fa.No_Transaksi = f.No_Transaksi
+                WHERE
+                    d.Kode_Karyawan = ?
+                    and fa.Status is null
+                    --and d.Status is null
 
-        ),
-        ApprovalStepValidation AS (
-            SELECT
-                bd.*,
-                TRY_CAST(bd.order_flow AS INT) AS Numeric_Order_Flow,
-                PrevApproval.Flag_Approval AS Previous_Step_Flag_Approval
-            FROM
-                (SELECT * FROM BaseData_Terpulang
-                UNION ALL
-                SELECT * FROM BaseData_Sakit
-                UNION ALL
-                SELECT * FROM BaseData_Cuti
-                ) AS bd
-                LEFT JOIN HRIS_Approval_Flow AS prev_flow
-                    ON prev_flow.Kode_Karyawan_Requester = bd.Requester_Kode_Karyawan AND
-                     prev_flow.order_flow = TRY_CAST(bd.order_flow AS INT) - 1
-                    AND TRY_CAST(bd.order_flow AS INT) > 1
-                LEFT JOIN HRIS_Approval_Request AS PrevApproval
-                    ON PrevApproval.Flow_Id = prev_flow.id
-                    AND PrevApproval.No_Transaksi = bd.No_Transaksi
-        )
-        -- Query utama untuk menampilkan hasil
-        SELECT
-            apv.tanggal_create,
-            apv.No_Transaksi,
-            apv.Approver_Kode_Karyawan,
-            apv.requester_Nama,
-            apv.Requester_Kode_Karyawan,
-            apv.Request_Jenis as Tipe_Izin,
-            apv.Request_Alasan as Alasan,
-            apv.TanggalIzin,
-            apv.filePath as Lampiran,
-            apv.STATUSLIST,
-            apv.MaxFlow,
-            apv.currentFlow,
-            apv.status,
-			apv.Approver,
-            apv.Current_Flag_Approval AS Status_Approval_Saat_Ini,
-            apv.Previous_Step_Flag_Approval AS Status_Approval_Langkah_Sebelumnya,
-            apv.order_flow
-        FROM
-            ApprovalStepValidation AS apv
-        WHERE
-            apv.Approver_Kode_Karyawan = ?
-
-            AND (
-                apv.Numeric_Order_Flow = 1
-                OR (
-                    apv.Numeric_Order_Flow > 1
-                    AND  apv.Previous_Step_Flag_Approval = 'Y'
-
-                )
+            ),
+            ApprovalStepValidation AS (
+                SELECT
+                    bd.*,
+                    TRY_CAST(bd.order_flow AS INT) AS Numeric_Order_Flow,
+                    PrevApproval.Flag_Approval AS Previous_Step_Flag_Approval
+                FROM
+                    (SELECT * FROM BaseData_Terpulang
+                    UNION ALL
+                    SELECT * FROM BaseData_Sakit
+                    UNION ALL
+                    SELECT * FROM BaseData_Cuti
+                    ) AS bd
+                    LEFT JOIN HRIS_Approval_Flow AS prev_flow
+                        ON prev_flow.Kode_Karyawan_Requester = bd.Requester_Kode_Karyawan AND
+                        prev_flow.order_flow = TRY_CAST(bd.order_flow AS INT) - 1
+                        AND TRY_CAST(bd.order_flow AS INT) > 1
+                    LEFT JOIN HRIS_Approval_Request AS PrevApproval
+                        ON PrevApproval.Flow_Id = prev_flow.id
+                        AND PrevApproval.No_Transaksi = bd.No_Transaksi
+                        --AND prev_flow.Status is NULL
             )
-        ORDER BY apv.tanggal_create desc
-        ";
+            -- Query utama untuk menampilkan hasil
+            SELECT
+                apv.tanggal_create,
+                apv.No_Transaksi,
+                apv.Approver_Kode_Karyawan,
+                apv.requester_Nama,
+                apv.Requester_Kode_Karyawan,
+                apv.Request_Jenis as Tipe_Izin,
+                apv.Request_Alasan as Alasan,
+                apv.TanggalIzin,
+                apv.filePath as Lampiran,
+                apv.STATUSLIST,
+                apv.MaxFlow,
+                apv.currentFlow,
+                apv.status,
+                apv.Approver,
+                apv.Current_Flag_Approval AS Status_Approval_Saat_Ini,
+                apv.Previous_Step_Flag_Approval AS Status_Approval_Langkah_Sebelumnya,
+                apv.order_flow
+            FROM
+                ApprovalStepValidation AS apv
+            WHERE
+                apv.Approver_Kode_Karyawan = ?
 
-        $result = DB::select($query, [$Kode_Karyawan, $Kode_Karyawan, $Kode_Karyawan, $Kode_Karyawan]);
+                AND (
+                    apv.Numeric_Order_Flow = 1
+                    OR (
+                        apv.Numeric_Order_Flow > 1
+                        AND  apv.Previous_Step_Flag_Approval = 'Y'
 
-        $dataFinal = collect($result)->map(function ($item) {
-            if (!empty($item->Approver_Kode_Karyawan)) {
-                $item->Approver_Kode_Karyawan = Crypt::encryptString($item->Approver_Kode_Karyawan);
-            }
-            if (!empty($item->Requester_Kode_Karyawan)) {
-                $item->Requester_Kode_Karyawan = Crypt::encryptString($item->Requester_Kode_Karyawan);
-            }
-            return $item;
-        });
+                    )
+                )
+            ORDER BY apv.tanggal_create desc
+            ";
+
+            $result = DB::select($query, [$Kode_Karyawan, $Kode_Karyawan, $Kode_Karyawan, $Kode_Karyawan]);
+
+            $dataFinal = collect($result)->map(function ($item) {
+                if (!empty($item->Approver_Kode_Karyawan)) {
+                    $item->Approver_Kode_Karyawan = Crypt::encryptString($item->Approver_Kode_Karyawan);
+                }
+                if (!empty($item->Requester_Kode_Karyawan)) {
+                    $item->Requester_Kode_Karyawan = Crypt::encryptString($item->Requester_Kode_Karyawan);
+                }
+                return $item;
+            });
 
 
             return response()->json([
@@ -1657,13 +3582,13 @@ class AbsensiController extends Controller
             'tanggal' => 'required|array',
             'tanggal.*' => 'required',
             'waktu' => 'required|string',
-            'Alasan' => 'required|string|max:255',
-            'file' => 'sometimes|nullable|mimes:jpeg,png,jpg,gif,pdf|max:2048',
+            'Alasan' => 'required|string|max:300',
+            'file' => 'sometimes|nullable|mimes:jpeg,png,jpg,gif,pdf',
         ]);
 
 
         if ($validator->fails()) {
-            Log::channel('izinLog')->error('data Izin tidka valid');
+            Log::channel('izinLog')->error('data Izin tidka valid'.$validator->errors());
 
             return response()->json([
                 'message' => 'Data tidak valid.',
@@ -1674,7 +3599,7 @@ class AbsensiController extends Controller
         $validatedData = $validator->validated();
 
        $approver = DB::table('HRIS_Approval_Flow')
-
+                    ->whereNULL('Status')
                     ->where("Kode_Karyawan_Requester", Auth::user()->karyawan->Kode_Karyawan)->get();
 
         // dd($approver);
@@ -1749,7 +3674,7 @@ class AbsensiController extends Controller
                 ];
                 $Division_Id =  Auth::user()->divisionKaryawan;
                 $flow = DB::table('HRIS_Approval_flow')
-
+                ->whereNull("Status")
                 ->where("Kode_Karyawan_Requester", $kodeKaryawan)
                 ->get()
                 ->map(function ($item) use ($kodeKaryawan, $noFaktur) {
@@ -1768,6 +3693,7 @@ class AbsensiController extends Controller
                     ->select("b.HP", "b.Nama", "b.Kode_Karyawan")
                     ->join('Karyawan as b', 'a.Kode_Karyawan' , '=','b.Kode_Karyawan')
                     ->where('a.Kode_Karyawan_Requester', $kodeKaryawan)
+                    ->whereNull("a.Status")
                     ->orderBy("a.order_flow")
                     ->first();
 
@@ -1835,6 +3761,7 @@ class AbsensiController extends Controller
                                     DB::table('HRIS_Approval_Request as a')
                                         ->join('HRIS_Approval_Flow as b', 'a.Flow_Id', '=', 'b.id')
                                         ->where("a.No_Transaksi", $noFaktur)
+                                        ->whereNull("b.Status")
                                         ->where("b.Kode_Karyawan", $user->Kode_Karyawan)
                                         ->update(['a.angka_wa' => DB::raw('COALESCE(angka_wa, 0) + 1')]);
                                 }
@@ -1930,7 +3857,7 @@ class AbsensiController extends Controller
                 ];
                 $Division_Id =  Auth::user()->divisionKaryawan;
                 $flow = DB::table('HRIS_Approval_flow')
-
+                ->whereNull("Status")
                 ->where("Kode_Karyawan_Requester", $kodeKaryawan)
                 ->get()
                 ->map(function ($item) use ($kodeKaryawan, $noFaktur) {
@@ -1948,6 +3875,7 @@ class AbsensiController extends Controller
                     ->select("b.HP", "b.Nama", "b.Kode_Karyawan")
                     ->join('Karyawan as b', 'a.Kode_Karyawan' , '=','b.Kode_Karyawan')
                     ->where('a.Kode_Karyawan_Requester', $kodeKaryawan)
+                    ->whereNull("a.Status")
                     ->orderBy("a.order_flow")
                     ->first();
 
@@ -2014,6 +3942,7 @@ class AbsensiController extends Controller
                                     DB::table('HRIS_Approval_Request as a')
                                         ->join('HRIS_Approval_Flow as b', 'a.Flow_Id', '=', 'b.id')
                                         ->where("a.No_Transaksi", $noFaktur)
+                                        ->whereNull("b.Status")
                                         ->where("b.Kode_Karyawan", $user->Kode_Karyawan)
                                         ->update(['a.angka_wa' => DB::raw('COALESCE(angka_wa, 0) + 1')]);
                                 }
@@ -2108,7 +4037,7 @@ class AbsensiController extends Controller
 
                 $Division_Id =  Auth::user()->divisionKaryawan;
                 $flow = DB::table('HRIS_Approval_flow')
-
+                ->whereNull("Status")
                 ->where("Kode_Karyawan_Requester", $kodeKaryawan)
                 ->get()
                 ->map(function ($item) use ($kodeKaryawan, $noFaktur) {
@@ -2126,6 +4055,7 @@ class AbsensiController extends Controller
                     ->select("b.HP", "b.Nama", "b.Kode_Karyawan")
                     ->join('Karyawan as b', 'a.Kode_Karyawan' , '=','b.Kode_Karyawan')
                     ->where('a.Kode_Karyawan_Requester', $kodeKaryawan)
+                    ->whereNull("a.Status")
                     ->orderBy("a.order_flow")
                     ->first();
 
@@ -2193,6 +4123,7 @@ class AbsensiController extends Controller
                                     DB::table('HRIS_Approval_Request as a')
                                         ->join('HRIS_Approval_Flow as b', 'a.Flow_Id', '=', 'b.id')
                                         ->where("a.No_Transaksi", $noFaktur)
+                                        ->whereNull("b.Status")
                                         ->where("b.Kode_Karyawan", $user->Kode_Karyawan)
                                         ->update(['a.angka_wa' => DB::raw('COALESCE(angka_wa, 0) + 1')]);
                                 }
@@ -2443,11 +4374,9 @@ class AbsensiController extends Controller
         }
     }
 
-    public function indexIzin()
+    public function indexIzinAdmin()
     {
         try{
-
-
             $Hari = date('N');
             if ($Hari <= 6 ) {
                 $Hari += 1 ;
@@ -2457,6 +4386,7 @@ class AbsensiController extends Controller
             $Tanggal = date('Y-m-d');
             $Kode_Karyawan = Auth::user()->karyawan->Kode_Karyawan;
             $nama_Karyawan = Auth::user()->karyawan->Nama;
+            // dd($nama_Karyawan);
             $query = "
                 WITH KaryawanShiftPermanen AS (
                     SELECT
@@ -2560,17 +4490,153 @@ class AbsensiController extends Controller
             })->first();
 
 
-            $IzinApproverRaw = DB::table('HRIS_Approval_Flow')
-                            ->where("Kode_Karyawan_Requester", $Kode_Karyawan)
-                            ->get();
-            $IzinApprover = collect($IzinApproverRaw)->map(function ($emp){
-                if(!empty($emp->Kode_Karyawan)){
-                    $emp->Nama = Karyawan::select("Nama")->where("Kode_Karyawan", $emp->Kode_Karyawan)->first()->Nama;
-                }
-                return $emp;
+            $IzinApprover = DB::table('HRIS_Approval_Flow as h')
+                ->join('Karyawan as k', 'k.Kode_Karyawan', '=', 'h.Kode_Karyawan')
+                ->where('h.Kode_Karyawan_Requester', $Kode_Karyawan)
+                ->whereNull('h.Status')
+                ->select('h.*', 'k.Nama')
+                ->orderBy("h.order_flow")
+                ->get();
 
-            });
-            // dd($IzinApprover);
+            return inertia('izinPageAdmin', [
+                'dataShift' => $dataFinal,
+                'namaKaryawan' => $nama_Karyawan,
+                'IzinApprover' =>$IzinApprover ?? null
+
+            ]);
+        }catch (\Throwable $e) {
+            Log::channel('izinLog')->error('Gagal menampilkan page izin: ' . $e->getMessage());
+            Alert::error('error', 'Terjadi Error saat menampilkan page izin!');
+            return back();
+        }
+    }
+
+
+    public function indexIzin()
+    {
+        try{
+
+
+            $Hari = date('N');
+            if ($Hari <= 6 ) {
+                $Hari += 1 ;
+                } elseif ($Hari == 7) {
+                    $Hari = 1;
+                }
+            $Tanggal = date('Y-m-d');
+            $Kode_Karyawan = Auth::user()->karyawan->Kode_Karyawan;
+            $nama_Karyawan = Auth::user()->karyawan->Nama;
+            // dd($nama_Karyawan);
+            $query = "
+                WITH KaryawanShiftPermanen AS (
+                    SELECT
+                        e.Kode_Karyawan,
+                        f.nama_divisi,
+                        f.nama_sub_divisi,
+                        e.UserID_Absen,
+                        c.Jam_Masuk,
+                        c.Jam_Keluar,
+                        e.Nama,
+                        a.ID_Shift,
+                        a.Nama as Nama_Shift,
+                        d.Periode,
+                        COALESCE(NULLIF(c.Jam_Selesai_Lintas_Hari, ''), NULLIF(c.Jam_Selesai_Absen_Keluar, '')) AS Jam_selesai_absen,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY e.Kode_Karyawan
+                            ORDER BY d.Periode DESC, d.Urut DESC
+                        ) as rn_periode
+                    FROM HRIS_Shift_Kerja a
+                    INNER JOIN HRIS_Shift_Kerja_Detail b ON a.ID_Shift = b.ID_Shift
+                    INNER JOIN HRIS_Waktu_Kerja c ON b.ID_Waktu_Kerja = c.ID_Waktu_Kerja
+                    INNER JOIN HRIS_Shift_Per_Karyawan d ON a.ID_Shift = d.ID_Shift
+                    INNER JOIN Karyawan e ON d.Kode_Karyawan = e.Kode_Karyawan
+                                        AND d.Kode_Perusahaan = e.Kode_Perusahaan
+                    INNER JOIN View_Divisi_Sub_Divisi f ON e.ID_Divisi_Sub_Divisi = f.ID_DIVISI_SUB_DIVISI
+                    INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan g ON e.ID_Level_Jabatan = g.ID_Level_Jabatan
+                    WHERE e.Kode_Perusahaan = '001'
+                    AND b.Hari = ?
+                    AND e.Kode_Karyawan = ?
+                    AND d.Periode <= ?
+                ),
+                ShiftPermanen AS (
+                    SELECT
+                        Kode_Karyawan,
+                        nama_divisi,
+                        nama_sub_divisi,
+                        UserID_Absen,
+                        Nama,
+                        Jam_Masuk,
+                        Jam_Keluar,
+                        ID_Shift,
+                        Nama_Shift,
+                        'Permanen' as Jenis_Shift,
+                        Periode,
+                        Jam_selesai_absen
+                    FROM KaryawanShiftPermanen
+                    WHERE rn_periode = 1
+                ),
+                ShiftSementara AS (
+                    SELECT
+                    TOP 1
+                        e.Kode_Karyawan,
+                        f.nama_divisi,
+                        f.nama_sub_divisi,
+                        e.UserID_Absen,
+                        e.Nama,
+                        c.Jam_Masuk,
+                        c.Jam_Keluar,
+                        a.ID_Shift,
+                        a.Nama as Nama_Shift,
+                        'Sementara' as Jenis_Shift,
+                        d.Tanggal as Periode,
+                        COALESCE(NULLIF(c.Jam_Selesai_Lintas_Hari, ''), NULLIF(c.Jam_Selesai_Absen_Keluar, '')) AS Jam_selesai_absen
+                    FROM HRIS_Shift_Kerja a
+                    INNER JOIN HRIS_Shift_Kerja_Detail b ON a.ID_Shift = b.ID_Shift
+                    INNER JOIN HRIS_Waktu_Kerja c ON b.ID_Waktu_Kerja = c.ID_Waktu_Kerja
+                    INNER JOIN HRIS_Shift_Sementara d ON a.ID_Shift = d.ID_Shift
+                    INNER JOIN Karyawan e ON d.Kode_Perusahaan = e.Kode_Perusahaan
+                                        AND d.Kode_Karyawan = e.Kode_Karyawan
+                    INNER JOIN View_Divisi_Sub_Divisi f ON e.ID_Divisi_Sub_Divisi = f.ID_DIVISI_SUB_DIVISI
+                    INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan g ON e.ID_Level_Jabatan = g.ID_Level_Jabatan
+                    WHERE e.Kode_Perusahaan = '001'
+                    AND b.Hari = ?
+                    AND e.Kode_Karyawan = ?
+                    AND d.Tanggal = ?
+                    ORDER BY d.Urut DESC, d.Tanggal DESC
+                )
+                SELECT
+                    COALESCE(ss.Kode_Karyawan, sp.Kode_Karyawan) as userId,
+                    COALESCE(ss.UserID_Absen, sp.UserID_Absen) as UserID_Absen,
+                    COALESCE(ss.nama_divisi, sp.nama_divisi) as Divisi,
+                    COALESCE(ss.nama_sub_divisi, sp.nama_sub_divisi) as Sub_Divisi,
+                    COALESCE(ss.Nama, sp.Nama) as name,
+                    COALESCE(ss.Jam_Masuk, sp.Jam_Masuk) as Jam_Masuk,
+                    COALESCE(ss.Jam_Keluar, sp.Jam_Keluar) as Jam_Keluar,
+                    COALESCE(ss.ID_Shift, sp.ID_Shift) as ID_Shift,
+                    COALESCE(ss.Nama_Shift, sp.Nama_Shift) as Nama_Shift,
+                    COALESCE(ss.Jam_selesai_absen, sp.Jam_selesai_absen) as Jam_selesai_absen,
+                    COALESCE(ss.Jenis_Shift, sp.Jenis_Shift) as Jenis_Shift
+                FROM ShiftPermanen sp
+                FULL OUTER JOIN ShiftSementara ss ON sp.Kode_Karyawan = ss.Kode_Karyawan
+            ";
+
+            $result = DB::select($query, [$Hari, $Kode_Karyawan, $Tanggal, $Hari, $Kode_Karyawan, $Tanggal]);
+
+            $dataFinal = collect($result)->map(function ($item) {
+                if (!empty($item->UserID_Absen)) {
+                    $item->UserID_Absen = Crypt::encryptString($item->UserID_Absen);
+                }
+                return $item;
+            })->first();
+
+
+            $IzinApprover = DB::table('HRIS_Approval_Flow as h')
+                ->join('Karyawan as k', 'k.Kode_Karyawan', '=', 'h.Kode_Karyawan')
+                ->where('h.Kode_Karyawan_Requester', $Kode_Karyawan)
+                ->whereNull('h.Status')
+                ->select('h.*', 'k.Nama')
+                ->orderBy("h.order_flow")
+                ->get();
 
             return inertia('izinPage', [
                 'dataShift' => $dataFinal,
@@ -2940,37 +5006,48 @@ class AbsensiController extends Controller
     }
 
 
-   public function destroyIzin(Request $request)
+    public function destroyIzin(Request $request)
     {
         try {
             DB::beginTransaction();
 
+            // ✅ Cek dulu apakah sudah ada approver yang flag 'Y'
+            $sudahAdaApprove = DB::table('HRIS_Approval_Request')
+                ->where('No_Transaksi', $request->No_Transaksi)
+                ->where('Flag_Approval', 'Y')
+                ->exists();
+
+            if ($sudahAdaApprove) {
+                DB::rollBack();
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'Data tidak bisa dihapus karena sudah ada approver yang menyetujui.'
+                ], 400);
+            }
+
             $recordsDeleted = 0;
 
             $recordsDeleted += DB::table('Transaksi_Sakit_Izin')
-                                ->where('No_Transaksi', $request->No_Transaksi)
-                                ->update(['Status' => 'Y']);
+                ->where('No_Transaksi', $request->No_Transaksi)
+                ->update(['Status' => 'Y']);
 
             $recordsDeleted += DB::table('Transaksi_Terlambat_Pulang_Cepat')
-                                ->where('No_Transaksi', $request->No_Transaksi)
-                                ->update(['Status' => 'Y']);
+                ->where('No_Transaksi', $request->No_Transaksi)
+                ->update(['Status' => 'Y']);
+
             $recordsDeleted += DB::table('Transaksi_Cuti')
-                                ->where('No_Transaksi', $request->No_Transaksi)
-                                ->update(['Status' => 'Y']);
+                ->where('No_Transaksi', $request->No_Transaksi)
+                ->update(['Status' => 'Y']);
 
-        if ($recordsDeleted === 0) {
-            DB::rollback();
-            Log::channel('izinLog')->error('Data tidak ditemukan');
-
+            if ($recordsDeleted === 0) {
+                DB::rollBack();
+                Log::channel('izinLog')->error('Data tidak ditemukan');
                 return response()->json([
                     'status' => 404,
                     'message' => 'Data tidak ditemukan.'
                 ], 404);
-        }
-            // if ($recordsDeleted && $recordsDeleted->filePath) {
-            //     Storage::disk('gcs')->delete($recordsDeleted->filePath);
-            //     Log::warning('Foto GCS dihapus karena kegagalan DB: ' . $photoPath);
-            // }
+            }
+
             DB::commit();
             return response()->json([
                 'status' => 200,
@@ -2978,7 +5055,7 @@ class AbsensiController extends Controller
             ]);
 
         } catch (\Throwable $e) {
-            DB::rollback();
+            DB::rollBack();
             Log::channel('izinLog')->error('Gagal menghapus data: ' . $e->getMessage());
             return response()->json([
                 'status' => 500,
@@ -2986,4 +5063,5 @@ class AbsensiController extends Controller
             ], 500);
         }
     }
+
 }

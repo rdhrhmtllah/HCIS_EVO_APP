@@ -42,16 +42,20 @@ public function index(){
 
         // Menghasilkan array tanggal per minggu
         $weekDates = [];
-        // $currentDate = $hPlus2;
-       $currentDate = '2025-07-21';
+        $currentDate = $today;
+    //    $currentDate = '2025-07-21';
         $today = date('Y-m-d');
         $weekDates = [];
+            for($i = 0; $i <=14; $i++){
+                $weekDates[] = $currentDate;
 
+                $currentDate = date('Y-m-d', strtotime('+1 day', strtotime($currentDate)));
+            };
         // Perulangan akan terus berjalan selama $currentDate kurang dari atau sama dengan $today
-        while (strtotime($currentDate) <= strtotime($today)) {
-            $weekDates[] = $currentDate;
-            $currentDate = date('Y-m-d', strtotime("+1 day", strtotime($currentDate)));
-        }
+        // while (strtotime($currentDate) <= strtotime($today)) {
+        //     $weekDates[] = $currentDate;
+        //     $currentDate = date('Y-m-d', strtotime("+1 day", strtotime($currentDate)));
+
 
             // dd($weekDates);
         $querShift = "
@@ -161,7 +165,7 @@ public function getShift(Request $request){
             if ($Hari <= 6 ) {
         $Hari += 1 ;
         $time = date('H:i:s');
-            $query = "
+        $query = "
         select
         a.ID_Shift,
         a.Nama as Shift,
@@ -181,7 +185,7 @@ public function getShift(Request $request){
         and b.ID_Waktu_Kerja = c.ID_Waktu_Kerja
         and b.Hari = ?
         and a.Non_Shift = 'T'
-        AND c.Jam_Keluar >= ?
+        --AND c.Jam_Keluar >= ?
 
         ";
         $result =  DB::select($query, [$Hari, $time]);
@@ -516,7 +520,6 @@ public function getWeekAdmin(Request $request)
                         a.ID_Level_Jabatan = d.ID_Level_Jabatan
                         AND a.UserID_Absen IS NOT NULL
                         AND a.ID_Divisi_Sub_Divisi = c.ID_DIVISI_SUB_DIVISI
-                        AND d.ID_Level IN (1,2,3,4)
                         group by
                         a.Nama,
                         a.UserID_Absen,
@@ -712,6 +715,159 @@ public function isLembur(Request $request){
 
 }
 
+
+public function submitAdmin(Request $request){
+    $data = $request->All();
+    $employees = $data['params']['AssignShift']['employees'];
+    $Kode_Perusahaan = '001';
+    $Id_Shift = $data['params']['AssignShift']['shift'];
+
+    DB::beginTransaction();
+    try{
+        // checking Lembur
+        // dd($request->all());
+        if($data['params']['AssignShift']['shiftType'] == 'permanent'){
+
+            $Tanggal = date('Y-m-d H:i:s',strtotime($data['params']['AssignShift']['dates']['start']));
+
+            $shiftKerja = Shift_Kerja::select('Nama')->Where('ID_Shift', $Id_Shift)->first()->Nama;
+            // dd($shiftKerja);
+            foreach($employees as $item){
+                $Kode_Karyawan = $item;
+                $lembur = LemburDetail::whereDate('Tanggal_Lembur_Dari', $Tanggal)
+                      ->orWhereDate('Tanggal_Lembur_Sampai', $Tanggal)
+                      ->where('Kode_Karyawan', $Kode_Karyawan)
+                      ->exists();
+                // dd($lembur);
+
+                $finalInsert = DB::table('HRIS_Shift_Per_Karyawan')->insert([
+                    'Kode_Perusahaan' => $Kode_Perusahaan,
+                    'Kode_Karyawan' => $Kode_Karyawan ,
+                    'ID_Shift' => $Id_Shift,
+                    'Periode' => $Tanggal
+                ]);
+                // whatsapp message to user
+                  $userInsert = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first() ?? null;
+                $userInsertNoHp = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first()->HP ?? null;
+
+
+            }
+
+
+
+
+
+        }elseif($data['params']['AssignShift']['shiftType'] == 'temporary'){
+            $Dates = $data['params']['AssignShift']['dates'];
+
+            foreach($employees as $item){
+                foreach($Dates as $date){
+                   $finalInsert =   DB::table('HRIS_Shift_Sementara')->insert([
+                                        'Kode_Perusahaan' => $Kode_Perusahaan,
+                                        'Kode_Karyawan' => $item,
+                                        'ID_Shift' => $Id_Shift,
+                                        'Tanggal' => $date
+                                    ]);
+                }
+                // whatsapp message to user
+                $Kode_Karyawan = $item;
+                $userInsert = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first() ?? null;
+                $shiftKerja = Shift_Kerja::select('Nama')->Where('ID_Shift', $Id_Shift)->first()->Nama;
+                $userInsertNoHp = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first()->HP ?? null;
+                // dd($userInsertNoHp);
+                // dd($userInsert);
+                if($userInsert && $finalInsert && $userInsertNoHp && $userInsertNoHp != '-'){
+
+                        if(count($Dates) > 1){
+                            $temp = [];
+                            foreach($Dates as $date){
+                                $temp[] = date('d', strtotime($date));
+                            }
+                            $hari =  implode(',', $temp);
+                            $bulanTahun = date('M Y', strtotime($Dates[0]));
+                            $parseDates = $hari.' '.$bulanTahun;
+                        }else{
+                            foreach($Dates as $date){
+                            $parseDates = date('D, d M Y', strtotime($date));
+                            }
+                        }
+                        $pesan = [
+                                    "messaging_product" => "whatsapp",
+                                    "to" => $userInsertNoHp,
+                                    "type" => "template",
+                                    "template" => [
+                                        "name" => "notif_ganti_shift",
+                                        "language" => [
+                                            "code" => "id",
+                                            "policy" => "deterministic"
+                                        ],
+                                        "components" => [
+                                            [
+                                                "type" => "body",
+                                                "parameters" => [
+                                                     [
+                                                    "type" => "text",
+                                                    "text" => $userInsert->Nama
+                                                    ],
+                                                    [
+                                                        "type" => "text",
+                                                        "text" => 'Sementara'
+                                                    ],
+
+                                                    [
+                                                        "type" => "text",
+                                                        "text" => $shiftKerja
+                                                    ],
+                                                    [
+                                                        "type" => "text",
+                                                        "text" => Auth()->user()->Nama
+                                                    ],
+                                                     [
+                                                        "type" => "text",
+                                                        "text" => $parseDates
+                                                    ],
+
+
+
+
+                                                    ]
+                                                ]
+                                            ]
+                                        ]
+                                    ];
+
+
+                            $response = Whatsapp::send_message($pesan);
+                            Log::channel('whatsapp_error')->warning('Pesan Error', [
+                                "pesan" => $response
+                            ]);
+                    }
+
+
+            }
+
+        }
+         DB::commit();
+        Alert::success('Success', 'Shift Berhasil Disimpan!');
+        return response()->json([
+            'status' => 200,
+            'Message' => 'Berhasil Menyimpan Pergantian Shift!'
+        ]);
+
+    }catch(\Throwable $e){
+        DB::rollback();
+
+        Log::channel('shiftLog')->error('Error simpan Lembur submit'. $e->getMessage());
+        return response()->json([
+            'status' => 500,
+            'Message' => 'Terjadi Kesalahan Menyimpan, Silahkan Coba beberapa saat lagi! submit'
+        ]);
+
+    }
+
+
+
+}
 
 public function submit(Request $request){
     $data = $request->All();
@@ -926,6 +1082,47 @@ public function submit(Request $request){
 
 }
 
+
+public function updateAdmin(Request $request){
+    DB::BeginTransaction();
+
+    try{
+        $employees = $request->params['employee']['Kode_Karyawan'];
+        // dd($request->all());
+        $Tanggal = date('Y-m-d H:i:s',strtotime($request->params['date']));
+        $finalInsert = DB::table('HRIS_Shift_Sementara')->insert([
+                'Kode_Perusahaan' => '001',
+                'Kode_Karyawan' => $employees,
+                'ID_Shift' => $request->params['shift'],
+                'Tanggal' => $Tanggal
+            ]);
+
+        // wa
+        $Kode_Karyawan = $employees;
+        $userInsert = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first() ?? null;
+        $shiftKerja = Shift_Kerja::select('Nama')->Where('ID_Shift', $request->params['shift'])->first()->Nama;
+        $userInsertNoHp = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first()->HP ?? null;
+
+
+        DB::commit();
+        Alert::success('Success', 'Shift Berhasil Disimpan!');
+        return response()->json([
+        'status' => 200,
+        'Message' => 'Berhasil Menyimpan Shift'
+        ]);
+    }catch(\Throwable $e){
+        DB::rollback();
+        Log::channel('shiftLog')->error('Terjadi kesalahan saat mengupdate shift update'. $e->getMessage());
+        return response()->json([
+            'status' => 500,
+            'Message' => 'Terjadi kesalahan saat mengupdate shift update!'
+        ]);
+
+    }
+
+
+
+}
 
 public function update(Request $request){
     DB::BeginTransaction();

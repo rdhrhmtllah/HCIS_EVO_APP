@@ -46,9 +46,11 @@ class AuthController extends Controller
                 // Check user role and redirect accordingly
                 switch ($user->Role) {
                     case 'superuser':
+                        User::where("Username", $user->Username)->update(['angka_login' => DB::raw('COALESCE(angka_login, 0) + 1')]);
                         Session::flash('success', 'Welcome back, Admin!');
                         return redirect()->intended('/uDash');
                     case 'user':
+                        User::where("Username", $user->Username)->update(['angka_login' => DB::raw('COALESCE(angka_login, 0) + 1')]);
                         Session::flash('success', 'Welcome back, Manager!');
                         return redirect()->intended('/uDash');
                         // return abort(403, 'Akses ditolak!');
