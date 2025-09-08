@@ -261,9 +261,9 @@ class karyawanTeamController extends Controller
             $divisi = $Karyawan->division->ID_Divisi;
             $level = $Karyawan->level->ID_Level;
 
+            // dd($Karyawan->UserID_Web );
 
             if($username && (!$Karyawan->UserID_Web || $Karyawan->UserID_Web == ' ' || $Karyawan->UserID_Web == '-')){
-                // dd("Pler");
                 $cleanPasswordPart = $username;
                 $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
                 $saltFront = env('SALT_FRONT');
@@ -287,9 +287,9 @@ class karyawanTeamController extends Controller
                 ]);
 
                 if($createUser){
+
                     $updateKaryawan = Karyawan::where("Kode_Karyawan", $Kode_Karyawan)
                     ->update(["UserID_Web" => $createUser->Id_Users]);
-                    // dd($updateKaryawan);
 
                     if($updateKaryawan < 1){
                         Log::channel('CreateUserLog')->error("Tidak ada UserID_Web");
@@ -407,21 +407,25 @@ class karyawanTeamController extends Controller
                 $e =  DB::table('HRIS_Approval_Request as a')
                     ->join('HRIS_Approval_Flow as b', 'a.Flow_Id', '=', 'b.id')
                     ->whereNull('a.Flag_Approval')
+                    ->where("a.Kode_Karyawan", $requester['Kode_Karyawan'])
 
-                    ->whereNotExists(function ($sub) {
+                    ->whereNotExists(function ($sub) use($requester) {
                         $sub->select(DB::raw(1))
                             ->from('HRIS_Approval_Request as prev')
                             ->join('HRIS_Approval_Flow as prev_flow', 'prev.Flow_Id', '=', 'prev_flow.id')
                             ->whereColumn('prev.No_Transaksi', 'a.No_Transaksi')
+                            ->where("prev.Kode_Karyawan", $requester['Kode_Karyawan'])
+
                             ->whereRaw('prev_flow.order_flow < b.order_flow')
-                            ->where(function ($q) {
+                            ->where(function ($q)  {
                                 $q->whereNull('prev.Flag_Approval')
                                 ->orWhere('prev.Flag_Approval', '!=', 'Y');
                             });
                     })
-                    ->whereIn('a.id', function ($query) {
+                    ->whereIn('a.id', function ($query)  use($requester) {
                         $query->selectRaw('MIN(t1.id)')
                             ->from('HRIS_Approval_Request as t1')
+                            ->where("t1.Kode_Karyawan", $requester['Kode_Karyawan'])
                             ->join('HRIS_Approval_Flow as t2', 't1.Flow_Id', '=', 't2.id')
                             ->whereNull('t1.Flag_Approval')
                             ->groupBy('t1.No_Transaksi');
@@ -432,11 +436,11 @@ class karyawanTeamController extends Controller
                         $sub->select(DB::raw(1))
                             ->from(DB::raw("
                                 (
-                                    SELECT No_Transaksi FROM Transaksi_Terlambat_Pulang_Cepat WHERE Status = 'Y'
+                                    SELECT a.No_Transaksi FROM Transaksi_Terlambat_Pulang_Cepat a JOIN Transaksi_Terlambat_Pulang_Cepat_Detail b ON a.No_Transaksi = b.No_Transaksi WHERE (a.Status = 'Y' OR b.Flag_Approval is not null)
                                     UNION ALL
-                                    SELECT No_Transaksi FROM Transaksi_Sakit_Izin WHERE Status = 'Y'
+                                    SELECT a.No_Transaksi FROM Transaksi_Sakit_Izin a JOIN Transaksi_Sakit_Izin_Detail b ON a.No_Transaksi = b.No_Transaksi WHERE (a.Status = 'Y' OR b.Flag_Approval is not null)
                                     UNION ALL
-                                    SELECT No_Transaksi FROM Transaksi_Cuti WHERE Status = 'Y'
+                                    SELECT a.No_Transaksi FROM Transaksi_Cuti a JOIN Transaksi_Cuti_Detail b ON a.No_Transaksi = b.No_Transaksi WHERE (a.Status = 'Y' OR b.Flag_Approval is not null)
                                 ) as t_check
                             "))
                             ->whereColumn('t_check.No_Transaksi', 'a.No_Transaksi');
@@ -444,17 +448,20 @@ class karyawanTeamController extends Controller
 
                     ->select('a.*', 'b.order_flow')
                     ->orderBy('a.No_Transaksi')
-                    ->exists();
+                    ->get();
+                // dd(count($e));
 
-                if($e){
+                if(count($e) != 0){
                     DB::rollback();
+                    // dd('tidak nol ni');
+
                     Log::channel('KaryawanTeamLog')->error("Gagal mengupdate approver karyawan karena karyawan masih ada pengajuan yang belum di acc ");
                     return response()->json([
                         'message' => 'Gagal mengupdate approver karyawan karena karyawan masih ada pengajuan yang belum di acc ',
                         // 'error' => $e->getMessage(),
                     ], 500);
                 }
-                // dd()::
+                // dd('nol ni');
 
                 DB::table('HRIS_Approval_Flow')
                     ->where("Kode_Karyawan_Requester", $requester['Kode_Karyawan'])

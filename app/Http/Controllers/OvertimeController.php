@@ -51,19 +51,18 @@ class OvertimeController extends Controller
                 $now = now();
                 // $now = now()->setTime(2, 0); // untuk testing
 
-                // $now = Carbon::createFromFormat('Y-m-d H:i', '2025-08-16 05:00');
+                // $now = Carbon::createFromFormat('Y-m-d H:i:s', '2025-08-31 02:30:00');
 
 
                 $dayName = $now->format('l'); // Monday, Tuesday, ..., Saturday, Sunday
 
                 // Tentukan cutoff jam berdasarkan hari
                 if (in_array($dayName, ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])) {
-                    $cutoffHour = 3; // jam 3 pagi
+                    $cutoffHour = 11; // jam 3 pagi
                 } elseif ($dayName === 'Saturday') {
-                    $cutoffHour = 5; // jam 5 pagi
+                    $cutoffHour = 11; // jam 3 pagi
                 } else {
-                    // Kalau Minggu, misalnya ikut jam 3 juga
-                    $cutoffHour = 3;
+                    $cutoffHour = 11; // jam 5 pagi
                 }
 
                 // Logika tentukan start date
@@ -81,6 +80,8 @@ class OvertimeController extends Controller
                     $date = date('Y-m-d', strtotime('+1 day', strtotime($date)));
                 }
 
+
+                // dd($week);
                 // dd($dayName, $cutoffHour, $now->format('Y-m-d H:i:s'), $week);
 
 
@@ -589,7 +590,7 @@ class OvertimeController extends Controller
     public function userActive(Request $request){
         // param
         try{
-
+            // dd($request->all());
             $Kode_Perusahaan = '001';
             // $ID_shift = $request->input('shift');
             $Hari = date('N',strtotime($request->input('date')));
@@ -1374,7 +1375,7 @@ class OvertimeController extends Controller
     }
 
     public function submit(Request $request){
-        // dd($request->params['dataUsers']);
+        // dd($request->all());
         $format_tanggal_sekarang = date('m') . '-' . date('y');
         // dd($format_tanggal_sekarang);
 

@@ -216,22 +216,25 @@
                                 placeholder="Semua"
                                 style="cursor: pointer"
                                 title="Pilih Tanggal"
+                                @mousedown.prevent="blockAutoSelect"
                             />
+
                             <div
                                 v-else
-                                type="date"
-                                class="form-control"
-                                placeholder="Semua"
-                                title="Pilih Tanggal"
+                                class="form-control d-flex align-items-center justify-content-between"
                                 style="cursor: pointer"
+                                title="Pilih Tanggal"
                             >
-                                {{ formatDateToDMY(selectedDateFilter) }}
+                                <span>{{
+                                    formatDateToDMY(selectedDateFilter)
+                                }}</span>
                                 <span
                                     @click="selectedDateFilter = null"
                                     v-tooltip="'Hapus filter'"
                                     class="closeFilter p-1 rounded-3 ms-2"
-                                    ><i class="bi bi-x"></i
-                                ></span>
+                                >
+                                    <i class="bi bi-x"></i>
+                                </span>
                             </div>
                         </div>
                         <div
@@ -1923,10 +1926,8 @@
                                         : "Waktu Datang"
                                 }}
                             </label>
-                            <div
-                                class="input-group px-2 px-md-3 mb-3 text-black"
-                            >
-                                <el-slider
+                            <div class="input-group mb-3 text-black">
+                                <!-- <el-slider
                                     v-model="AssignTime"
                                     :min="min"
                                     :max="max"
@@ -1941,6 +1942,15 @@
                                     :marks="JamOptions"
                                     show-stops
                                     style="width: 100%"
+                                /> -->
+
+                                <el-time-picker
+                                    v-model="AssignTime"
+                                    :disabled-hours="disabledHours"
+                                    :disabled-minutes="disabledMinutes"
+                                    class="w-100"
+                                    :disabled-seconds="disabledSeconds"
+                                    placeholder="Pilih Waktu"
                                 />
                             </div>
                             <small class="text-muted">
@@ -2115,11 +2125,11 @@
                                 </span>
                                 <div style="color: #6366f1" class="fw-bold">
                                     {{
-                                        formatTanggalIzin(
-                                            assignIzinType,
+                                        formatTanggalIzin2(
+                                            assignIzinType2,
                                             AssignDateRange[0],
                                             AssignDateRange[1],
-                                            formatTimeForSubmission(AssignTime)
+                                            formatToHHMM(AssignTime)
                                         )
                                     }}
                                 </div>
@@ -2158,12 +2168,7 @@
                                         assignIzinType2 == "izinFull" ||
                                         assignIzinType2 == "sakit"
                                             ? "Tidak ada"
-                                            : formatTimeForSubmission(
-                                                  AssignTime
-                                              )
-                                                  .split(":")
-                                                  .slice(0, 2)
-                                                  .join(":")
+                                            : formatToHHMM(AssignTime)
                                     }}
                                 </div>
                             </div>
@@ -2627,6 +2632,7 @@ import {
     ElMessage,
     ElTag,
     ElTooltip,
+    ElTimePicker,
     ElSteps,
     ElStep,
     ElNotification,
@@ -2644,6 +2650,7 @@ export default {
         ElMessage,
         ElSteps,
         ElStep,
+        ElTimePicker,
         ElNotification,
         ElTooltip,
         ElSlider,
@@ -2657,6 +2664,9 @@ export default {
     },
     data() {
         return {
+            Jam_Masuk: "00:00",
+            Jam_Keluar: "07:00",
+
             dataExport: [],
             showAlertModal: false,
             Pesan: "",
@@ -3470,18 +3480,20 @@ export default {
 
             if (this.selectedDateFilter) {
                 filtered = filtered.filter((item) => {
-                    // Convert all dates to Date objects for reliable comparison
                     const selectedDate = new Date(this.selectedDateFilter);
-                    const startDate = new Date(item.Tanggal_Mulai);
-                    const endDate = new Date(item.Tanggal_Selesai);
+                    selectedDate.setHours(0, 0, 0, 0);
 
-                    // Check if selectedDate is greater than or equal to Tanggal_Mulai
-                    // AND less than or equal to Tanggal_Selesai
-                    return (
-                        (selectedDate >= startDate &&
-                            selectedDate <= endDate) ||
-                        null
-                    );
+                    const startDate = new Date(item.Tanggal_Mulai);
+                    startDate.setHours(0, 0, 0, 0);
+
+                    const endDate = item.Tanggal_Selesai
+                        ? new Date(item.Tanggal_Selesai)
+                        : null;
+                    if (endDate) endDate.setHours(0, 0, 0, 0);
+
+                    return endDate
+                        ? selectedDate >= startDate && selectedDate <= endDate
+                        : selectedDate.getTime() === startDate.getTime();
                 });
             }
 
@@ -3517,6 +3529,89 @@ export default {
         },
     },
     methods: {
+        blockAutoSelect(e) {
+            if (!this.selectedDateFilter) {
+                e.target.value = ""; // kosongkan supaya tidak auto ke 2
+            }
+        },
+        formatToHHMM(assignTime) {
+            if (!assignTime) return "";
+
+            const date = new Date(assignTime); // pastikan ini Date object
+            const hours = date.getHours().toString().padStart(2, "0");
+            const minutes = date.getMinutes().toString().padStart(2, "0");
+
+            return `${hours}:${minutes}`;
+        },
+        async getJamKerja() {
+            try {
+                const response = await axios.get("/izin/getKerja", {
+                    params: this.AssignDateRange,
+                });
+                if (response.status === 200) {
+                    const data = response.data.data;
+                    this.Jam_Masuk = data.Jam_Masuk;
+                    this.Jam_Keluar = data.Jam_Keluar;
+                    this.value1 = data.Jam_Masuk;
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        },
+
+        disabledHours() {
+            const [jamMasuk] = this.Jam_Masuk.split(":").map(Number);
+            const [jamKeluar] = this.Jam_Keluar.split(":").map(Number);
+
+            const disabled = [];
+
+            if (jamMasuk <= jamKeluar) {
+                // Normal shift (contoh: 08:00 - 16:00)
+                for (let h = 0; h < 24; h++) {
+                    if (h < jamMasuk || h > jamKeluar) disabled.push(h);
+                }
+            } else {
+                // Shift lintas hari (contoh: 23:00 - 07:00)
+                for (let h = jamKeluar + 1; h < jamMasuk; h++) {
+                    disabled.push(h);
+                }
+            }
+
+            return disabled;
+        },
+
+        disabledMinutes(hour) {
+            const [jamMasuk, menitMasuk] =
+                this.Jam_Masuk.split(":").map(Number);
+            const [jamKeluar, menitKeluar] =
+                this.Jam_Keluar.split(":").map(Number);
+
+            const minutes = [];
+
+            if (jamMasuk <= jamKeluar) {
+                // Normal shift
+                if (hour === jamMasuk) {
+                    for (let m = 0; m < menitMasuk; m++) minutes.push(m);
+                }
+                if (hour === jamKeluar) {
+                    for (let m = menitKeluar + 1; m < 60; m++) minutes.push(m);
+                }
+            } else {
+                // Lintas hari
+                if (hour === jamMasuk) {
+                    for (let m = 0; m < menitMasuk; m++) minutes.push(m);
+                }
+                if (hour === jamKeluar) {
+                    for (let m = menitKeluar + 1; m < 60; m++) minutes.push(m);
+                }
+            }
+
+            return minutes;
+        },
+
+        disabledSeconds() {
+            return Array.from({ length: 60 }, (_, i) => i); // disable semua detik
+        },
         openDialogExport() {
             if (this.selectedDateExport.length === 2) {
                 const [startStr, endStr] = this.selectedDateExport;
@@ -4343,23 +4438,7 @@ export default {
                 return "Cuti";
             }
         },
-        async getJamKerja() {
-            try {
-                const tanggal = this.AssignDateRange;
-                const response = await axios.get("/izin/getKerja", {
-                    params: tanggal,
-                });
-                if (response.status == 200) {
-                    this.min = response.data.data.min;
-                    this.max = response.data.data.max;
-                    this.AssignTime = response.data.data.min;
-                    this.JamOptions = response.data.data.JamOptions;
-                    // console.log(this.JamOptions);
-                }
-            } catch (error) {
-                console.log(error);
-            }
-        },
+
         formatTanggalIzin(tipe, Mulai, Selesai, Jam) {
             if (
                 tipe == "izinFull" ||
@@ -4386,6 +4465,56 @@ export default {
                 );
             }
         },
+        toMinutes(jamString) {
+            let [h, m] = jamString.split(":").map(Number);
+            return h * 60 + m;
+        },
+        formatTanggalIzin2(tipe, Mulai, Selesai, Jam) {
+            if (
+                tipe == "izinFull" ||
+                tipe == "sakit" ||
+                tipe == "cuti" ||
+                tipe == "cutiHutang"
+            ) {
+                if (
+                    this.formatDateToDMY(Mulai) == this.formatDateToDMY(Selesai)
+                ) {
+                    return this.formatDateToDMY(Mulai);
+                } else {
+                    return (
+                        this.formatDateToDMY(Mulai).split(" ").slice(0, 1) +
+                        " - " +
+                        this.formatDateToDMY(Selesai)
+                    );
+                }
+            } else {
+                const toMinutes = (jamString) => {
+                    let [h, m] = jamString.split(":").map(Number);
+                    return h * 60 + m;
+                };
+
+                let jamMasuk = toMinutes(this.Jam_Masuk);
+                let jamKeluar = toMinutes(this.Jam_Keluar);
+                let jamIzin = toMinutes(Jam);
+
+                let tanggal = new Date(Mulai);
+
+                if (jamKeluar < jamMasuk) {
+                    // ✅ shift malam
+                    if (jamIzin < jamKeluar) {
+                        tanggal.setDate(tanggal.getDate() + 1); // next day
+                    }
+                }
+                // ✅ shift normal → selalu pakai tanggal Mulai
+
+                return (
+                    this.formatDateToDMY(tanggal) +
+                    " " +
+                    Jam.split(":").slice(0, 2).join(":")
+                );
+            }
+        },
+
         log() {
             // console.log(this.permissionReason);
         },
@@ -4422,10 +4551,15 @@ export default {
                     "AssignDateRange is not a valid array or is empty."
                 );
             }
-            const formattedTime = this.formatTimeForSubmission(this.AssignTime);
+            const formattedTime = this.AssignTime
+                ? this.formatToHHMM(this.AssignTime)
+                : "00:00";
             formData.append("waktu", formattedTime);
             formData.append("jenisCuti", this.AssignJenisCuti || null);
             formData.append("Alasan", this.permissionReason);
+            formData.append("jam_masuk", this.Jam_Masuk || null);
+            formData.append("jam_keluar", this.Jam_Keluar || null);
+
             if (this.AssignFile instanceof File) {
                 formData.append("file", this.AssignFile);
                 console.log("Appending 'file' to FormData as a File object.");

@@ -21,8 +21,7 @@
                                         Manajemen Penugasan Shift
                                     </h2>
                                     <p class="subtitle">
-                                        Kelola pergantian shift divisi
-                                        {{ divisi.toLowerCase() }}
+                                        Kelola pergantian shift tim
                                     </p>
                                 </div>
                             </div>
@@ -261,7 +260,11 @@
                                                     {{ employee.name }}
                                                 </div>
                                                 <div class="employee-id">
-                                                    {{ divisi }}
+                                                    {{
+                                                        getData(
+                                                            employee.Kode_Karyawan
+                                                        ).nama_divisi
+                                                    }}
                                                 </div>
                                             </div>
                                         </div>
@@ -598,11 +601,7 @@
     </div>
 
     <!--  Assign Shift Modal -->
-    <div
-        class="modal-overlay"
-        :class="{ show: showAssignModal }"
-        @click="closeAssignModal"
-    >
+    <div class="modal-overlay" :class="{ show: showAssignModal }">
         <div class="modal-container assign-modal" @click.stop>
             <div class="modal-header">
                 <div class="header-title-section">
@@ -858,7 +857,7 @@
                                 v-if="assignShiftType === 'temporary'"
                             >
                                 <label class="form-label">Pilih Tanggal:</label>
-                                <div class="date-picker-grid">
+                                <!-- <div class="date-picker-grid">
                                     <div
                                         v-for="(day, idx) in tanggalLoop"
                                         :key="idx"
@@ -891,7 +890,16 @@
                                             ></i>
                                         </div>
                                     </div>
-                                </div>
+                                </div> -->
+                                <el-date-picker
+                                    v-model="selectedAssignDates"
+                                    class="w-100"
+                                    type="dates"
+                                    format="YYYY-MM-DD"
+                                    value-format="YYYY-MM-DD"
+                                    :disabled-date="disabledDate"
+                                    placeholder="Pilih satu tanggal atau lebih"
+                                />
                             </div>
 
                             <div
@@ -901,11 +909,21 @@
                                 <label class="form-label">Periode Shift:</label>
                                 <div class="date-range-inputs">
                                     <div class="date-input-group">
-                                        <input
+                                        <!-- <input
                                             type="date"
                                             class="form-control date-input"
                                             v-model="assignStartDate"
                                             :min="minDate"
+                                        /> -->
+
+                                        <el-date-picker
+                                            v-model="assignStartDate"
+                                            class="w-100"
+                                            type="date"
+                                            format="YYYY-MM-DD"
+                                            value-format="YYYY-MM-DD"
+                                            :disabled-date="disabledDate"
+                                            placeholder="Pilih satu tanggal"
                                         />
                                     </div>
                                     <!-- <div class="date-separator">—</div> -->
@@ -1221,10 +1239,12 @@ export default {
     props: {
         semuaShift: Array,
         divisi: String,
+        // dataAll: Array,
         tanggalLoop: Array,
     },
     data() {
         return {
+            dataFinal: [],
             isLemburData: [],
             jenisShift: [],
             tanggalHariIni: new Date(),
@@ -1373,6 +1393,7 @@ export default {
     mounted() {
         this.setMinimumDate();
         this.fetchWeekDates();
+        this.getTime();
         document.addEventListener("click", this.closeDropdowns);
 
         this.checkScreenSize();
@@ -1383,6 +1404,10 @@ export default {
         window.removeEventListener("resize", this.checkScreenSize);
     },
     methods: {
+        getData(usr) {
+            // console.log(this.dataFinal);
+            return this.dataFinal.find((emp) => emp.Kode_Karyawan === usr);
+        },
         dayNight() {
             const sekarang = new Date();
             const jam = sekarang.getHours();
@@ -1503,6 +1528,51 @@ export default {
                     this.formatDate(date2)
                 );
             }
+        },
+        async getTime() {
+            this.loading = true;
+            try {
+                const response = await axios.get("/getTime");
+
+                if (response.status === 200) {
+                    // misal response.data.data = "2025-09-05"
+                    this.minDate = new Date(response.data.time);
+                } else {
+                    ElMessage({
+                        showClose: true,
+                        message: "Terjadi kesalahan response dari server",
+                        type: "error",
+                        customStyle: { "z-index": "1050" },
+                    });
+                    this.minDate = null;
+                }
+            } catch (error) {
+                ElMessage({
+                    showClose: true,
+                    message:
+                        "Terjadi kesalahan, silakan coba lagi beberapa saat",
+                    type: "error",
+                    customStyle: { "z-index": "1050" },
+                });
+                this.minDate = null;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        disabledDate(time) {
+            if (!this.minDate) return false;
+
+            // Buat minDate di-normalisasi ke jam 00:00:00
+            const min = new Date(this.minDate);
+            min.setHours(0, 0, 0, 0);
+
+            // Bandingkan juga time yang dipilih di-normalisasi
+            const current = new Date(time);
+            current.setHours(0, 0, 0, 0);
+
+            // Disable hanya kalau tanggal < minDate
+            return current.getTime() < min.getTime();
         },
         async saveShift() {
             this.loading = true;
@@ -1971,6 +2041,7 @@ export default {
 
                 this.weekDates = Object.values(response.data.week_dates);
                 this.Tanggal = response.data.Tanggal;
+                this.dataFinal = response.data.dataAll;
                 // console.log(response.data.Tanggal);
                 this.startOfWeek = this.formatDate(response.data.start_of_week);
                 this.endOfWeek = this.formatDate(response.data.end_of_week);
@@ -2347,6 +2418,7 @@ export default {
 
             // Tutup modal duluan biar user gak bisa klik tombol lagi
             this.closeAlertModal();
+            this.closeAssignModal();
 
             try {
                 const response = await axios.post("/swapShift/submit", {
@@ -2356,12 +2428,10 @@ export default {
                 if (response.status === 200) {
                     ElMessage({
                         showClose: true,
-                        message: "Congrats, Berhasil Menambahkan Data Lembur.",
+                        message: "Congrats, Berhasil mengupdate shift.",
                         type: "success",
                         customStyle: { "z-index": "1050" },
                     });
-
-                    this.closeAssignModal();
 
                     // fetch jalan di background, tidak ditunggu
                     this.fetchWeekDates();

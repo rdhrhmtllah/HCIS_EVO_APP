@@ -732,33 +732,38 @@
                                 <div class="card-body row">
                                     <div class="col-md-8 col-6">
                                         <div class="card-row">
-                                            <i
+                                            <!-- <i
                                                 class="bi bi-hash d-flex justify-content-center align-items-center"
-                                            ></i>
-                                            <div class="card-label">
-                                                No. Transaksi:
-                                            </div>
+                                            ></i> -->
+                                            <div class="card-label">Nama :</div>
                                             <div class="card-value">
-                                                {{ item.No_Transaksi }}
+                                                {{
+                                                    truncateText(
+                                                        capitalize(
+                                                            item.requester_Nama
+                                                        ),
+                                                        20
+                                                    )
+                                                }}
                                             </div>
                                         </div>
                                         <div class="card-row">
-                                            <i
+                                            <!-- <i
                                                 class="bi bi-tag d-flex justify-content-center align-items-center"
-                                            ></i>
+                                            ></i> -->
                                             <div class="card-label">
-                                                Jenis Izin:
+                                                Jenis Izin :
                                             </div>
                                             <div class="card-value">
                                                 {{ parseIzin(item.Tipe_Izin) }}
                                             </div>
                                         </div>
                                         <div class="card-row">
-                                            <i
+                                            <!-- <i
                                                 class="bi bi-chat-dots d-flex justify-content-center align-items-center"
-                                            ></i>
+                                            ></i> -->
                                             <div class="card-label">
-                                                Alasan:
+                                                Alasan :
                                             </div>
                                             <div class="card-value">
                                                 {{
@@ -770,10 +775,12 @@
                                             </div>
                                         </div>
                                         <div v-if="item.Waktu" class="card-row">
-                                            <i
+                                            <!-- <i
                                                 class="bi bi-clock d-flex justify-content-center align-items-center"
-                                            ></i>
-                                            <div class="card-label">Waktu:</div>
+                                            ></i> -->
+                                            <div class="card-label">
+                                                Waktu :
+                                            </div>
                                             <div class="card-value">
                                                 {{
                                                     formatSliderTooltip(
@@ -783,11 +790,11 @@
                                             </div>
                                         </div>
                                         <div class="card-row">
-                                            <i
+                                            <!-- <i
                                                 class="bi bi-paperclip d-flex justify-content-center align-items-center"
-                                            ></i>
+                                            ></i> -->
                                             <div class="card-label">
-                                                Lampiran:
+                                                Lampiran :
                                             </div>
                                             <div class="card-value">
                                                 <a
@@ -1000,6 +1007,18 @@
         <div v-if="selectedItem" class="detail-modal-content">
             <div class="detail-grid">
                 <!-- Setiap detail row menggunakan grid system -->
+                <div class="detail-item">
+                    <span class="detail-label">Nama Pengaju:</span>
+                    <span class="detail-value highlight">
+                        {{
+                            truncateText(
+                                capitalize(selectedItem.requester_Nama),
+                                30
+                            )
+                        }}
+                    </span>
+                </div>
+
                 <div class="detail-item">
                     <span class="detail-label">Jenis Izin:</span>
                     <span class="detail-value highlight">
@@ -2516,20 +2535,47 @@ export default {
                 );
             }
 
+            // if (this.selectedDateFilter) {
+            //     filtered = filtered.filter((item) => {
+            //         // Convert all dates to Date objects for reliable comparison
+            //         const selectedDate = new Date(this.selectedDateFilter);
+            //         const startDate = new Date(item.Tanggal_Mulai);
+            //         const endDate = new Date(item.Tanggal_Selesai);
+
+            //         // Check if selectedDate is greater than or equal to Tanggal_Mulai
+            //         // AND less than or equal to Tanggal_Selesai
+            //         return (
+            //             (selectedDate >= startDate &&
+            //                 selectedDate <= endDate) ||
+            //             null
+            //         );
+            //     });
+            // }
+
             if (this.selectedDateFilter) {
                 filtered = filtered.filter((item) => {
-                    // Convert all dates to Date objects for reliable comparison
                     const selectedDate = new Date(this.selectedDateFilter);
-                    const startDate = new Date(item.Tanggal_Mulai);
-                    const endDate = new Date(item.Tanggal_Selesai);
+                    if (isNaN(selectedDate)) return false;
+                    selectedDate.setHours(0, 0, 0, 0);
 
-                    // Check if selectedDate is greater than or equal to Tanggal_Mulai
-                    // AND less than or equal to Tanggal_Selesai
-                    return (
-                        (selectedDate >= startDate &&
-                            selectedDate <= endDate) ||
-                        null
+                    const { startDate, endDate } = this.parseTanggalIzin(
+                        item.TanggalIzin
                     );
+                    if (!startDate) return false;
+
+                    const result = endDate
+                        ? selectedDate >= startDate && selectedDate <= endDate
+                        : selectedDate.getTime() === startDate.getTime();
+
+                    console.log("DEBUG:", {
+                        selected: selectedDate,
+                        start: startDate,
+                        end: endDate,
+                        hasil: result,
+                        raw: item.TanggalIzin,
+                    });
+
+                    return result;
                 });
             }
 
@@ -2563,6 +2609,55 @@ export default {
         },
     },
     methods: {
+        parseTanggalIzin(str) {
+            if (!str) return { startDate: null, endDate: null };
+
+            // Mapping bulan
+            const monthMap = {
+                January: 0,
+                February: 1,
+                March: 2,
+                April: 3,
+                May: 4,
+                June: 5,
+                July: 6,
+                August: 7,
+                September: 8,
+                October: 9,
+                November: 10,
+                December: 11,
+            };
+
+            // Case rentang: "23-26 July 2025"
+            const rangeMatch = str.match(
+                /^(\d{1,2})-(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/
+            );
+            if (rangeMatch) {
+                const [, startDay, endDay, monthName, year] = rangeMatch;
+                const month = monthMap[monthName];
+                const startDate = new Date(year, month, parseInt(startDay));
+                const endDate = new Date(year, month, parseInt(endDay));
+
+                startDate.setHours(0, 0, 0, 0);
+                endDate.setHours(0, 0, 0, 0);
+
+                return { startDate, endDate };
+            }
+
+            // Case single date: "28 August 2025 08:30"
+            const singleMatch = str.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+            if (singleMatch) {
+                const [, day, monthName, year] = singleMatch;
+                const month = monthMap[monthName];
+                const d = new Date(year, month, parseInt(day));
+                d.setHours(0, 0, 0, 0);
+
+                return { startDate: d, endDate: null };
+            }
+
+            // Default gagal
+            return { startDate: null, endDate: null };
+        },
         formatDateToYYYYMMDD(date) {
             const d = new Date(date);
             const year = d.getFullYear();
@@ -3867,6 +3962,14 @@ export default {
     max-height: 100vh;
     max-width: 100vw;
     overflow: hidden;
+}
+
+.card-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    width: fit-content !important;
 }
 
 .el-dialog {

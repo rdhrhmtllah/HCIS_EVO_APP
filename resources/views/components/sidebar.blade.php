@@ -12,19 +12,21 @@ Request::is('crossFeedbackReview');
 
 $isDashboard = Request::is('uDash');
 
-$isHCIS = Request::is('izin') ||
-Request::is('absensi')||
-Request::is('swapShift') ||
-Request::is('swapShiftAdmin') ||
-Request::is('overtime') ||
-Request::is('overtimeAdmin') ||
-Request::is('absensiSales') ||
-Request::is('izinLevelUp') ||
-Request::is('izinAdmin') ||
-Request::is('add-karyawan-team') ||
-Request::is('izin')
-;
 
+$isAdmin = Request::is('izinAdmin', 'swapShiftAdmin', 'overtimeAdmin', 'add-karyawan-team');
+$rolesAdmin = ['IzinPageAdmin', 'OvertimeManagementAdmin', 'ShiftManagementAdmin', 'addKaryawanTeam'];
+$hasAccessAdmin = array_filter($rolesAdmin, fn($role) => auth()->user()->can('akses-spesial', $role));
+$hasAccessAdmin = !empty($hasAccessAdmin);
+
+$isPerson = Request::is('izin', 'absensi', 'absensiSales');
+$rolesPerson = ['IzinPage', 'absensiPage', ];
+$hasAccessPerson = array_filter($rolesPerson, fn($role) => auth()->user()->can('akses-spesial', $role));
+$hasAccessPerson = !empty($hasAccessPerson);
+
+$isTeam = Request::is('izinLevelUp', 'overtime', 'swapShift');
+$rolesTeam = ['OvertimeManagement', 'IzinPageApprover', 'ShiftManagement'];
+$hasAccessTeam = array_filter($rolesTeam, fn($role) => auth()->user()->can('akses-spesial', $role));
+$hasAccessTeam = !empty($hasAccessTeam);
 
 // Custom check for Ticket group
 $isTicketActive =
@@ -45,7 +47,7 @@ Request::is('finishTicket');
                 <span class="  fw-bold px-2 py-0" style="font-size: 18px"><i class="me-2 bi bi-person-fill"></i><span class="text-uppercase">{{
                         Auth::user()->Username
                         }}</span></span>
-            <span style="font-size: 0.9rem; font-weight: 400;" class=" px-2 fw-0 my-0"> <span class=""></span> {{Auth::user()->divisionKaryawan->nama_divisi}}</span>
+            <span style="font-size: 0.9rem; font-weight: 400;" class=" px-2 fw-0 my-0"> <span class=""></span> {{Auth::user()->divisionKaryawan->nama_sub_divisi}}</span>
             </div>
         </div>
 
@@ -75,29 +77,78 @@ Request::is('finishTicket');
                     </a>
                 </li>
 
-                {{-- HCIS --}}
-                <li class="sidebar-item has-sub {{ $isHCIS ? 'active' : '' }}">
+                @if($hasAccessPerson)
+                    <li class="sidebar-item has-sub {{ $isPerson ? 'active' : '' }}">
+                        <a href="#" class="sidebar-link">
+                            <i class="bi bi-person-fill-gear"></i>
+                            <span>Kehadiran</span>
+                        </a>
+                        <ul class="submenu px-0 {{ $isPerson ? 'd-block' : '' }}">
+                            @can('akses-spesial', 'absensiPage')
+
+                                <li class="submenu-item {{ Request::is('absensiSales') ? 'active' : '' }}">
+                                    <a href="/absensiSales" class="submenu-link">
+                                        <i class="bi bi-person-badge"></i> Absensi
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('akses-spesial', 'IzinPage')
+
+                                <li class="submenu-item {{ Request::is('izin') ? 'active' : '' }}">
+                                    <a href="/izin" class="submenu-link">
+                                        <i class="bi bi-mailbox-flag"></i> Izin
+                                    </a>
+                                </li>
+                            @endcan
+
+                        </ul>
+                    </li>
+                @endif
+
+                @if($hasAccessTeam)
+                    <li class="sidebar-item has-sub {{ $isTeam ? 'active' : '' }}">
+                        <a href="#" class="sidebar-link">
+                            <i class="bi bi-person-video2"></i>
+                            <span>Manajemen Tim</span>
+                        </a>
+                        <ul class="submenu px-0 {{ $isTeam ? 'd-block' : '' }}">
+
+                            @can('akses-spesial', 'IzinPageApprover')
+
+                                <li class="submenu-item {{ Request::is('izinLevelUp') ? 'active' : '' }}">
+                                    <a href="/izinLevelUp" class="submenu-link">
+                                        <i class="bi bi-check-circle"></i> Pengajuan Izin
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('akses-spesial','OvertimeManagement')
+
+                                    <li class="submenu-item {{ Request::is('overtime') ? 'active' : '' }}">
+                                        <a href="/overtime" class="submenu-link">
+                                            <i class="bi bi-stack-overflow"></i> Penugasan Lembur
+                                        </a>
+                                    </li>
+                                @endcan
+
+                                @can('akses-spesial','ShiftManagement')
+                                <li class="submenu-item {{ Request::is('swapShift') ? 'active' : '' }}">
+                                    <a href="/swapShift" class="submenu-link">
+                                        <i class="bi bi-shuffle"></i> Pergantian Shift
+                                    </a>
+                                </li>
+                            @endcan
+                        </ul>
+                    </li>
+                @endif
+
+                @if($hasAccessAdmin)
+                <li class="sidebar-item has-sub {{ $isAdmin ? 'active' : '' }}">
                     <a href="#" class="sidebar-link">
-                        <i class="bi bi-person-video2"></i>
-                        <span>HCIS</span>
+                        <i class="bi bi-gear-fill"></i>
+                        <span>Administrator</span>
                     </a>
-                    <ul class="submenu px-0 {{ $isHCIS ? 'd-block' : '' }}">
-                        @can('akses-spesial', 'absensiPage')
+                       <ul class="submenu px-0 {{ $isAdmin ? 'd-block' : '' }}">
 
-                            <li class="submenu-item {{ Request::is('absensiSales') ? 'active' : '' }}">
-                                <a href="/absensiSales" class="submenu-link">
-                                    <i class="bi bi-person-badge"></i> Absensi
-                                </a>
-                            </li>
-                        @endcan
-                        @can('akses-spesial', 'IzinPage')
-
-                            <li class="submenu-item {{ Request::is('izin') ? 'active' : '' }}">
-                                <a href="/izin" class="submenu-link">
-                                    <i class="bi bi-mailbox-flag"></i> Izin
-                                </a>
-                            </li>
-                        @endcan
                         @can('akses-spesial', 'IzinPageAdmin')
 
                             <li class="submenu-item {{ Request::is('izinAdmin') ? 'active' : '' }}">
@@ -106,22 +157,7 @@ Request::is('finishTicket');
                                 </a>
                             </li>
                         @endcan
-                        @can('akses-spesial', 'IzinPageApprover')
 
-                            <li class="submenu-item {{ Request::is('izinLevelUp') ? 'active' : '' }}">
-                                <a href="/izinLevelUp" class="submenu-link">
-                                    <i class="bi bi-check-circle"></i> Izin Approver
-                                </a>
-                            </li>
-                        @endcan
-                        @can('akses-spesial','OvertimeManagement')
-
-                                <li class="submenu-item {{ Request::is('overtime') ? 'active' : '' }}">
-                                    <a href="/overtime" class="submenu-link">
-                                        <i class="bi bi-stack-overflow"></i> Lembur
-                                    </a>
-                                </li>
-                            @endcan
                         @can('akses-spesial','OvertimeManagementAdmin')
 
                                 <li class="submenu-item {{ Request::is('overtimeAdmin') ? 'active' : '' }}">
@@ -137,13 +173,7 @@ Request::is('finishTicket');
                                 </a>
                             </li>
                         @endcan
-                            @can('akses-spesial','ShiftManagement')
-                            <li class="submenu-item {{ Request::is('swapShift') ? 'active' : '' }}">
-                                <a href="/swapShift" class="submenu-link">
-                                    <i class="bi bi-shuffle"></i> Shift
-                                </a>
-                            </li>
-                        @endcan
+
                         @can('akses-spesial','addKaryawanTeam')
                             <li class="submenu-item {{ Request::is('add-karyawan-team') ? 'active' : '' }}">
                                 <a href="/add-karyawan-team" class="submenu-link">
@@ -153,16 +183,10 @@ Request::is('finishTicket');
                         @endcan
 
 
-                        @can('open-kpi')
-
-                                    <li class="submenu-item">
-                                        <a href="/uDash" class="submenu-link">
-                                            <i class="bi bi-person-badge"></i> uDash
-                                        </a>
-                                    </li>
-                        @endcan
-                                </ul>
+                    </ul>
                 </li>
+                @endif
+
 
                 @can('open-kpi')
                     {{-- Cross Review Menu --}}
@@ -276,10 +300,10 @@ Request::is('finishTicket');
                     @endcan
                     <hr>
 
-                    <li class="sidebar-item {{ $currentRoute === 'password.reset' ? 'active' : '' }}">
-                        <a href="{{ route('password.reset') }}" class="sidebar-link">
-                            <i class="bi bi-plus-circle"></i>
-                            <span>Setting</span>
+                    <li class="sidebar-item {{ $currentRoute === 'profileUser.index' ? 'active' : '' }}">
+                        <a href="{{route('profileUser.index')}}" class="sidebar-link">
+                            <i class="bi bi-person-circle"></i>
+                            <span>Profile</span>
                         </a>
                     </li>
 

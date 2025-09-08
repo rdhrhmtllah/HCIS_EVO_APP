@@ -61,10 +61,10 @@ class flagCheckinout extends Command
                                     ->first()->UserID_Absen;
                     $jamIzin = $t->Jam;
 
-                    $Untuk_Tanggal = date('Y-m-d H:i:s', strtotime("$tanggal $jamIzin"));
+                    $Untuk_Tanggal = date('Y-m-d H:i:s', strtotime("$tanggal"));
                     // Range ±1 jam dari jam izin
-                    $startTime = date('Y-m-d H:i:s', strtotime("$tanggal $jamIzin -2 hour"));
-                    $endTime   = date('Y-m-d H:i:s', strtotime("$tanggal $jamIzin +2 hour"));
+                    $startTime = date('Y-m-d H:i:s', strtotime("$tanggal $jamIzin -1 hour"));
+                    $endTime   = date('Y-m-d H:i:s', strtotime("$tanggal $jamIzin +1 hour"));
 
                     $checkout = DB::table('CheckInOut')
                         ->where('UserID', $UserID_Absen)
@@ -80,7 +80,7 @@ class flagCheckinout extends Command
                         ->orderBy('CHECKTIME', 'asc')
                         ->update([
                             'Alasan' => 'TERLAMBAT',
-                            'Hasil' => 'In',
+                            'Hasil' => 'Masuk',
                             'Untuk_Tanggal' => $Untuk_Tanggal
                         ]);
 
@@ -105,11 +105,10 @@ class flagCheckinout extends Command
                                     ->first()->UserID_Absen;
                     $jamIzin = $t->Jam;
 
-                    $Untuk_Tanggal = date('Y-m-d H:i:s', strtotime("$tanggal $jamIzin"));
-
+                    $Untuk_Tanggal = date('Y-m-d H:i:s', strtotime("$tanggal"));
                     // Range ±1 jam dari jam izin
-                    $startTime = date('Y-m-d H:i:s', strtotime("$tanggal $jamIzin -2 hour"));
-                    $endTime   = date('Y-m-d H:i:s', strtotime("$tanggal $jamIzin +2 hour"));
+                    $startTime = date('Y-m-d H:i:s', strtotime("$tanggal $jamIzin -1 hour"));
+                    $endTime   = date('Y-m-d H:i:s', strtotime("$tanggal $jamIzin +1 hour"));
 
                     $checkout = DB::table('CheckInOut')
                         ->where('UserID', $UserID_Absen)
@@ -125,7 +124,7 @@ class flagCheckinout extends Command
                         ->orderBy('CHECKTIME', 'asc')
                         ->update([
                             'Alasan' => 'PULANG CEPAT',
-                            'Hasil' => 'Out',
+                            'Hasil' => 'Keluar',
                             'Untuk_Tanggal' => $Untuk_Tanggal
                         ]);
                     if($insertChecktime){

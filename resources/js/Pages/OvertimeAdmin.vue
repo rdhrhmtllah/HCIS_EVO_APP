@@ -346,7 +346,9 @@
                                             <i class="bi bi-pen"></i>
                                         </div> -->
                                         <button
-                                            disabled
+                                            :disabled="
+                                                disabledButton('item.Tanggal')
+                                            "
                                             @click.stop="
                                                 deleteAlertButton(
                                                     item.No_Transaksi
@@ -1705,7 +1707,9 @@
                                             <i class="bi bi-pen"></i>
                                         </div> -->
                                             <button
-                                                disabled
+                                                :disabled="
+                                                    disabledButton(item.Tanggal)
+                                                "
                                                 @click="
                                                     deleteUserButton(
                                                         item.Urut_Oto

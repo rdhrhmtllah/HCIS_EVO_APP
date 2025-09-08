@@ -152,6 +152,7 @@ public function indexAdmin(){
 }
 
 public function getShift(Request $request){
+    // dd($request->all());
     try{
         if($request['type'] === 'temporary'){
             $tanggal = $request['tanggal'][0];
@@ -161,9 +162,14 @@ public function getShift(Request $request){
         // dd($tanggal);
         // dd(date('Y-m-d',strtotime($tanggal)) <= date('Y-m-d'));
         if(date('Y-m-d',strtotime($tanggal)) == date('Y-m-d')){
+            // dd('masuk1');
         $Hari = date('N', strtotime($tanggal));
             if ($Hari <= 6 ) {
         $Hari += 1 ;
+        } elseif ($Hari == 7) {
+            $Hari = 1;
+        }
+
         $time = date('H:i:s');
         $query = "
         select
@@ -185,17 +191,15 @@ public function getShift(Request $request){
         and b.ID_Waktu_Kerja = c.ID_Waktu_Kerja
         and b.Hari = ?
         and a.Non_Shift = 'T'
-        --AND c.Jam_Keluar >= ?
 
         ";
-        $result =  DB::select($query, [$Hari, $time]);
+
+        $result =  DB::select($query, [$Hari]);
 
 
-        } elseif ($Hari == 7) {
-            $Hari = 1;
-        }
 
         }else{
+            // dd('masuk2');
 
             // dd($tanggal);
         $Hari = date('N', strtotime($tanggal));
@@ -228,7 +232,7 @@ public function getShift(Request $request){
         and b.Hari = ?
         and a.Non_Shift = 'T'
         ";
-    $result =  DB::select($query, [$Hari]);
+    $result =  DB::select($query, [$Hari]) ;
     }
 
 
@@ -249,8 +253,6 @@ public function getShift(Request $request){
 public function getWeek(Request $request)
 {
     try{
-
-
         $startDate = $request->input('start_date', date('Y-m-d'));
         $startOfWeek = date('Y-m-d', strtotime('last Sunday', strtotime($startDate)));
 
@@ -262,26 +264,22 @@ public function getWeek(Request $request)
                         e.Kode_Karyawan,
                         a.Nama,
                         a.UserID_Absen,
-                        c.ID_Divisi
+                        c.ID_Divisi,
+						c.nama_sub_divisi as nama_divisi
                         FROM
-                        HRIS_Karyawan_Team e,
-                        Karyawan a,
-                        View_Divisi_Sub_Divisi c,
-                        View_Golongan_Sub_Golongan_Level_Jabatan d
-
+                        HRIS_Karyawan_Team e
+                        LEFT JOIN Karyawan a ON e.Kode_Karyawan = a.Kode_Karyawan
+                        LEFT JOIN View_Divisi_Sub_Divisi c ON a.ID_Divisi_Sub_Divisi = c.ID_DIVISI_SUB_DIVISI
+                        LEFT JOIN View_Golongan_Sub_Golongan_Level_Jabatan d ON  a.ID_Level_Jabatan = d.ID_Level_Jabatan
                         WHERE
-                        a.ID_Level_Jabatan = d.ID_Level_Jabatan
-                        AND a.UserID_Absen IS NOT NULL
-                        AND a.ID_Divisi_Sub_Divisi = c.ID_DIVISI_SUB_DIVISI
-                        AND a.Kode_Karyawan = e.Kode_Karyawan
+                        a.UserID_Absen IS NOT NULL
                         AND e.Kode_Karyawan_Team = ?
-                        AND d.ID_Level IN (1,2,3,4)
                         group by
                         a.Nama,
                         a.UserID_Absen,
                         c.ID_Divisi,
-                        e.Kode_Karyawan
-
+                        e.Kode_Karyawan,
+						c.nama_sub_divisi
         ";
 
 
@@ -337,7 +335,7 @@ public function getWeek(Request $request)
         $datePlaceholders = implode(',', array_fill(0, count($dateRange), '?'));
         $userQuery = implode(',', $userIds);
 
-        $query = "exec HRIS_SP_GET_ABSEN_NEW '001','$startOfWeek','$endOfWeek','$userQuery', ''";
+        $query = "exec HRIS_SP_GET_ABSEN_NEW_V3 '001','$startOfWeek','$endOfWeek','$userQuery', ''";
         $resultData =  DB::select($query);
         //     $resultData = collect($resultData);  // Mengonversi array of stdClass menjadi koleksi
 
@@ -481,7 +479,8 @@ public function getWeek(Request $request)
                 'Tanggal' => $weekDates,
                 // 'userData' =>
                 'start_of_week' => $startOfWeek,
-                'end_of_week' => $endOfWeek
+                'end_of_week' => $endOfWeek,
+                 'dataAll' => $users
             ]);
     }catch(\Throwable $e){
         Log::channel('shiftLog')->error('Gagal Mengambil data getWeek'. $e->getMessage());
@@ -503,34 +502,57 @@ public function getWeekAdmin(Request $request)
         $endOfWeek = date('Y-m-d', strtotime('Saturday', strtotime($startOfWeek)));
         $divisi =  Auth()->user()->divisionKaryawan->ID_Divisi;
         $karyawan_Auth =Auth()->user()->karyawan->Kode_Karyawan;
+        // $queryUser = "
+        //             SELECT
+        //                 a.Kode_Karyawan,
+        //                 a.Nama,
+        //                 a.UserID_Absen,
+        //                 c.ID_Divisi,
+        //                 c.nama_divisi
+        //                 FROM
+
+        //                 Karyawan a,
+        //                 View_Divisi_Sub_Divisi c,
+        //                 View_Golongan_Sub_Golongan_Level_Jabatan d
+
+        //                 WHERE
+        //                 a.ID_Level_Jabatan = d.ID_Level_Jabatan
+        //                 AND a.UserID_Absen IS NOT NULL
+        //                 AND a.ID_Divisi_Sub_Divisi = c.ID_DIVISI_SUB_DIVISI
+        //                 group by
+        //                 a.Nama,
+        //                 a.UserID_Absen,
+        //                 c.ID_Divisi,
+        //                 a.Kode_Karyawan,
+        //                 c.nama_divisi
+
+        // ";
+
         $queryUser = "
-                    SELECT
-                        a.Kode_Karyawan,
-                        a.Nama,
-                        a.UserID_Absen,
-                        c.ID_Divisi,
-                        c.nama_divisi
-                        FROM
-
-                        Karyawan a,
-                        View_Divisi_Sub_Divisi c,
-                        View_Golongan_Sub_Golongan_Level_Jabatan d
-
-                        WHERE
-                        a.ID_Level_Jabatan = d.ID_Level_Jabatan
-                        AND a.UserID_Absen IS NOT NULL
-                        AND a.ID_Divisi_Sub_Divisi = c.ID_DIVISI_SUB_DIVISI
-                        group by
-                        a.Nama,
-                        a.UserID_Absen,
-                        c.ID_Divisi,
-                        a.Kode_Karyawan,
-                        c.nama_divisi
+        SELECT
+        a.Kode_Karyawan,
+        a.Nama,
+        a.UserID_Absen,
+        c.ID_Divisi,
+        c.nama_sub_divisi as nama_divisi
+        FROM
+        Karyawan a
+        LEFT JOIN View_Divisi_Sub_Divisi c ON a.ID_Divisi_Sub_Divisi = c.ID_DIVISI_SUB_DIVISI
+        LEFT JOIN View_Golongan_Sub_Golongan_Level_Jabatan d ON a.ID_Level_Jabatan = d.ID_Level_Jabatan
+        WHERE
+        a.UserID_Absen IS NOT NULL
+        group by
+        a.Nama,
+        a.UserID_Absen,
+        c.ID_Divisi,
+        a.Kode_Karyawan,
+        c.nama_sub_divisi
 
         ";
 
 
         $users = DB::select($queryUser);
+        // dd($users);
         if(!$users){
             return response()->json([
                 'status' => 404,
@@ -558,7 +580,7 @@ public function getWeekAdmin(Request $request)
         $datePlaceholders = implode(',', array_fill(0, count($dateRange), '?'));
         $userQuery = implode(',', $userIds);
 
-        $query = "exec HRIS_SP_GET_ABSEN_NEW '001','$startOfWeek','$endOfWeek','$userQuery', ''";
+        $query = "exec HRIS_SP_GET_ABSEN_NEW_V3 '001','$startOfWeek','$endOfWeek','$userQuery', ''";
         $resultData =  DB::select($query);
         //     $resultData = collect($resultData);  // Mengonversi array of stdClass menjadi koleksi
 
@@ -606,7 +628,8 @@ public function getWeekAdmin(Request $request)
                 'Tanggal' => $weekDates,
                 'dataExtend' => $users,
                 'start_of_week' => $startOfWeek,
-                'end_of_week' => $endOfWeek
+                'end_of_week' => $endOfWeek,
+                'dataAll' => $users
             ]);
         }catch(\Throwable $e){
         Log::channel('shiftLog')->error('Gagal Mengambil data getWeekAdmin'. $e->getMessage());
@@ -647,7 +670,7 @@ public function getWeekAdmin(Request $request)
             $userIds = array_column($users, 'UserID_Absen');
             $userListString = implode(',', $userIds);
 
-            $query = "EXEC HRIS_SP_GET_ABSEN_NEW ?, ?, ?, ?, ?";
+            $query = "EXEC HRIS_SP_GET_ABSEN_NEW_V3 ?, ?, ?, ?, ?";
             $resultData = DB::select($query, ['001', $startOfWeek, $endOfWeek, $userListString, '']);
 
             $groupedData = [];
@@ -776,72 +799,6 @@ public function submitAdmin(Request $request){
                 $userInsertNoHp = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first()->HP ?? null;
                 // dd($userInsertNoHp);
                 // dd($userInsert);
-                if($userInsert && $finalInsert && $userInsertNoHp && $userInsertNoHp != '-'){
-
-                        if(count($Dates) > 1){
-                            $temp = [];
-                            foreach($Dates as $date){
-                                $temp[] = date('d', strtotime($date));
-                            }
-                            $hari =  implode(',', $temp);
-                            $bulanTahun = date('M Y', strtotime($Dates[0]));
-                            $parseDates = $hari.' '.$bulanTahun;
-                        }else{
-                            foreach($Dates as $date){
-                            $parseDates = date('D, d M Y', strtotime($date));
-                            }
-                        }
-                        $pesan = [
-                                    "messaging_product" => "whatsapp",
-                                    "to" => $userInsertNoHp,
-                                    "type" => "template",
-                                    "template" => [
-                                        "name" => "notif_ganti_shift",
-                                        "language" => [
-                                            "code" => "id",
-                                            "policy" => "deterministic"
-                                        ],
-                                        "components" => [
-                                            [
-                                                "type" => "body",
-                                                "parameters" => [
-                                                     [
-                                                    "type" => "text",
-                                                    "text" => $userInsert->Nama
-                                                    ],
-                                                    [
-                                                        "type" => "text",
-                                                        "text" => 'Sementara'
-                                                    ],
-
-                                                    [
-                                                        "type" => "text",
-                                                        "text" => $shiftKerja
-                                                    ],
-                                                    [
-                                                        "type" => "text",
-                                                        "text" => Auth()->user()->Nama
-                                                    ],
-                                                     [
-                                                        "type" => "text",
-                                                        "text" => $parseDates
-                                                    ],
-
-
-
-
-                                                    ]
-                                                ]
-                                            ]
-                                        ]
-                                    ];
-
-
-                            $response = Whatsapp::send_message($pesan);
-                            Log::channel('whatsapp_error')->warning('Pesan Error', [
-                                "pesan" => $response
-                            ]);
-                    }
 
 
             }

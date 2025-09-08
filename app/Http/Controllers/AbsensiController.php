@@ -98,7 +98,7 @@ class AbsensiController extends Controller
                 }
                 return $item;
             })->first();
-            // dd($dataFinal);
+            // dd($hashedUser);
             return inertia('absensiSales', ['userLogin' => $hashedUser, 'TodayData' => $dataFinal]);
 
         }catch (\Throwable $e) {
@@ -3577,6 +3577,7 @@ $result = DB::select($query, $params);
 
     public function submitIzin(Request $request)
     {
+        // dd($request->all());
         $validator = Validator::make($request->all(), [
             'jenisIzin' => 'required|string',
             'tanggal' => 'required|array',
@@ -3597,21 +3598,66 @@ $result = DB::select($query, $params);
         }
 
         $validatedData = $validator->validated();
-
-       $approver = DB::table('HRIS_Approval_Flow')
-                    ->whereNULL('Status')
-                    ->where("Kode_Karyawan_Requester", Auth::user()->karyawan->Kode_Karyawan)->get();
+        // $approver = DB::table('HRIS_Approval_Flow as a')
+        //     ->join('Karyawan as b', 'a.Kode_Karyawan', '=', 'b.Kode_Karyawan')
+        //     ->whereNull('a.Status')
+        //     ->where('b.Aktif', 'Y')
+        //     ->whereNull('b.Tanggal_Resign')
+        //     ->where('a.Kode_Karyawan_Requester', Auth::user()->karyawan->Kode_Karyawan)
+        //     ->get();
 
         // dd($approver);
 
-        if ($approver->isEmpty()) {
-            Log::channel('uDashLog')->error('Tidak ada approver. Hubungi admin untuk menugaskan approver divisi anda!');
+        // if ($approver->isEmpty()) {
+        //     Log::channel('uDashLog')->error('Tidak ada approver. Hubungi admin untuk menugaskan approver divisi anda!');
+
+        //     return response()->json([
+        //         'message' => 'Tidak ada approver. Hubungi admin untuk menugaskan approver divisi anda!.',
+        //         'errors' => 'Tidak ada approver. Hubungi admin untuk menugaskan approver divisi anda!.'
+        //     ], 404);
+        // }
+        $approverAll = DB::table('HRIS_Approval_Flow as a')
+            ->join('Karyawan as b', 'a.Kode_Karyawan', '=', 'b.Kode_Karyawan')
+            ->whereNull('a.Status')
+            ->where('a.Kode_Karyawan_Requester', Auth::user()->karyawan->Kode_Karyawan)
+            ->select(
+                'a.*',
+
+                'b.Aktif',
+                'b.Tanggal_Resign'
+            )
+            ->get();
+
+        // jika tidak ada approver sama sekali
+        if ($approverAll->isEmpty()) {
+            Log::channel('uDashLog')->error('Tidak ada approver sama sekali!');
 
             return response()->json([
-                'message' => 'Tidak ada approver. Hubungi admin untuk menugaskan approver divisi anda!.',
-                'errors' => 'Tidak ada approver. Hubungi admin untuk menugaskan approver divisi anda!.'
+                'message' => 'Tidak ada approver. Hubungi admin untuk menugaskan approver izin anda!.',
+                'errors'  => 'Tidak ada approver. Hubungi admin untuk menugaskan approver izin anda!.'
             ], 404);
         }
+
+        // cek apakah semua approver aktif
+        $allActive = $approverAll->every(function ($item) {
+            return $item->Aktif === 'Y' && is_null($item->Tanggal_Resign);
+        });
+
+        // kalau ada 1 saja yang nonaktif/resign → blok
+        if (! $allActive) {
+            Log::channel('uDashLog')->error('Terdapat approver nonaktif/resign!');
+
+            return response()->json([
+                'message' => 'Terdapat approver nonaktif. Hubungi admin untuk memperbarui approver izin anda!.',
+                'errors'  => 'Terdapat approver nonaktif. Hubungi admin untuk memperbarui approver izin anda!.'
+            ], 404);
+        }
+
+        // lanjut kalau semua approver valid
+        $approver = $approverAll;
+
+        // dd($approver);
+
 
         try {
             DB::beginTransaction();
@@ -3772,8 +3818,8 @@ $result = DB::select($query, $params);
                 $Detail_Id = DB::table('Transaksi_Sakit_Izin_Detail')->insertGetId($transaksi_detail);
 
                 if($tanggalSakitIzinDari != $tanggalSakitIzinSampai){
-                    $start = Carbon::createFromFormat('Y-m-d H:i:s', $tanggalSakitIzinDari);
-                    $end = Carbon::createFromFormat('Y-m-d H:i:s', $tanggalSakitIzinSampai);
+                    $start = Carbon::createFromFormat('Y-m-d H:i', $tanggalSakitIzinDari);
+                    $end = Carbon::createFromFormat('Y-m-d H:i', $tanggalSakitIzinSampai);
 
                     $currentDate = $start->copy();
                     while ($currentDate->lte($end)) {
@@ -3980,6 +4026,10 @@ $result = DB::select($query, $params);
 
             }else{
                  // Logika pembuatan nomor faktur langsung di sini
+
+                $Jam_Masuk_Real = $request->jam_masuk ?? null;
+                $Jam_Keluar_Real = $request->jam_keluar ?? null;
+                // dd($Jam_Masuk_Real, $Jam_Keluar_Real);
                 $formatTanggalSekarang = Carbon::now()->format('m-y');
                 $prefix = "TP" . $formatTanggalSekarang . "-";
 
@@ -3999,10 +4049,41 @@ $result = DB::select($query, $params);
                 $userID = Auth::id();
                 $kodeKaryawan = Auth::user()->karyawan->Kode_Karyawan;
                 $jenisIzin = $validatedData['jenisIzin'];
-                $tanggalSakitIzinDari = $validatedData['tanggal'][0] ;
-                $tanggalSakitIzinSampai = $validatedData['tanggal'][1] . ' ' . $validatedData['waktu'];
                 $alasan = $validatedData['Alasan'];
 
+                // $if($Jam_Keluar_Real < $Jam_Masuk_Real){
+                //     $tanggalSakitIzinDari = $validatedData['tanggal'][0] ;
+
+                // }else{
+
+                // }
+
+                 $jamMasuk   = Carbon::createFromFormat('H:i', $Jam_Masuk_Real);
+                $jamKeluar  = Carbon::createFromFormat('H:i', $Jam_Keluar_Real);
+                $jamIzin    = Carbon::createFromFormat('H:i', $validatedData['waktu']);
+
+                $tanggal = Carbon::parse($validatedData['tanggal'][0]);
+
+                if ($jamKeluar->lessThan($jamMasuk)) {
+                    // ✅ Shift malam (jam keluar < jam masuk, misalnya 19:00 – 01:00)
+                    if ($jamIzin->lessThan($jamKeluar)) {
+                        // izin jam lewat tengah malam → tambah 1 hari
+                        $tanggalSakitIzinDari = $tanggal->copy()->addDay()->format('Y-m-d');
+                    } else {
+                        // izin jam di hari yang sama
+                        $tanggalSakitIzinDari = $tanggal->format('Y-m-d');
+                    }
+                } else {
+                    // ✅ Shift normal (jam keluar > jam masuk, misalnya 08:00 – 17:00)
+                    $tanggalSakitIzinDari = $tanggal->format('Y-m-d');
+                }
+
+
+                // dd($tanggalSakitIzinDari, $validatedData['waktu']);
+
+
+
+                $tanggalSakitIzinSampai = $validatedData['tanggal'][1] . ' ' . $validatedData['waktu'];
                 $filePath = null;
                 if ($request->hasFile('file')) {
                     $file = $request->file('file');
@@ -4101,7 +4182,7 @@ $result = DB::select($query, $params);
                                                             ],
                                                             [
                                                                 "type" => "text",
-                                                                "text" => $tanggalSakitIzinSampai
+                                                                "text" => $tanggalSakitIzinDari . ' ' . $validatedData['waktu']
                                                             ],
                                                             [
                                                                 "type" => "text",
@@ -4243,29 +4324,25 @@ $result = DB::select($query, $params);
         }
     }
 
-    public function getJamKerja(Request $request){
-        // dd($request[0]);
-        try{
-
+    public function getJamKerja(Request $request)
+    {
+        try {
             $Tanggal = date('Y-m-d', strtotime($request[0]));
-
             $Hari = date('N', strtotime($Tanggal));
-            if ($Hari <= 6 ) {
-                $Hari += 1 ;
-                } elseif ($Hari == 7) {
-                    $Hari = 1;
-                }
+            if ($Hari <= 6) {
+                $Hari += 1;
+            } elseif ($Hari == 7) {
+                $Hari = 1;
+            }
+
             $Kode_Karyawan = Auth::user()->karyawan->Kode_Karyawan;
 
             $query = "
                 WITH KaryawanShiftPermanen AS (
                     SELECT
-
                         e.Kode_Karyawan,
                         c.Jam_Masuk,
                         c.Jam_Keluar,
-
-
                         ROW_NUMBER() OVER (
                             PARTITION BY e.Kode_Karyawan
                             ORDER BY d.Periode DESC, d.Urut DESC
@@ -4276,8 +4353,6 @@ $result = DB::select($query, $params);
                     INNER JOIN HRIS_Shift_Per_Karyawan d ON a.ID_Shift = d.ID_Shift
                     INNER JOIN Karyawan e ON d.Kode_Karyawan = e.Kode_Karyawan
                                         AND d.Kode_Perusahaan = e.Kode_Perusahaan
-                    INNER JOIN View_Divisi_Sub_Divisi f ON e.ID_Divisi_Sub_Divisi = f.ID_DIVISI_SUB_DIVISI
-                    INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan g ON e.ID_Level_Jabatan = g.ID_Level_Jabatan
                     WHERE e.Kode_Perusahaan = '001'
                     AND b.Hari = ?
                     AND e.Kode_Karyawan = ?
@@ -4288,25 +4363,20 @@ $result = DB::select($query, $params);
                         Kode_Karyawan,
                         Jam_Masuk,
                         Jam_Keluar
-
                     FROM KaryawanShiftPermanen
                     WHERE rn_periode = 1
                 ),
                 ShiftSementara AS (
-                    SELECT
-                    TOP 1
+                    SELECT TOP 1
                         e.Kode_Karyawan,
                         c.Jam_Masuk,
                         c.Jam_Keluar
-
                     FROM HRIS_Shift_Kerja a
                     INNER JOIN HRIS_Shift_Kerja_Detail b ON a.ID_Shift = b.ID_Shift
                     INNER JOIN HRIS_Waktu_Kerja c ON b.ID_Waktu_Kerja = c.ID_Waktu_Kerja
                     INNER JOIN HRIS_Shift_Sementara d ON a.ID_Shift = d.ID_Shift
                     INNER JOIN Karyawan e ON d.Kode_Perusahaan = e.Kode_Perusahaan
                                         AND d.Kode_Karyawan = e.Kode_Karyawan
-                    INNER JOIN View_Divisi_Sub_Divisi f ON e.ID_Divisi_Sub_Divisi = f.ID_DIVISI_SUB_DIVISI
-                    INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan g ON e.ID_Level_Jabatan = g.ID_Level_Jabatan
                     WHERE e.Kode_Perusahaan = '001'
                     AND b.Hari = ?
                     AND e.Kode_Karyawan = ?
@@ -4317,62 +4387,36 @@ $result = DB::select($query, $params);
                     COALESCE(ss.Kode_Karyawan, sp.Kode_Karyawan) as Kode_Karyawan,
                     COALESCE(ss.Jam_Masuk, sp.Jam_Masuk) as Jam_Masuk,
                     COALESCE(ss.Jam_Keluar, sp.Jam_Keluar) as Jam_Keluar
-
                 FROM ShiftPermanen sp
                 FULL OUTER JOIN ShiftSementara ss ON sp.Kode_Karyawan = ss.Kode_Karyawan
             ";
 
             $result = DB::select($query, [$Hari, $Kode_Karyawan, $Tanggal, $Hari, $Kode_Karyawan, $Tanggal]);
 
-            $dataFinal = collect($result)->map(function ($item) {
-                if (!empty($item->UserID_Absen)) {
-                    $item->UserID_Absen = Crypt::encryptString($item->UserID_Absen);
-                }
-                return $item;
-            })->first();
+            $dataFinal = collect($result)->first();
 
             $Jam_Masuk = $dataFinal->Jam_Masuk ?? '08:30';
             $Jam_Keluar = $dataFinal->Jam_Keluar ?? '16:30';
 
-            $convertTimeToDecimal = function (string $timeString): float {
-                if (!preg_match('/^(\d{2}):(\d{2})$/', $timeString, $matches)) {
-                    Log::warning("Invalid time format for conversion: " . $timeString);
-                    return 0.0;
-                }
-                $hours = (int) $matches[1];
-                $minutes = (int) $matches[2];
-                return $hours + ($minutes / 60);
-            };
-
-            $jamMulaiDesimal = $convertTimeToDecimal($Jam_Masuk) ;
-            $jamSelesaiDesimal = $convertTimeToDecimal($Jam_Keluar);
-
-            // Buat array jam untuk opsi dropdown/slider
-            $jamOptions = [];
-            $jamMulaiInt = (int) $jamMulaiDesimal;
-            $jamSelesaiInt = (int) $jamSelesaiDesimal;
-            for ($i = $jamMulaiInt; $i <= $jamSelesaiInt; $i++) {
-                $jamOptions[$i] = str_pad($i, 2, '0', STR_PAD_LEFT);
-            }
 
 
             return response()->json([
                 'status' => 200,
                 'data' => [
+                    'Jam_Masuk' => $Jam_Masuk,
+                    'Jam_Keluar' => $Jam_Keluar,
 
-                    'min' => $jamMulaiDesimal,
-                    'max' => $jamSelesaiDesimal,
-                    'JamOptions' => $jamOptions ?? []
-                    ]
+                ]
             ]);
-        }catch(\Throwable $e){
-            Log::channel('izinLog')->error('Gagal Mengambil data jam Kerja getJamKerja'. $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::channel('izinLog')->error('Gagal Mengambil data jam Kerja getJamKerja ' . $e->getMessage());
             return response()->json([
                 'status' => 500,
                 'error' => "Tidak bisa mengambil data jam Kerja "
             ], 500);
         }
     }
+
 
     public function indexIzinAdmin()
     {
@@ -5014,7 +5058,7 @@ $result = DB::select($query, $params);
             // ✅ Cek dulu apakah sudah ada approver yang flag 'Y'
             $sudahAdaApprove = DB::table('HRIS_Approval_Request')
                 ->where('No_Transaksi', $request->No_Transaksi)
-                ->where('Flag_Approval', 'Y')
+                ->whereNotNull('Flag_Approval')
                 ->exists();
 
             if ($sudahAdaApprove) {

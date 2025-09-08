@@ -601,11 +601,7 @@
     </div>
 
     <!--  Assign Shift Modal -->
-    <div
-        class="modal-overlay"
-        :class="{ show: showAssignModal }"
-        @click="closeAssignModal"
-    >
+    <div class="modal-overlay" :class="{ show: showAssignModal }">
         <div class="modal-container assign-modal" @click.stop>
             <div class="modal-header">
                 <div class="header-title-section">
@@ -1230,6 +1226,7 @@ export default {
     },
     data() {
         return {
+            dataFinal: [],
             dataExtend: [],
             isLemburData: [],
             jenisShift: [],
@@ -1389,6 +1386,10 @@ export default {
         window.removeEventListener("resize", this.checkScreenSize);
     },
     methods: {
+        getData(usr) {
+            // console.log(this.dataFinal);
+            return this.dataFinal.find((emp) => emp.Kode_Karyawan === usr);
+        },
         getUserDivision(Kode) {
             const user = this.dataExtend.find((emp) => {
                 return emp.Kode_Karyawan == Kode;
@@ -2010,6 +2011,8 @@ export default {
 
                 this.weekDates = Object.values(response.data.week_dates);
                 this.Tanggal = response.data.Tanggal;
+                this.dataFinal = response.data.dataAll;
+
                 // console.log(response.data.Tanggal);
                 this.startOfWeek = this.formatDate(response.data.start_of_week);
                 this.endOfWeek = this.formatDate(response.data.end_of_week);

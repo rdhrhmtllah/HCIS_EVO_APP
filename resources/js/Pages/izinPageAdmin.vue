@@ -752,20 +752,17 @@
                                 <div class="card-body row">
                                     <div class="col-md-8 col-6">
                                         <div class="card-row">
-                                            <i
+                                            <!-- <i
                                                 class="bi bi-hash d-flex justify-content-center align-items-center"
-                                            ></i>
-                                            <div class="card-label">Nama:</div>
-                                            <div
-                                                v-tooltip="item.nama_requester"
-                                                class="card-value"
-                                            >
+                                            ></i> -->
+                                            <div class="card-label">Nama :</div>
+                                            <div class="card-value">
                                                 {{
                                                     truncateText(
                                                         capitalize(
                                                             item.nama_requester
                                                         ),
-                                                        15
+                                                        20
                                                     )
                                                 }}
                                             </div>
@@ -1111,6 +1108,17 @@
         <div v-if="selectedItem" class="detail-modal-content">
             <div class="detail-grid">
                 <!-- Setiap detail row menggunakan grid system -->
+                <div class="detail-item">
+                    <span class="detail-label">Nama Pengaju:</span>
+                    <span class="detail-value highlight">
+                        {{
+                            truncateText(
+                                capitalize(selectedItem.nama_requester),
+                                30
+                            )
+                        }}
+                    </span>
+                </div>
                 <div class="detail-item">
                     <span class="detail-label">Jenis Izin:</span>
                     <span class="detail-value highlight">
@@ -3355,18 +3363,20 @@ export default {
 
             if (this.selectedDateFilter) {
                 filtered = filtered.filter((item) => {
-                    // Convert all dates to Date objects for reliable comparison
                     const selectedDate = new Date(this.selectedDateFilter);
-                    const startDate = new Date(item.Tanggal_Mulai);
-                    const endDate = new Date(item.Tanggal_Selesai);
+                    selectedDate.setHours(0, 0, 0, 0);
 
-                    // Check if selectedDate is greater than or equal to Tanggal_Mulai
-                    // AND less than or equal to Tanggal_Selesai
-                    return (
-                        (selectedDate >= startDate &&
-                            selectedDate <= endDate) ||
-                        null
-                    );
+                    const startDate = new Date(item.Tanggal_Mulai);
+                    startDate.setHours(0, 0, 0, 0);
+
+                    const endDate = item.Tanggal_Selesai
+                        ? new Date(item.Tanggal_Selesai)
+                        : null;
+                    if (endDate) endDate.setHours(0, 0, 0, 0);
+
+                    return endDate
+                        ? selectedDate >= startDate && selectedDate <= endDate
+                        : selectedDate.getTime() === startDate.getTime();
                 });
             }
 

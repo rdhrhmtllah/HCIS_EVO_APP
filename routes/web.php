@@ -22,9 +22,18 @@ use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\uDashController;
 use App\Http\Controllers\NewsController;
+use App\Http\Controllers\userController;
 use Illuminate\Support\Facades\Artisan;
 // use Illuminate\Support\Facades\Request;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
+
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Cache;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -40,10 +49,46 @@ Route::get('/', function () {
     return view('login');
 })->middleware('guest');
 
+Route::get('/reset-user', function () {
+
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->with('status', 'Silakan login terlebih dahulu.');
+    }
+
+    $userId = $user->Id_Users;
+
+    // --- Hapus session user ---
+    if (config('session.driver') === 'database') {
+        \DB::table('sessions')->where('user_id', $userId)->delete();
+    }
+    Session::flush();
+
+    // --- Logout user ---
+    Auth::logout();
+
+    // --- Hapus semua cookies ---
+    foreach (request()->cookies as $key => $value) {
+        Cookie::queue(Cookie::forget($key));
+    }
+
+    // --- Hapus cache terkait user ---
+    Cache::forget('user_'.$userId.'_some_data');
+
+    return redirect('/login')->with('status', 'Status aplikasi Anda berhasil direset.');
+});
 // Route::get('/absensiSales', function () {
 //     return inertia('absensiSales');
 // });
 
+
+Route::get('/getTime', function (Request $request) {
+    $now = now()->toDateTimeString();
+
+    // Sekenario tanggal 26 agt 2025 jam 20:29 hari selasa sebagai perwakilan weekday
+    // $now = Carbon::parse('2025-08-31 02:30:00', 'Asia/Jakarta')->toDateTimeString();
+    return response()->json(['status'=> 200,'time' => $now]);
+})->name('getTime');
 
 Route::get('/login', [AuthController::class, 'login'])->name('login')->middleware('guest');
 Route::get('/mulai/27738', [AuthController::class, 'loginRe'])->name('loginRe')->middleware('guest');
@@ -64,6 +109,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/master-periode/display_tambah', [MasterPeriodeController::class, 'display_tambah_periode'])->name('master.periode.display_tambah');
     Route::post('master-periode/display_tambah', [MasterPeriodeController::class, 'tambah_periode'])->name('master.periode.add.data');
 
+    Route::get('/user-profile', [userController::class, 'index'])->name('profileUser.index');
 
     // // Cross Division Review
     // route::get('/crossDivisionReview', [CrossDivisionReviewController::class, 'index'])->name('Cross.index');
@@ -275,6 +321,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/uDash/getChartData',[uDashController::class, 'getChartData'])->name('Udash.chartData');
     Route::get('/uDash/getAllLembur',[uDashController::class, 'getAllLembur'])->name('Udash.allLembur');
     Route::get('/uDash/getAllIzin',[uDashController::class, 'getAllIzin'])->name('Udash.allIzin');
+    Route::get('/uDash/getRiwayatAbsen',[uDashController::class, 'getRiwayatAbsen'])->name('Udash.riwayatAbsen');
+    Route::get('/uDash/getAbsenDetail',[uDashController::class, 'getAbsenDetail'])->name('Udash.absenDetail');
+    Route::get('/uDash/getChartLembur',[uDashController::class, 'getChartLembur'])->name('Udash.chartLembur');
+    Route::get('/uDash/getRingkasanTeam',[uDashController::class, 'getRingkasanTeam'])->name('Udash.getRingkasanTeam');
 
     // //ROUTE GROUP AKSES Shift Management
     // Route::middleware(['auth','check.jabatan:ShiftManagement'])->group(function(){
@@ -309,14 +359,14 @@ Route::middleware(['auth'])->group(function () {
 
         // Route khusus ShiftManagement
         Route::middleware(['check.jabatan:ShiftManagement'])->group(function(){
-            Route::post('/swapShift/submitAdmin', [ShiftController::class, 'submitAdmin'])->name('shift.submitAdmin');
-            Route::post('/swapShift/updateAdmin', [ShiftController::class, 'updateAdmin'])->name('shift.updateAdmin');
             Route::get('/swapShift', [ShiftController::class, 'index'])->name('shift.index');
             Route::get('/swapShift/getWeek', [ShiftController::class, 'getWeek'])->name('shift.getWeek');
         });
 
         // Route khusus ShiftManagementAdmin
         Route::middleware(['check.jabatan:ShiftManagementAdmin'])->group(function(){
+            Route::post('/swapShift/submitAdmin', [ShiftController::class, 'submitAdmin'])->name('shift.submitAdmin');
+            Route::post('/swapShift/updateAdmin', [ShiftController::class, 'updateAdmin'])->name('shift.updateAdmin');
             Route::get('/swapShiftAdmin', [ShiftController::class, 'indexAdmin'])->name('shift.indexAdmin');
             Route::get('/swapShift/getWeekAdmin', [ShiftController::class, 'getWeekAdmin'])->name('shift.getWeekAdmin');
         });
