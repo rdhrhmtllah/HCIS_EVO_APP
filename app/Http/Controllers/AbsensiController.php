@@ -4817,6 +4817,7 @@ $result = DB::select($query, $params);
 
 
 
+
             return inertia('izinPageDH', [
                 'dataShift' => $dataFinal,
                 'namaKaryawan' => $nama_Karyawan,
