@@ -29,6 +29,7 @@ class perbaikiCheckinoutController extends Controller
                     ->groupBy('ID_Divisi', 'nama_divisi')
                     ->get();
 
+
         return inertia('perbaikanCheckInOut', ['dataKaryawan' => $data, 'allDivisi' => $divisi]);
     }
 
@@ -67,7 +68,7 @@ class perbaikiCheckinoutController extends Controller
                     'Status_Kehadiran' => $row->Status_Kehadiran,
                 ];
             });
-
+            dd($data);
             return response()->json([
                 'status' => 200,
                 'data' => $data,
