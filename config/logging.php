@@ -101,6 +101,12 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 30,
         ],
+        'CreateUserLog' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/CreateUserLog.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 30,
+        ],
         'FlagCheckinout' => [
             'driver' => 'daily',
             'path' => storage_path('logs/FlagCheckinout.log'),

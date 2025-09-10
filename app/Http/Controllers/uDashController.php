@@ -351,9 +351,9 @@ class uDashController extends Controller
 
 
             $LeaderTeam = DB::table('HRIS_Karyawan_Team')->where('Kode_Karyawan_Team', $Kode_KaryawanReal)->exists();
-            // if($Kode_KaryawanReal == 'RIDHO RAHMAT' || $Kode_KaryawanReal == 'H45'){
-            //     $LeaderTeam = false;
-            // }
+            if($Kode_KaryawanReal == 'RIDHO RAHMAT' || $Kode_KaryawanReal == 'H45'){
+                $LeaderTeam = false;
+            }
             // dd($LeaderTeam);
             if($LeaderTeam){
                 $datasPending = DB::table('HRIS_Approval_Request as a')

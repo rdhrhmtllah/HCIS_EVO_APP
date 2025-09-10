@@ -4058,11 +4058,13 @@ $result = DB::select($query, $params);
 
                 // }
 
-                 $jamMasuk   = Carbon::createFromFormat('H:i', $Jam_Masuk_Real);
+                $jamMasuk   = Carbon::createFromFormat('H:i', $Jam_Masuk_Real);
                 $jamKeluar  = Carbon::createFromFormat('H:i', $Jam_Keluar_Real);
                 $jamIzin    = Carbon::createFromFormat('H:i', $validatedData['waktu']);
 
+
                 $tanggal = Carbon::parse($validatedData['tanggal'][0]);
+                // dd($jamMasuk, $jamKeluar, $jamIzin, $tanggal);
 
                 if ($jamKeluar->lessThan($jamMasuk)) {
                     // ✅ Shift malam (jam keluar < jam masuk, misalnya 19:00 – 01:00)
@@ -4812,6 +4814,7 @@ $result = DB::select($query, $params);
                 }
                 return $item;
             })->first();
+
 
 
 

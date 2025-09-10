@@ -2661,9 +2661,12 @@ export default {
         dataShift: Array,
         namaKaryawan: String,
         IzinApprover: Array,
+        todayTime: String,
     },
     data() {
         return {
+            serverTime: null,
+
             Jam_Masuk: "00:00",
             Jam_Keluar: "07:00",
 
@@ -4753,8 +4756,18 @@ export default {
                 return dateString; // Fallback
             }
         },
+        async getTimeServer() {
+            const res = await axios.get("/getTime");
+            if (res.status == 200) {
+                this.serverTime = new Date(
+                    new Date(res.data.time).toLocaleString("en-US", {
+                        timeZone: "Asia/Jakarta",
+                    })
+                );
+            }
+        },
         disablePastDates(date) {
-            const today = new Date();
+            const today = this.serverTime;
             const dayOfWeek = date.getDay();
             today.setHours(0, 0, 0, 0); // Normalisasi 'hari ini' ke awal hari
 
@@ -4763,7 +4776,7 @@ export default {
 
             // 1. Logika untuk meng-disable tanggal yang sudah lebih dari 4 hari lalu
             const fourDaysAgo = new Date(today);
-            fourDaysAgo.setDate(today.getDate() - 4);
+            fourDaysAgo.setDate(today.getDate() - 3);
             const isPastDate = dateToCheck.getTime() < fourDaysAgo.getTime();
 
             // 2. Logika untuk meng-disable tanggal spesial (cuti, sakit, terlambat)
@@ -4775,7 +4788,8 @@ export default {
             return isPastDate || isSpecial || minggu;
         },
         disablePastDatesSingle(date) {
-            const today = new Date();
+            const today = this.serverTime;
+
             const dayOfWeek = date.getDay();
             today.setHours(0, 0, 0, 0); // Normalisasi 'hari ini' ke awal hari
 
@@ -4784,7 +4798,7 @@ export default {
 
             // 1. Logika untuk meng-disable tanggal yang sudah lebih dari 4 hari lalu
             const fourDaysAgo = new Date(today);
-            fourDaysAgo.setDate(today.getDate() - 4);
+            fourDaysAgo.setDate(today.getDate() - 3);
             const isPastDate = dateToCheck.getTime() < fourDaysAgo.getTime();
 
             // 2. Logika untuk meng-disable tanggal spesial (cuti, sakit, terlambat)
@@ -4797,7 +4811,8 @@ export default {
         },
 
         disablePastDatesCuti(date) {
-            const today = new Date();
+            const today = this.serverTime;
+
             today.setHours(0, 0, 0, 0); // Normalisasi 'hari ini' ke awal hari
 
             const dateToCheck = new Date(date);
@@ -5477,7 +5492,7 @@ export default {
     },
     mounted() {
         this.checkScreenSize();
-
+        this.getTimeServer();
         window.addEventListener("scroll", this.updatePopupPosition);
         // Set day/night based on current time for the header icon
         const currentHour = new Date().getHours();

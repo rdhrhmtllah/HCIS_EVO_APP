@@ -23,6 +23,7 @@ use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\uDashController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\userController;
+use App\Http\Controllers\perbaikiCheckinoutController;
 use Illuminate\Support\Facades\Artisan;
 // use Illuminate\Support\Facades\Request;
 use Illuminate\Http\Request;
@@ -348,6 +349,10 @@ Route::middleware(['auth'])->group(function () {
     //     Route::get('/shift/getShift',[ShiftController::class, 'getShift'])->name('shift.getShift');
     //     Route::get('/shift/isLembur',[ShiftController::class, 'isLembur'])->name('shift.isLembur');
     // });
+
+    Route::get('/perbaiki-checkinout', [perbaikiCheckinoutController::class, 'index'])->name('perbaiki.index');
+    Route::get('/perbaiki-checkinout/attendance', [perbaikiCheckinoutController::class, 'attendance'])->name('perbaiki.attendance');
+
 
     Route::middleware(['auth', 'check.jabatan:ShiftManagement,ShiftManagementAdmin'])->group(function(){
         // Route yang bisa diakses oleh kedua jabatan
