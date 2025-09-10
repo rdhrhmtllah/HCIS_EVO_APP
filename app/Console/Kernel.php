@@ -23,6 +23,7 @@ class Kernel extends ConsoleKernel
         // $schedule->command('izin:waUlang')->everyMinute();
 
         $schedule->command('izin:expiredIzin')->dailyAt('23:59');
+        $schedule->command('absen:flagCheckinout')->hourly();
         // Berjalan setiap akhir tahun pada 31 Desember
         // $schedule->command('cuti:cutiAkhirTahun')->yearlyOn(12, 31, '23:59');
     }

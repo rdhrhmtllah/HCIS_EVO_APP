@@ -11,7 +11,7 @@
                         <div class="col-sm-8">
                             <div class="header-info">
                                 <div
-                                    @click="log()"
+                                    @click="getData()"
                                     class="icon-container d-flex align-items-center justify-content-center"
                                 >
                                     <i
@@ -32,9 +32,6 @@
                                             )
                                         }}
                                     </h2>
-                                    <p class="subtitle">
-                                        Manage Pengajuan Izin
-                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -43,7 +40,7 @@
                                 class="header-actions d-flex gap-2 flex-nowrap flex-sm-column justify-content-center justify-content-md-start justify-content-md-center align-items-md-end"
                             >
                                 <div
-                                    class="date-range btn-modern px-2 px-md-3 py-1 gap-2 gap-md-3"
+                                    class="date-range px-2 px-md-3 py-1 gap-2 gap-md-3"
                                 >
                                     <div class="date-item">
                                         <i
@@ -75,6 +72,8 @@
             </div>
         </div>
     </div>
+
+    <!-- info bar -->
 
     <!-- Control Panel -->
     <div class="row d-flex justify-content-center mb-1 mb-md-3 fade-in">
@@ -186,6 +185,7 @@
                                 </div>
                             </div>
                         </div>
+
                         <div
                             style="width: 10rem"
                             class="d-md-block w-max d-none position-relative ps-0"
@@ -220,10 +220,8 @@
                         </div>
                     </div>
 
-                    <div class="filters-container flex-grow-1 flex-md-grow-0">
-                        <div
-                            class="search-container flex-grow-1 d-block d-md-none"
-                        >
+                    <div class="filters-container">
+                        <div class="search-container d-block d-md-none">
                             <i
                                 class="bi bi-search search-icon d-flex justify-content-center align-items-center"
                             ></i>
@@ -338,7 +336,7 @@
         </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- Table & Card -->
     <div class="row d-flex justify-content-center fade-in">
         <div class="col-md-11">
             <div class="content-container">
@@ -354,7 +352,7 @@
                     <p class="loading-text">Memuat data izin...</p>
                 </div>
 
-                <!-- Tidak ada Isi -->
+                <!-- Not Found -->
                 <div
                     v-else-if="filteredPermissions.length === 0 && !loading"
                     class="empty-state"
@@ -364,9 +362,12 @@
                             class="bi bi-inbox d-flex justify-content-center align-items-center"
                         ></i>
                     </div>
-                    <h4>Tidak Ada Data Pengajuan Izin</h4>
-                    <p>Anda belum memiliki pengajuan izin dari team.</p>
-                    <!-- <button
+                    <h4>Tidak Ada Data Izin</h4>
+                    <p>
+                        Anda belum memiliki pengajuan izin. Klik tombol "Ajukan
+                        Izin" untuk membuat pengajuan baru.
+                    </p>
+                    <button
                         class="btn-modern btn-primary"
                         @click="showAssignModal = true"
                     >
@@ -374,10 +375,11 @@
                             class="bi bi-plus-circle me-2 d-flex justify-content-center align-items-center"
                         ></i>
                         Ajukan Izin
-                    </button> -->
+                    </button>
                 </div>
 
                 <transition name="fade-switch" mode="out-in">
+                    <!-- Table -->
                     <div
                         v-if="
                             viewMode === 'table' &&
@@ -394,7 +396,7 @@
                                         <th class="header-cell sticky-column">
                                             <div class="header-cell-content">
                                                 <i
-                                                    class="bi bi-stack me-2 d-flex justify-content-center align-items-center"
+                                                    class="bi bi-people me-2 d-flex justify-content-center align-items-center"
                                                 ></i>
                                                 <span
                                                     >No Transaksi
@@ -409,20 +411,11 @@
                                         <th class="header-cell">
                                             <div class="header-cell-content">
                                                 <i
-                                                    class="bi bi-people me-2 d-flex justify-content-center align-items-center"
-                                                ></i>
-                                                <span>Nama Pengaju</span>
-                                            </div>
-                                        </th>
-                                        <th class="header-cell">
-                                            <div class="header-cell-content">
-                                                <i
                                                     class="bi bi-calendar me-2 d-flex justify-content-center align-items-center"
                                                 ></i>
                                                 <span>Tanggal</span>
                                             </div>
                                         </th>
-
                                         <th class="header-cell">
                                             <div class="header-cell-content">
                                                 <i
@@ -442,18 +435,25 @@
                                         <th class="header-cell">
                                             <div class="header-cell-content">
                                                 <i
-                                                    class="bi bi-paperclip me-2 d-flex justify-content-center align-items-center"
-                                                ></i>
-                                                <span>Step</span>
-                                            </div>
-                                        </th>
-
-                                        <th class="header-cell">
-                                            <div class="header-cell-content">
-                                                <i
                                                     class="bi bi-check-circle me-2 d-flex justify-content-center align-items-center"
                                                 ></i>
                                                 <span>Status</span>
+                                            </div>
+                                        </th>
+                                        <th class="header-cell">
+                                            <div class="header-cell-content">
+                                                <i
+                                                    class="bi bi-node-plus me-2 d-flex justify-content-center align-items-center"
+                                                ></i>
+                                                <span>Progress</span>
+                                            </div>
+                                        </th>
+                                        <th class="header-cell">
+                                            <div class="header-cell-content">
+                                                <i
+                                                    class="bi bi-three-dots me-2 d-flex justify-content-center align-items-center"
+                                                ></i>
+                                                <span>Aksi</span>
                                             </div>
                                         </th>
                                     </tr>
@@ -465,10 +465,20 @@
                                         class="table-row"
                                         @click="showDetail(item)"
                                     >
-                                        <td class="sticky-column">
+                                        <td
+                                            v-tooltip="item.nama_requester"
+                                            class="sticky-column"
+                                        >
                                             <div class="transaction-cell">
                                                 <div class="transaction-id">
-                                                    {{ item.No_Transaksi }}
+                                                    {{
+                                                        truncateText(
+                                                            capitalize(
+                                                                item.nama_requester
+                                                            ),
+                                                            15
+                                                        )
+                                                    }}
                                                 </div>
                                                 <div
                                                     class="transaction-type"
@@ -492,16 +502,13 @@
                                         <td>
                                             <div class="date-table-cell">
                                                 {{
-                                                    item.requester_Nama
-                                                        ?.split(" ")
-                                                        .slice(0, 2)
-                                                        .join(" ")
+                                                    formatTanggalIzin(
+                                                        item.Tipe_Izin,
+                                                        item.Tanggal_Mulai,
+                                                        item.Tanggal_Selesai,
+                                                        item.Jam_Mulai
+                                                    )
                                                 }}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="date-table-cell">
-                                                {{ item.TanggalIzin }}
                                             </div>
                                         </td>
                                         <td>
@@ -564,6 +571,38 @@
                                                 </span>
                                             </div>
                                         </td>
+                                        <td>
+                                            <div
+                                                v-if="
+                                                    item.status == 'NO' &&
+                                                    !item.Approver
+                                                "
+                                                class="status-cell"
+                                            >
+                                                <span
+                                                    class="status-badge status-pending"
+                                                >
+                                                    Tidak Diproses
+                                                </span>
+                                            </div>
+                                            <div v-else class="status-cell">
+                                                <span
+                                                    class="status-badge"
+                                                    :class="
+                                                        getStatusClass(
+                                                            item.status
+                                                        )
+                                                    "
+                                                >
+                                                    {{
+                                                        parseStatus(
+                                                            item.status,
+                                                            item.Approver
+                                                        )
+                                                    }}
+                                                </span>
+                                            </div>
+                                        </td>
                                         <td
                                             @click.stop
                                             @mouseover="
@@ -572,8 +611,8 @@
                                         >
                                             <el-tooltip
                                                 :content="
-                                                    item.status == 'Ditolak' &&
-                                                    !item.Status_Approval_Saat_Ini
+                                                    item.Approver == 'Sistem' ||
+                                                    item.status == 'Ditolak'
                                                         ? ''
                                                         : tooltipContent
                                                 "
@@ -592,68 +631,35 @@
                                             </el-tooltip>
                                         </td>
                                         <td>
-                                            <div class="status-cell">
-                                                <span
-                                                    v-if="
-                                                        !item.Status_Approval_Saat_Ini &&
-                                                        item.status ==
-                                                            'Diproses'
+                                            <div class="action-cell">
+                                                <button
+                                                    disabled
+                                                    class="btn-action delete-btn"
+                                                    @click.stop="
+                                                        showDeleteConfirm(
+                                                            item.No_Transaksi
+                                                        )
                                                     "
-                                                    class="status-badge p-0 d-flex justify-content-between"
-                                                    style="width: 10rem"
-                                                >
-                                                    <span
-                                                        @click.stop="
-                                                            showConfirmYesModal(
-                                                                'Terima',
-                                                                item.No_Transaksi,
-                                                                item.Requester_Kode_Karyawan,
-                                                                item.Approver_Kode_Karyawan
-                                                            )
-                                                        "
-                                                        class="d-flex px-2 justify-content-center text-success cursor-pointer buttonAccept right"
-                                                        ><i
-                                                            class="bi bi-check-circle me-1"
-                                                        ></i
-                                                        >Terima</span
-                                                    >
-                                                    <span
-                                                        @click.stop="
-                                                            showConfirmNoModal(
-                                                                'Tolak',
-                                                                item.No_Transaksi,
-                                                                item.Requester_Kode_Karyawan,
-                                                                item.Approver_Kode_Karyawan
-                                                            )
-                                                        "
-                                                        class="d-flex px-2 justify-content-center text-danger cursor-pointer buttonAccept left"
-                                                        ><i
-                                                            class="bi bi-x-circle me-1"
-                                                        ></i
-                                                        >Tolak</span
-                                                    >
-                                                </span>
-                                                <span
-                                                    v-else-if="
-                                                        item.Status_Approval_Saat_Ini
-                                                            ? item.Status_Approval_Saat_Ini?.trim() ===
-                                                              'Y'
-                                                            : false
+                                                    v-tooltip="
+                                                        'Hapus Pengajuan'
                                                     "
-                                                    class="text-success"
-                                                    >DISETUJUI</span
                                                 >
-                                                <span
-                                                    v-else-if="
-                                                        !item.Status_Approval_Saat_Ini &&
-                                                        item.status == 'Ditolak'
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                                <!-- <button
+                                                    class="btn-action more-btn"
+                                                    @click.stop="
+                                                        showActionMenu(
+                                                            item,
+                                                            $event
+                                                        )
                                                     "
-                                                    class="text-danger"
-                                                    >Ditolak Oleh Sistem</span
+                                                    v-tooltip="'Lainnya'"
                                                 >
-                                                <span v-else class="text-danger"
-                                                    >DITOLAK
-                                                </span>
+                                                    <i
+                                                        class="bi bi-three-dots-vertical"
+                                                    ></i>
+                                                </button> -->
                                             </div>
                                         </td>
                                     </tr>
@@ -694,6 +700,7 @@
                         </div>
                     </div>
 
+                    <!-- Card -->
                     <div
                         v-else-if="
                             viewMode === 'card' &&
@@ -712,19 +719,32 @@
                             >
                                 <div
                                     class="card-header"
-                                    :class="
-                                        getStatusHeaderClass(
-                                            item.Status_Approval_Saat_Ini
-                                        )
-                                    "
+                                    :class="getStatusHeaderClass(item.status)"
                                 >
                                     <div class="card-date">
-                                        {{ item.TanggalIzin }}
-                                    </div>
-                                    <div class="card-status">
                                         {{
-                                            maknaStatus(
-                                                item.Status_Approval_Saat_Ini
+                                            formatTanggalIzin(
+                                                item.Tipe_Izin,
+                                                item.Tanggal_Mulai,
+                                                item.Tanggal_Selesai,
+                                                item.Jam_Mulai
+                                            )
+                                        }}
+                                    </div>
+                                    <div
+                                        v-if="
+                                            item.status == 'NO' &&
+                                            !item.Approver
+                                        "
+                                        class="card-status"
+                                    >
+                                        Tidak Diproses
+                                    </div>
+                                    <div v-else class="card-status">
+                                        {{
+                                            parseStatus(
+                                                item.status,
+                                                item.Approver
                                             )
                                         }}
                                     </div>
@@ -740,7 +760,7 @@
                                                 {{
                                                     truncateText(
                                                         capitalize(
-                                                            item.requester_Nama
+                                                            item.nama_requester
                                                         ),
                                                         20
                                                     )
@@ -748,22 +768,22 @@
                                             </div>
                                         </div>
                                         <div class="card-row">
-                                            <!-- <i
+                                            <i
                                                 class="bi bi-tag d-flex justify-content-center align-items-center"
-                                            ></i> -->
+                                            ></i>
                                             <div class="card-label">
-                                                Jenis Izin :
+                                                Jenis Izin:
                                             </div>
                                             <div class="card-value">
                                                 {{ parseIzin(item.Tipe_Izin) }}
                                             </div>
                                         </div>
                                         <div class="card-row">
-                                            <!-- <i
+                                            <i
                                                 class="bi bi-chat-dots d-flex justify-content-center align-items-center"
-                                            ></i> -->
+                                            ></i>
                                             <div class="card-label">
-                                                Alasan :
+                                                Alasan:
                                             </div>
                                             <div class="card-value">
                                                 {{
@@ -775,12 +795,10 @@
                                             </div>
                                         </div>
                                         <div v-if="item.Waktu" class="card-row">
-                                            <!-- <i
+                                            <i
                                                 class="bi bi-clock d-flex justify-content-center align-items-center"
-                                            ></i> -->
-                                            <div class="card-label">
-                                                Waktu :
-                                            </div>
+                                            ></i>
+                                            <div class="card-label">Waktu:</div>
                                             <div class="card-value">
                                                 {{
                                                     formatSliderTooltip(
@@ -790,11 +808,11 @@
                                             </div>
                                         </div>
                                         <div class="card-row">
-                                            <!-- <i
+                                            <i
                                                 class="bi bi-paperclip d-flex justify-content-center align-items-center"
-                                            ></i> -->
+                                            ></i>
                                             <div class="card-label">
-                                                Lampiran :
+                                                Lampiran:
                                             </div>
                                             <div class="card-value">
                                                 <a
@@ -847,7 +865,6 @@
                                             style="height: 50%"
                                         >
                                             <el-steps
-                                                align-center
                                                 style="
                                                     font-size: 0.5rem;
                                                     max-height: 15rem;
@@ -856,7 +873,6 @@
                                                 :active="2"
                                             >
                                                 <el-step
-                                                    align-center
                                                     v-for="(
                                                         data, index
                                                     ) in parsedDataArray(
@@ -877,7 +893,8 @@
                                     </div>
                                 </div>
                                 <div class="card-footer">
-                                    <!-- <button
+                                    <button
+                                        disabled
                                         class="card-btn delete-btn"
                                         @click.stop="
                                             showDeleteConfirm(item.No_Transaksi)
@@ -887,81 +904,17 @@
                                             class="bi bi-trash d-flex justify-content-center align-items-center"
                                         ></i>
                                         Hapus
+                                    </button>
+                                    <!-- <button
+                                        class="card-btn more-btn"
+                                        @click.stop="
+                                            showActionMenu(item, $event)
+                                        "
+                                    >
+                                        <i
+                                            class="bi bi-three-dots d-flex justify-content-center align-items-center"
+                                        ></i>
                                     </button> -->
-                                    <div class="card-btn px-0 py-0">
-                                        <div class="status-cell">
-                                            <span
-                                                v-if="
-                                                    !item.Status_Approval_Saat_Ini &&
-                                                    item.status == 'Diproses'
-                                                "
-                                                class="d-flex justify-content-between"
-                                                style="width: 10rem"
-                                            >
-                                                <span
-                                                    style="
-                                                        cursor: pointer !important;
-                                                        border-radius: 8px 0px
-                                                            0px 8px !important;
-                                                    "
-                                                    @click.stop="
-                                                        showConfirmYesModal(
-                                                            'Terima',
-                                                            item.No_Transaksi,
-                                                            item.Requester_Kode_Karyawan,
-                                                            item.Approver_Kode_Karyawan
-                                                        )
-                                                    "
-                                                    class="d-flex pe-1 ps-1 justify-content-center text-success cursor-pointer buttonAccept right"
-                                                    ><i
-                                                        class="bi bi-check-circle me-1"
-                                                    ></i
-                                                    >Terima</span
-                                                >
-                                                <span
-                                                    style="
-                                                        cursor: pointer !important;
-                                                        border-radius: 0 8px 8px
-                                                            0 !important;
-                                                    "
-                                                    @click.stop="
-                                                        showConfirmNoModal(
-                                                            'Tolak',
-                                                            item.No_Transaksi,
-                                                            item.Requester_Kode_Karyawan,
-                                                            item.Approver_Kode_Karyawan
-                                                        )
-                                                    "
-                                                    class="d-flex ps-1 pe-1 justify-content-center text-danger cursor-pointer buttonAccept left"
-                                                    ><i
-                                                        class="bi bi-x-circle me-1"
-                                                    ></i
-                                                    >Tolak</span
-                                                >
-                                            </span>
-                                            <span
-                                                v-else-if="
-                                                    item.Status_Approval_Saat_Ini
-                                                        ? item.Status_Approval_Saat_Ini?.trim() ===
-                                                          'Y'
-                                                        : false
-                                                "
-                                                class="text-success"
-                                                >DISETUJUI</span
-                                            >
-                                            <span
-                                                v-else-if="
-                                                    !item.Status_Approval_Saat_Ini &&
-                                                    item.status == 'Ditolak'
-                                                "
-                                                class="text-danger"
-                                                >Ditolak Oleh Sistem</span
-                                            >
-                                            <span v-else class="text-danger"
-                                                >DITOLAK</span
-                                            >
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -996,6 +949,154 @@
     </div>
 
     <!-- Detail Modal -->
+    <!-- <el-dialog
+        v-model="showDetailModal"
+        :title="`Detail Izin - ${selectedItem?.No_Transaksi || ''}`"
+        width="90%"
+        :fullscreen="isMobile()"
+    >
+        <div v-if="selectedItem" class="detail-modal-content">
+            <div class="detail-section">
+                <div class="detail-row">
+                    <div class="detail-label">Jenis Izin:</div>
+                    <div class="detail-value">
+                        {{ parseIzin(selectedItem.Tipe_Izin) }}
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Tanggal:</div>
+                    <div class="detail-value">
+                        {{ formatDateString(selectedItem.Tanggal_Mulai) }}
+                        <span
+                            v-if="
+                                selectedItem.Tanggal_Mulai !==
+                                    selectedItem.Tanggal_Selesai &&
+                                selectedItem.Tanggal_Selesai
+                            "
+                        >
+                            s.d
+                            {{ formatDateString(selectedItem.Tanggal_Selesai) }}
+                        </span>
+                    </div>
+                </div>
+                <div v-if="selectedItem.Jam_Mulai" class="detail-row">
+                    <div class="detail-label">Waktu:</div>
+                    <div class="detail-value">
+                        {{
+                            selectedItem.Jam_Mulai?.split(":")
+                                .slice(0, 2)
+                                .join(":")
+                        }}
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Status:</div>
+                    <div
+                        v-if="
+                            selectedItem.status == 'NO' &&
+                            !selectedItem.Approver
+                        "
+                        class="detail-value"
+                    >
+                        <span class="status-badge status-pending">
+                            Tidak Diproses
+                        </span>
+                    </div>
+                    <div v-else class="detail-value">
+                        <span
+                            class="status-badge"
+                            :class="getStatusClass(selectedItem.status)"
+                        >
+                            {{
+                                parseStatus(
+                                    selectedItem.status,
+                                    selectedItem.Approver
+                                )
+                            }}
+                        </span>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Alasan:</div>
+                    <div class="detail-value">{{ selectedItem.Alasan }}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Lampiran:</div>
+                    <div class="detail-value">
+                        <a
+                            v-if="selectedItem.Lampiran"
+                            href="#"
+                            @click.prevent.stop="
+                                viewAttachment(selectedItem.Lampiran)
+                            "
+                            target="_blank"
+                            class="detail-link"
+                            :class="{ 'is-loading': loadingAttachment }"
+                            :disabled="loadingAttachment"
+                        >
+                            <span
+                                class="d-flex justify-content-center align-items-center"
+                                v-if="!loadingAttachment"
+                            >
+                                Lihat Lampiran
+                            </span>
+                            <span v-else>
+                                <i
+                                    class="bi bi-arrow-clockwise animated-spin"
+                                ></i>
+                                Memuat...
+                            </span>
+                        </a>
+                        <span v-else> Tidak ada lampiran </span>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-value">
+                        <el-steps
+                            style="font-size: 0.5rem; max-width: 50%"
+                            :active="2"
+                        >
+                            <el-step
+                                v-for="(data, index) in parsedDataArray(
+                                    selectedItem.STATUSLIST
+                                )"
+                                :status="
+                                    data.status == 'Y'
+                                        ? 'success'
+                                        : data.status == 'T'
+                                        ? 'error'
+                                        : 'wait'
+                                "
+                                :key="index"
+                                :title="data.name"
+                            />
+                        </el-steps>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <template #footer>
+            <div class="detail-modal-footer px-0">
+                <button
+                    class="btn-modern btn-secondary"
+                    @click="showDetailModal = false"
+                >
+                    Tutup
+                </button>
+                <button
+                    class="btn-modern btn-danger"
+                    @click="showDeleteConfirm(selectedItem.No_Transaksi)"
+                    v-if="selectedItem"
+                >
+                    <i
+                        class="bi bi-trash d-flex justify-content-center align-items-center"
+                    ></i>
+                    Hapus
+                </button>
+            </div>
+        </template>
+    </el-dialog> -->
+
     <el-dialog
         v-model="showDetailModal"
         :title="`Detail Izin - ${selectedItem?.No_Transaksi || ''}`"
@@ -1012,13 +1113,12 @@
                     <span class="detail-value highlight">
                         {{
                             truncateText(
-                                capitalize(selectedItem.requester_Nama),
+                                capitalize(selectedItem.nama_requester),
                                 30
                             )
                         }}
                     </span>
                 </div>
-
                 <div class="detail-item">
                     <span class="detail-label">Jenis Izin:</span>
                     <span class="detail-value highlight">
@@ -1029,7 +1129,17 @@
                 <div class="detail-item">
                     <span class="detail-label">Tanggal:</span>
                     <span class="detail-value">
-                        {{ selectedItem.TanggalIzin }}
+                        {{ formatDateString(selectedItem.Tanggal_Mulai) }}
+                        <span
+                            v-if="
+                                selectedItem.Tanggal_Mulai !==
+                                    selectedItem.Tanggal_Selesai &&
+                                selectedItem.Tanggal_Selesai
+                            "
+                        >
+                            s.d
+                            {{ formatDateString(selectedItem.Tanggal_Selesai) }}
+                        </span>
                     </span>
                 </div>
 
@@ -1050,40 +1160,18 @@
                         <el-tag
                             :type="
                                 getStatusTagType(
-                                    selectedItem.Status_Approval_Saat_Ini
+                                    selectedItem.status,
+                                    selectedItem.Approver
                                 )
                             "
                             size="medium"
                         >
-                            <span
-                                v-if="
-                                    selectedItem.Status_Approval_Saat_Ini
-                                        ? selectedItem.Status_Approval_Saat_Ini?.trim() ===
-                                          'Y'
-                                        : false
-                                "
-                                class="text-success"
-                                >DISETUJUI</span
-                            >
-                            <span
-                                v-else-if="
-                                    selectedItem.Status_Approval_Saat_Ini?.trim() ===
-                                        'T' && selectedItem.status == 'Ditolak'
-                                "
-                                class="text-danger"
-                                >DITOLAK</span
-                            >
-                            <span
-                                v-else-if="
-                                    !selectedItem.Status_Approval_Saat_Ini &&
-                                    selectedItem.status == 'Ditolak'
-                                "
-                                class="text-danger"
-                                >Ditolak Oleh Sistem</span
-                            >
-                            <span v-else class="text-danger"
-                                >Menunggu Keputusan</span
-                            >
+                            {{
+                                parseStatus(
+                                    selectedItem.status,
+                                    selectedItem.Approver
+                                )
+                            }}
                         </el-tag>
                     </span>
                 </div>
@@ -1133,70 +1221,41 @@
         </div>
 
         <template #footer>
-            <div
-                v-if="selectedItem.status == 'Diproses'"
-                class="modal-footer-actions p-0 pt-3"
-            >
-                <button
-                    class="btn-modern btn-danger"
-                    @click="
-                        showConfirmNoModal(
-                            'Tolak',
-                            selectedItem.No_Transaksi,
-                            selectedItem.Requester_Kode_Karyawan,
-                            selectedItem.Approver_Kode_Karyawan
-                        )
-                    "
-                >
-                    <i
-                        class="bi bi-x fs-4 d-flex justify-content-center align-items-center me-1"
-                    ></i>
-                    Tolak
-                </button>
-                <button
-                    class="btn-modern btn-success"
-                    @click="
-                        showConfirmYesModal(
-                            'Terima',
-                            selectedItem.No_Transaksi,
-                            selectedItem.Requester_Kode_Karyawan,
-                            selectedItem.Approver_Kode_Karyawan
-                        )
-                    "
-                    v-if="selectedItem"
-                >
-                    <i
-                        class="bi bi-check fs-4 d-flex justify-content-center align-items-center me-1"
-                    ></i>
-                    Setuju
-                </button>
-            </div>
-            <div v-else class="modal-footer-actions p-0 pt-3">
+            <div class="modal-footer-actions p-0 pt-3">
                 <button
                     class="btn-modern btn-secondary"
                     @click="showDetailModal = false"
                 >
-                    Batal
+                    Tutup
+                </button>
+                <button
+                    class="btn-modern btn-danger"
+                    @click="showDeleteConfirm(selectedItem.No_Transaksi)"
+                    disabled
+                    v-if="selectedItem"
+                >
+                    <i
+                        class="bi bi-trash d-flex justify-content-center align-items-center"
+                    ></i>
+                    Hapus
                 </button>
             </div>
         </template>
     </el-dialog>
 
-    <!-- Picture Modal -->
-
-    <!-- confirm Modal -->
+    <!-- Delete Modal -->
     <el-dialog
-        v-model="showConfirmModal"
-        title="Konfirmasi Simpan"
+        v-model="showDeleteModal"
+        title="Konfirmasi Hapus"
         width="400px"
         center
         :lock-scroll="true"
     >
         <div class="delete-modal-content">
-            <i :class="iconConfirm"></i>
+            <i class="bi bi-exclamation-triangle warning-icon"></i>
             <p>
-                {{ titleAlert }} <br />
-                <strong>{{ confirmIzinId }}</strong
+                Anda yakin ingin menghapus pengajuan izin
+                <strong>{{ deleteItemId }}</strong
                 >?
             </p>
             <p class="text-muted">Aksi ini tidak dapat dibatalkan.</p>
@@ -1205,33 +1264,62 @@
             <div class="delete-modal-footer">
                 <button
                     class="btn-modern btn-secondary"
-                    @click="closeConfirmModal"
+                    @click="showDeleteModal = false"
+                >
+                    Batal
+                </button>
+                <button class="btn-modern btn-danger" @click="confirmDelete">
+                    <i
+                        class="bi bi-trash d-flex justify-content-center align-items-center"
+                    ></i>
+                    Hapus
+                </button>
+            </div>
+        </template>
+    </el-dialog>
+
+    <!-- Cuti alert Modal -->
+    <el-dialog
+        v-model="showCutiAlertModal"
+        title="Konfirmasi menambah hutang cuti"
+        width="400px"
+        center
+        :lock-scroll="true"
+    >
+        <div class="delete-modal-content">
+            <i class="bi bi-exclamation-triangle warning-icon"></i>
+            <p>
+                Kuota cuti anda 0, anda yakin untuk mengambil cuti dan berhutang
+                cuti
+                <strong>{{ deleteItemId }}</strong
+                >?
+            </p>
+            <p class="text-danger">
+                Hutang cuti menambah
+                <span class="fw-bold">{{ hutangTerhitung }}</span
+                >.
+            </p>
+        </div>
+        <template #footer>
+            <div class="delete-modal-footer">
+                <button
+                    class="btn-modern btn-secondary"
+                    @click="showCutiAlertModal = false"
                 >
                     Batal
                 </button>
                 <button
-                    v-if="decisionIzin == 'Terima'"
-                    class="btn-modern btn-success"
-                    @click="yesModal"
+                    class="btn-modern btn-danger"
+                    @click="
+                        showCutiAlertModal = false;
+                        assignStep++;
+                        assignIzinType2 = 'cutiHutang';
+                    "
                 >
-                    <i
-                        v-if="loadingSimpan"
-                        class="spinner-border spinner-border-sm me-1"
-                    ></i>
-                    <i
-                        v-else
-                        class="bi bi-check d-flex justify-content-center align-items-center fs-4 fw-light me-1"
-                    ></i>
-
-                    {{ buttonAlertModal }}
-                </button>
-                <button v-else class="btn-modern btn-danger" @click="yesModal">
-                    <i
-                        v-if="!loadingSimpan"
-                        class="bi bi-trash d-flex justify-content-center align-items-center me-1"
-                    ></i>
-                    <i v-else class="spinner-border spinner-border-sm me-1"></i>
-                    {{ buttonAlertModal }}
+                    <!-- <i
+                        class="bi bi-arrow-right d-flex justify-content-center align-items-center"
+                    ></i> -->
+                    Lanjut
                 </button>
             </div>
         </template>
@@ -1257,11 +1345,11 @@
         </div>
     </div>
 
-    <div
+    <!-- <div
         class="action-menu-backdrop"
         v-if="showActionPopup"
         @click="showActionPopup = false"
-    ></div>
+    ></div> -->
 
     <!-- Modal Assign -->
     <div
@@ -1307,7 +1395,7 @@
 
                         <div class="form-group">
                             <div class="permission-type-options row g-2">
-                                <div class="col-12 col-md-3">
+                                <div class="col-12 col-md-6">
                                     <div
                                         class="permission-type-card"
                                         :class="{
@@ -1317,12 +1405,13 @@
                                         @click="handleAssignIzin('izinFull')"
                                     >
                                         <div class="permission-type-icon">
-                                            <i class="bi bi-playstation"></i>
+                                            <i class="bi bi-house-door"></i>
                                         </div>
                                         <div class="permission-type-content">
-                                            <h6>Tidak Masuk</h6>
+                                            <h6>Izin</h6>
                                             <p class="text-muted small">
-                                                Tidak masuk full hari
+                                                Pulang cepat, Datang terlambat
+                                                dan Tidak masuk
                                             </p>
                                         </div>
                                         <div class="permission-type-check">
@@ -1337,7 +1426,39 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-12 col-md-3">
+
+                                <!-- Aktifkan Cuti -->
+
+                                <!-- <div class="col-12 col-md-4">
+                                    <div
+                                        class="permission-type-card"
+                                        :class="{
+                                            selected: assignIzinType === 'cuti',
+                                        }"
+                                        @click="handleAssignIzin('cuti')"
+                                    >
+                                        <div class="permission-type-icon">
+                                            <i class="bi bi-clock"></i>
+                                        </div>
+                                        <div class="permission-type-content">
+                                            <h6>Cuti</h6>
+                                            <p class="text-muted small">
+                                                Izin untuk mengambil cuti
+                                            </p>
+                                        </div>
+                                        <div class="permission-type-check">
+                                            <i
+                                                class="bi bi-check-circle-fill"
+                                                v-if="assignIzinType === 'cuti'"
+                                            ></i>
+                                            <i class="bi bi-circle" v-else></i>
+                                        </div>
+                                    </div>
+                                </div> -->
+
+                                <!-- AKhir Aktifkan Cuti -->
+
+                                <!-- <div class="col-12 col-md-3">
                                     <div
                                         class="permission-type-card"
                                         :class="{
@@ -1398,9 +1519,9 @@
                                             <i class="bi bi-circle" v-else></i>
                                         </div>
                                     </div>
-                                </div>
+                                </div> -->
 
-                                <div class="col-12 col-md-3">
+                                <div class="col-12 col-md-6">
                                     <div
                                         class="permission-type-card"
                                         :class="{
@@ -1431,22 +1552,154 @@
                                 </div>
                             </div>
                         </div>
+
+                        <h4
+                            v-if="assignIzinType == 'izinFull'"
+                            class="section-title"
+                        >
+                            <i
+                                class="bi bi-calendar-event me-2 d-flex justify-content-center align-items-center"
+                            ></i>
+                            Pilih Jenis
+                        </h4>
+                        <h4 v-else class="section-title">
+                            <i
+                                class="bi bi-calendar-event me-2 d-flex justify-content-center align-items-center"
+                            ></i>
+                            Keterangan Jenis
+                        </h4>
+
+                        <div class="form-group">
+                            <!-- Izin Tidak Masuk -->
+                            <select
+                                v-if="assignIzinType == 'izinFull'"
+                                name=""
+                                id=""
+                                v-model="assignIzinType2"
+                                class="form-control"
+                            >
+                                <option selected :value="null">
+                                    Pilih Jenis Izin
+                                </option>
+                                <option
+                                    v-for="item in pilihanIzin"
+                                    :key="item.jenis"
+                                    :value="item.value"
+                                >
+                                    {{ item.Jenis }}
+                                </option>
+                            </select>
+                            <!-- Sakit -->
+                            <!-- <select
+                                v-else-if="assignIzinType == 'sakit'"
+                                name=""
+                                id=""
+                                v-model="assignIzinType2"
+                                class="form-control"
+                            >
+                                <option selected :value="null">
+                                    Pilih Jenis Izin
+                                </option>
+                                <option
+                                    v-for="item in pilihanSakit"
+                                    :key="item.jenis"
+                                    :value="item.value"
+                                >
+                                    {{ item.Jenis }}
+                                </option>
+                            </select> -->
+
+                            <div
+                                v-else-if="assignIzinType == 'sakit'"
+                                name=""
+                                id=""
+                                disabled
+                                class="w-100 form-control"
+                                style="
+                                    border-radius: 10px !important;
+                                    padding: 0.75rem 1rem !important;
+                                "
+                            >
+                                <div class="d-flex justify-content-between">
+                                    <span class=""
+                                        >Izin sakit satu hari penuh
+                                    </span>
+                                    <!-- <i
+                                        :class="getIconCuti(dataCuti.Sisa_Cuti)"
+                                    ></i> -->
+                                </div>
+                            </div>
+                            <div
+                                v-else-if="assignIzinType == 'cuti'"
+                                name=""
+                                id=""
+                                disabled
+                                class="w-100 form-control"
+                                :class="getClassCuti(dataCuti.Sisa_Cuti)"
+                                style="
+                                    border-radius: 10px !important;
+                                    padding: 0.75rem 1rem !important;
+                                "
+                            >
+                                <div class="d-flex justify-content-between">
+                                    <span class=""
+                                        >Sisa Cuti adalah
+                                        {{ dataCuti.Sisa_Cuti }}</span
+                                    >
+                                    <i
+                                        :class="getIconCuti(dataCuti.Sisa_Cuti)"
+                                    ></i>
+                                </div>
+                            </div>
+
+                            <!-- non selected -->
+                            <select
+                                v-tooltip="'Pilih Jenis Izin dulu'"
+                                v-else
+                                disabled
+                                class="form-control"
+                            >
+                                <option>Pilih Jenis Izin</option>
+                            </select>
+                        </div>
+
                         <h4 class="section-title">
                             <i
                                 class="bi bi-calendar-event me-2 d-flex justify-content-center align-items-center"
                             ></i>
                             Pilih Tanggal
                         </h4>
-
                         <div
-                            v-if="
-                                assignIzinType == 'izinFull' ||
-                                assignIzinType == 'sakit'
+                            v-if="!assignIzinType2 || !assignIzinType"
+                            class="form-group d-flex cursor-pointer justify-content-start align-items-center"
+                        >
+                            <div
+                                class="form-control d-flex align-items-center justify-content-center cursor-pointer"
+                            >
+                                <div class="me-2">
+                                    <i
+                                        class="bi bi-calendar-week d-flex justify-content-center align-items-center"
+                                    ></i>
+                                </div>
+                                <div v-if="!AssignDateRange" class="w-100">
+                                    Pilih Izin dan Jenis Izin terlebih dahulu
+                                </div>
+                                <div v-else class="w-100">
+                                    {{ formatDateString(AssignDateRange[0]) }}
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            v-else-if="
+                                assignIzinType2 &&
+                                (assignIzinType2 == 'izinFull' ||
+                                    assignIzinType2 == 'sakit')
                             "
                             @click="openDialog"
                             class="form-group d-flex cursor-pointer justify-content-start align-items-center"
                         >
                             <div
+                                style="cursor: pointer !important"
                                 class="form-control d-flex align-items-center justify-content-center cursor-pointer"
                             >
                                 <div class="me-2">
@@ -1475,11 +1728,51 @@
                             </div>
                         </div>
                         <div
+                            v-else-if="
+                                assignIzinType2 &&
+                                (assignIzinType == 'cuti' ||
+                                    assignIzinType2 === 'cutiHutang')
+                            "
+                            @click="openDialogCuti"
+                            class="form-group d-flex cursor-pointer justify-content-start align-items-center"
+                        >
+                            <div
+                                style="cursor: pointer !important"
+                                class="form-control d-flex align-items-center justify-content-center cursor-pointer"
+                            >
+                                <div class="me-2">
+                                    <i
+                                        class="bi bi-calendar-week d-flex justify-content-center align-items-center"
+                                    ></i>
+                                </div>
+                                <div v-if="!AssignDateRange" class="w-100">
+                                    Tekan untuk pilih tanggal Cuti
+                                </div>
+                                <div v-else class="w-100">
+                                    {{
+                                        AssignDateRange[0] == AssignDateRange[1]
+                                            ? formatDateString(
+                                                  AssignDateRange[0]
+                                              )
+                                            : formatDateString(
+                                                  AssignDateRange[0]
+                                              ) +
+                                              " s.d " +
+                                              formatDateString(
+                                                  AssignDateRange[1]
+                                              )
+                                    }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
                             v-else
                             @click="openDialogSingle"
                             class="form-group d-flex cursor-pointer justify-content-start align-items-center"
                         >
                             <div
+                                style="cursor: pointer !important"
                                 class="form-control d-flex align-items-center justify-content-center cursor-pointer"
                             >
                                 <div class="me-2">
@@ -1509,33 +1802,43 @@
                         <div
                             class="form-group mb-4"
                             v-if="
-                                assignIzinType === 'pulangCepat' ||
-                                assignIzinType === 'terlambat'
+                                assignIzinType2 === 'pulangCepat' ||
+                                assignIzinType2 === 'terlambat' ||
+                                assignIzinType2 === 'sakitTibaTiba'
                             "
                         >
                             <label class="form-label">
                                 {{
-                                    assignIzinType === "pulangCepat"
+                                    assignIzinType2 === "pulangCepat" ||
+                                    assignIzinType2 === "sakitTibaTiba"
                                         ? "Waktu Pulang"
                                         : "Waktu Datang"
                                 }}
                             </label>
-                            <div class="input-group px-2 px-md-3 mb-3">
+                            <div
+                                class="input-group px-2 px-md-3 mb-3 text-black"
+                            >
                                 <el-slider
-                                    @change="console.log(AssignTime)"
                                     v-model="AssignTime"
                                     :min="min"
                                     :max="max"
                                     :step="0.5"
-                                    :marks="jamOptions"
-                                    :disabled="!max"
                                     :format-tooltip="formatSliderTooltip"
+                                    :show-tooltip="true"
+                                    tooltip-class="custom-tooltip"
+                                    :tooltip-props="{
+                                        placement: 'top',
+                                        alwaysVisible: true,
+                                    }"
+                                    :marks="JamOptions"
                                     show-stops
+                                    style="width: 100%"
                                 />
                             </div>
                             <small class="text-muted">
                                 {{
-                                    assignIzinType === "pulangCepat"
+                                    assignIzinType2 === "pulangCepat" ||
+                                    assignIzinType2 === "sakitTibaTiba"
                                         ? "Pilih waktu Anda akan pulang"
                                         : "Pilih waktu Anda akan tiba"
                                 }}
@@ -1567,10 +1870,15 @@
                         <!-- File Upload for Sick Leave -->
                         <div
                             class="form-group"
-                            v-if="assignIzinType === 'sakit'"
+                            v-if="assignIzinType == 'sakit'"
                         >
-                            <label class="form-label"
+                            <label
+                                v-if="AssignDateRange[0] != AssignDateRange[1]"
+                                class="form-label"
                                 >Surat Keterangan Dokter (Wajib)</label
+                            >
+                            <label v-else class="form-label"
+                                >Surat Keterangan Dokter (Optional)</label
                             >
                             <div class="file-upload-wrapper">
                                 <input
@@ -1608,9 +1916,10 @@
                                 </div>
                             </div>
                             <small class="text-muted"
-                                >Format: PDF, JPG, PNG (maks. 5MB)</small
+                                >Format: PDF, JPG, PNG (maks. 10MB)</small
                             >
                         </div>
+
                         <div class="form-group" v-else>
                             <label class="form-label"
                                 >Foto Atau File Tambahan (Optional)</label
@@ -1651,7 +1960,7 @@
                                 </div>
                             </div>
                             <small class="text-muted"
-                                >Format: PDF, JPG, PNG (maks. 5MB)</small
+                                >Format: PDF, JPG, PNG (maks. 10MB)</small
                             >
                         </div>
                         <!-- <div v-else class="text-muted text-center py-4">
@@ -1683,7 +1992,7 @@
                                     >
                                 </span>
                                 <div style="color: #6366f1" class="fw-bold">
-                                    {{ parseIzin(assignIzinType) }}
+                                    {{ parseIzin(assignIzinType2) }}
                                 </div>
                             </div>
                             <div
@@ -1696,10 +2005,16 @@
                                     ></i>
                                     <span class="m-0 fw-medium"> Tanggal</span>
                                 </span>
-                                <div
-                                    style="color: #6366f1"
-                                    class="fw-bold"
-                                ></div>
+                                <div style="color: #6366f1" class="fw-bold">
+                                    {{
+                                        formatTanggalIzin(
+                                            assignIzinType,
+                                            AssignDateRange[0],
+                                            AssignDateRange[1],
+                                            formatTimeForSubmission(AssignTime)
+                                        )
+                                    }}
+                                </div>
                             </div>
                             <div
                                 style="border-bottom: 1px solid #e2e8f0"
@@ -1716,6 +2031,11 @@
                                 </div>
                             </div>
                             <div
+                                v-if="
+                                    assignIzinType2 === 'pulangCepat' ||
+                                    assignIzinType2 === 'terlambat' ||
+                                    assignIzinType2 === 'sakitTibaTiba'
+                                "
                                 style="border-bottom: 1px solid #e2e8f0"
                                 class="d-flex justify-content-between pb-2 align-items-center mb-4"
                             >
@@ -1727,8 +2047,8 @@
                                 </span>
                                 <div style="color: #6366f1" class="fw-bold">
                                     {{
-                                        assignIzinType == "izinFull" ||
-                                        assignIzinType == "sakit"
+                                        assignIzinType2 == "izinFull" ||
+                                        assignIzinType2 == "sakit"
                                             ? "Tidak ada"
                                             : formatTimeForSubmission(
                                                   AssignTime
@@ -1749,11 +2069,7 @@
                                     <span class="m-0 fw-medium">Lampiran</span>
                                 </span>
                                 <div style="color: #6366f1" class="fw-bold">
-                                    {{
-                                        AssignFile
-                                            ? AssignFile.name
-                                            : "Tidak ada"
-                                    }}
+                                    {{ AssignFile ? "Ada" : "Tidak ada" }}
                                 </div>
                             </div>
                             <!-- <small class="text-muted"
@@ -1792,7 +2108,12 @@
                     >
                         Lanjut
                         <i
+                            v-if="!isLoadingAssign"
                             class="bi bi-arrow-right ms-2 d-flex justify-content-center align-items-center"
+                        ></i>
+                        <i
+                            v-if="isLoadingAssign"
+                            class="spinner-border spinner-border-sm ms-2"
                         ></i>
                     </button>
 
@@ -1802,16 +2123,22 @@
                         @click="submitData"
                     >
                         <i
+                            v-if="!loadingSimpan"
                             class="bi bi-check-lg me-2 d-flex justify-content-center align-items-center"
                         ></i>
-                        Simpan
+
+                        <span
+                            v-else
+                            class="spinner-border spinner-border-sm me-2"
+                        ></span
+                        >Simpan
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Calendar Single -->
+    <!-- Calendar Range -->
     <el-dialog
         v-model="dialogVisible"
         title="Pilih Tanggal Mulai dan Selesai"
@@ -1821,117 +2148,76 @@
     >
         <el-calendar v-model="calendarDate" :disabled-date="disablePastDates">
             <template #date-cell="{ data }">
-                <div
-                    class="cell-date-wrapper"
-                    :class="getCellClass(data)"
-                    @click="handleDateClick(data)"
+                <el-tooltip
+                    :disabled="!isSpecialDate(data.date)"
+                    :content="getSpecialDateTooltip(data.date)"
+                    placement="top"
                 >
                     <div
-                        class="date-cell"
-                        :class="{
-                            'is-disabled-custom': disablePastDates(data.date),
-                        }"
+                        class="cell-date-wrapper"
+                        :class="getCellClass(data)"
+                        @click="handleDateClick(data)"
                     >
-                        {{ data.day.split("-")[2] }}
+                        <div
+                            class="date-cell"
+                            :class="{
+                                'is-disabled-custom': disablePastDates(
+                                    data.date
+                                ),
+                            }"
+                        >
+                            {{ data.day.split("-")[2] }}
+                        </div>
                     </div>
-                </div>
+                </el-tooltip>
             </template>
         </el-calendar>
 
         <template #footer>
-            <div class="dialog-footer gap-3 d-flex justify-content-end">
-                <el-button
-                    @click="handleCancel"
-                    class="btn-secondary p-1 rounded-3"
-                    >Batal</el-button
-                >
-                <el-button
-                    class="shiningEffect btn-success py-0 rounded-3 px-1 py-1"
-                    :disabled="!tempEndDate"
-                    @click="confirmDate('range')"
-                >
-                    Pilih Tanggal
-                </el-button>
-            </div>
-        </template>
-    </el-dialog>
-
-    <!-- Calendar Range -->
-    <el-dialog
-        v-model="dialogVisibleSingle"
-        title="Pilih Tanggal"
-        width="480px"
-        align-center
-        :lock-scroll="true"
-    >
-        <el-calendar v-model="calendarDate" :disabled-date="disablePastDates">
-            <template #date-cell="{ data }">
-                <div
-                    class="cell-date-wrapper"
-                    :class="getCellClass(data)"
-                    @click="handleDateClickSingle(data)"
-                >
+            <div class="dialog-footer gap-3 d-flex justify-content-between">
+                <div>
                     <div
-                        class="date-cell"
-                        :class="{
-                            'is-disabled-custom': disablePastDates(data.date),
-                        }"
+                        class="px-2 rounded d-flex justify-content-center align-items-center bg-primary"
                     >
-                        {{ data.day.split("-")[2] }}
+                        <div v-if="!tempStartDate" class="text-white">
+                            Pilih Tanggal Mulai
+                        </div>
+                        <div
+                            v-if="tempStartDate && !tempEndDate"
+                            class="text-white"
+                        >
+                            Pilih Tanggal Selesai
+                        </div>
+                        <div
+                            v-if="tempStartDate && tempEndDate"
+                            class="text-white"
+                        >
+                            {{ formatTanggalTemp(tempStartDate, tempEndDate) }}
+                        </div>
+                    </div>
+                    <div
+                        style="font-size: 0.8rem"
+                        class="text-danger text-start"
+                    >
+                        Klik 2 kali jika ingin 1 hari!
                     </div>
                 </div>
-            </template>
-        </el-calendar>
-
-        <template #footer>
-            <div class="dialog-footer gap-3 d-flex justify-content-end">
-                <el-button
-                    @click="handleCancel"
-                    class="btn-secondary p-1 rounded-3"
-                    >Batal</el-button
-                >
-                <el-button
-                    class="shiningEffect btn-success py-0 rounded-3 px-1 py-1"
-                    :disabled="!tempEndDate"
-                    @click="confirmDate('single')"
-                >
-                    Pilih Tanggal
-                </el-button>
-            </div>
-        </template>
-    </el-dialog>
-
-    <!-- Delete Modal -->
-    <el-dialog
-        v-model="showDeleteModal"
-        title="Konfirmasi Hapus"
-        width="400px"
-        center
-        :lock-scroll="true"
-    >
-        <div class="delete-modal-content">
-            <i class="bi bi-exclamation-triangle warning-icon"></i>
-            <p>
-                Anda yakin ingin Mensetujui pengajuan izin
-                <strong>{{ deleteItemId }}</strong
-                >?
-            </p>
-            <p class="text-muted">Aksi ini tidak dapat dibatalkan.</p>
-        </div>
-        <template #footer>
-            <div class="delete-modal-footer">
-                <button
-                    class="btn-modern btn-secondary"
-                    @click="showDeleteModal = false"
-                >
-                    Batal
-                </button>
-                <button class="btn-modern btn-danger" @click="confirmDelete">
-                    <i
-                        class="bi bi-trash d-flex justify-content-center align-items-center"
-                    ></i>
-                    Simpan
-                </button>
+                <div class="d-flex gap-2">
+                    <el-button
+                        style="cursor: pointer !important"
+                        @click="handleCancel"
+                        class="btn-secondary p-1 rounded-3"
+                        >Batal</el-button
+                    >
+                    <el-button
+                        style="cursor: pointer !important"
+                        class="btn-modern btn-success py-1 rounded-3 px-1"
+                        :disabled="!tempEndDate"
+                        @click="confirmDate('range')"
+                    >
+                        Pilih Tanggal
+                    </el-button>
+                </div>
             </div>
         </template>
     </el-dialog>
@@ -2012,6 +2298,188 @@
         </template>
     </el-dialog>
 
+    <!-- Calendar Range Cuti-->
+    <el-dialog
+        v-model="dialogVisibleCuti"
+        title="Pilih Tanggal Mulai dan Selesai Cuti"
+        width="480px"
+        align-center
+        :lock-scroll="true"
+    >
+        <el-calendar
+            v-model="calendarDateCuti"
+            :disabled-date="disablePastDatesCuti"
+        >
+            <template #date-cell="{ data }">
+                <el-tooltip
+                    :disabled="!isSpecialDate(data.date)"
+                    :content="getSpecialDateTooltip(data.date)"
+                    placement="top"
+                >
+                    <div
+                        class="cell-date-wrapper"
+                        :class="getCellClass(data)"
+                        @click="handleDateClick(data)"
+                    >
+                        <div
+                            class="date-cell"
+                            :class="{
+                                'is-disabled-custom': disablePastDates(
+                                    data.date
+                                ),
+                            }"
+                        >
+                            {{ data.day.split("-")[2] }}
+                        </div>
+                    </div>
+                </el-tooltip>
+            </template>
+        </el-calendar>
+
+        <template #footer>
+            <div class="dialog-footer gap-3 d-flex justify-content-between">
+                <div
+                    class="px-2 rounded d-flex justify-content-center align-items-center bg-primary"
+                >
+                    <div v-if="!tempStartDate" class="text-white">
+                        Pilih Tanggal Mulai
+                    </div>
+                    <div
+                        v-if="tempStartDate && !tempEndDate"
+                        class="text-white"
+                    >
+                        Pilih Tanggal Selesai
+                    </div>
+                    <div v-if="tempStartDate && tempEndDate" class="text-white">
+                        {{ formatTanggalTemp(tempStartDate, tempEndDate) }}
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <el-button
+                        style="cursor: pointer !important"
+                        @click="handleCancel"
+                        class="btn-secondary p-1 rounded-3"
+                        >Batal</el-button
+                    >
+                    <el-button
+                        style="cursor: pointer !important"
+                        class="btn-modern btn-success py-1 rounded-3 px-1"
+                        :disabled="!tempEndDate"
+                        @click="confirmDate('single')"
+                    >
+                        Pilih Tanggal
+                    </el-button>
+                </div>
+            </div>
+        </template>
+    </el-dialog>
+
+    <!-- Calendar Single -->
+    <el-dialog
+        v-model="dialogVisibleSingle"
+        title="Pilih satu tanggal"
+        width="480px"
+        align-center
+        :lock-scroll="true"
+    >
+        <el-calendar
+            v-model="calendarDate"
+            :disabled-date="disablePastDatesSingle"
+        >
+            <template #date-cell="{ data }">
+                <el-tooltip
+                    :disabled="!isSpecialDateSingle(data.date)"
+                    :content="getSpecialDateTooltipSingle(data.date)"
+                    placement="top"
+                >
+                    <div
+                        class="cell-date-wrapper"
+                        :class="getCellClassSingle(data)"
+                        @click="handleDateClickSingle(data)"
+                    >
+                        <div
+                            class="date-cell"
+                            :class="{
+                                'is-disabled-custom': disablePastDatesSingle(
+                                    data.date
+                                ),
+                            }"
+                        >
+                            {{ data.day.split("-")[2] }}
+                        </div>
+                    </div>
+                </el-tooltip>
+            </template>
+        </el-calendar>
+
+        <template #footer>
+            <div class="dialog-footer gap-3 d-flex justify-content-between">
+                <div
+                    class="px-2 rounded d-flex justify-content-center align-items-center bg-primary"
+                >
+                    <div v-if="!tempStartDate" class="text-white">
+                        Pilih Tanggal
+                    </div>
+                    <div v-else class="text-white">
+                        {{ formatTanggalTemp(tempStartDate) }}
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <el-button
+                        style="cursor: pointer !important"
+                        @click="handleCancel"
+                        class="btn-secondary p-1 rounded-3"
+                        >Batal</el-button
+                    >
+                    <el-button
+                        style="cursor: pointer !important"
+                        class="btn-modern btn-success py-1 rounded-3 px-1"
+                        :disabled="!tempStartDate"
+                        @click="confirmDate('single')"
+                    >
+                        Pilih Tanggal
+                    </el-button>
+                </div>
+            </div>
+        </template>
+    </el-dialog>
+
+    <!-- Calendar Filter -->
+    <el-dialog
+        v-model="dialogFilter"
+        title="Pilih Tanggal Filter"
+        width="480px"
+        align-center
+        z-index="1048"
+    >
+        <el-calendar v-model="calendarDateFilter">
+            <template #date-cell="{ data }">
+                <div
+                    class="cell-wrapper"
+                    :class="getCellClass(data)"
+                    @click="handleDateClickFilter(data)"
+                >
+                    <div class="date-cell">
+                        {{ data.day.split("-")[2] }}
+                    </div>
+                </div>
+            </template>
+        </el-calendar>
+
+        <template #footer>
+            <div class="dialog-footer">
+                <el-button @click="handleCancelFilter">Batal</el-button>
+                <el-button
+                    class="shiningEffect btn-primary"
+                    :disabled="!tempStartDateFilter"
+                    @click="getDateFilter"
+                >
+                    Pilih Tanggal
+                </el-button>
+            </div>
+        </template>
+    </el-dialog>
+
     <!-- alert modal -->
     <el-dialog
         v-model="showAlertModal"
@@ -2049,14 +2517,15 @@ import {
     ElDialog,
     ElCalendar,
     ElMessage,
-    ElSteps,
     ElTag,
-    ElStep,
     ElTooltip,
+    ElSteps,
+    ElStep,
     ElNotification,
     ElSlider,
 } from "element-plus";
 import "element-plus/dist/index.css";
+import { differenceInDays } from "date-fns";
 import { capitalize } from "vue";
 // import DotLottieVue from 'dotlottie-vue'; // Uncomment if you are using dotlottie-vue
 
@@ -2067,15 +2536,16 @@ export default {
         ElMessage,
         ElSteps,
         ElStep,
-        ElTooltip,
-        ElTag,
         ElNotification,
+        ElTooltip,
         ElSlider,
+        ElTag,
         // DotLottieVue, // Uncomment if you are using dotlottie-vue
     },
     props: {
         dataShift: Array,
         namaKaryawan: String,
+        IzinApprover: Array,
     },
     data() {
         return {
@@ -2092,24 +2562,44 @@ export default {
             tempEndDateExport: null,
             calendarDateExport: new Date(),
 
+            TanggalSakitIzin: [],
+            TanggalCuti: [],
+            TanggalPulangTerlambat: [],
+
+            AssignJenisCuti: null,
+
             filterDropdown: "",
+            dataCuti: { Nama: "Undifined", Sisa_Cuti: 0, Hutang_Cuti: 0 },
+            hutangTerhitung: 0,
+            showCutiAlertModal: false,
+            specialDates: [], //nanti ganti dengan data dari database
+
+            pilihanIzin: [
+                { Jenis: "Satu Hari Penuh", value: "izinFull" },
+                { Jenis: "Pulang Cepat", value: "pulangCepat" },
+                { Jenis: "Datang Terlambat", value: "terlambat" },
+            ],
+            pilihanSakit: [
+                { Jenis: "Satu Hari Penuh", value: "sakit" },
+                { Jenis: "Setengah Hari", value: "sakitTibaTiba" },
+            ],
 
             dialogFilter: false,
-            selectedDateFilter: null,
+            selectedDateFilter: null, // Ini akan menyimpan [startDate, endDate]
             tempStartDateFilter: null,
+            calendarDateCuti: new Date(),
+            calendarDateFilter: new Date(),
 
+            dialogVisibleCuti: false,
+            dialogVisibleSingle: false,
+            calendarDate: new Date(), // Pastikan ini ada dan diinisialisasi
+            tempEndDate: null,
+            isLoadingAssign: false,
+            activeNode: null,
+            clickedElement: null,
+            actionMenuPosition: { top: "0px", left: "0px" },
             loadingSimpan: false,
-            titleAlert: "",
-            confirmIzinId: null,
-            decisionIzin: null,
-            requesterConfirm: null,
-            approverConfirm: null,
-            buttonConfirmModal: null,
-            iconConfirm: "",
-            showConfirmModal: false,
-            yesModal: null,
-
-            showPictureModal: false,
+            loadingAttachment: false,
             showDetailModal: false,
             selectedItem: null,
             showDeleteModal: false,
@@ -2121,6 +2611,8 @@ export default {
                 "Izin Sakit",
                 "Izin Terlambat",
                 "Pulang Cepat",
+                "Tidak Masuk",
+                "Cuti Tahunan",
                 "Izin Pribadi",
             ],
             viewMode: "table",
@@ -2131,7 +2623,7 @@ export default {
             itemsPerPage: 8,
             currentDate: new Date(),
             showAssignModal: false,
-            dayNight: "Siang",
+            dayNight: "Siang", // This would typically be dynamic based on current time
             permissionRecords: [],
 
             min: null,
@@ -2139,10 +2631,11 @@ export default {
             jamOptions: [],
 
             assignIzinType: null,
-            AssignDateRange: null,
-            AssignTime: null,
+            assignIzinType2: null,
+            AssignDateRange: null, // Stores confirmed date range [start_date_string, end_date_string]
+            AssignTime: null, // For time selection in partial leave
             permissionReason: "",
-            AssignFile: null,
+            AssignFile: null, // To store the selected file object
 
             dialogVisible: false,
             dialogVisibleSingle: false,
@@ -2150,8 +2643,8 @@ export default {
             tempEndDate: null,
 
             DataIzin: null,
-
-            loadingAttachment: false,
+            active: 0,
+            // Marks for the time slider
             min: null,
             max: null,
             timeMarks: {
@@ -2165,11 +2658,19 @@ export default {
                 15: "15",
                 16: "16",
             },
-            windowWidth: window.innerWidth, // For responsive design checks
+            windowWidth: window.innerWidth,
             approvalData: ["M.REZA: Y, RIDHO RAHMAT: T, BUDI SANTOSO: N"],
         };
     },
     computed: {
+        dataDiproses() {
+            let dataAll = this.permissionRecords.map((emp) => ({ ...emp }));
+            let dataRaw = dataAll.filter((e) => {
+                return e.status == "Diproses";
+            });
+
+            return dataRaw.length ?? 0;
+        },
         parsedData() {
             const allApprovals = this.approvalData.join(", ").split(", ");
             return allApprovals.map((item) => {
@@ -2178,6 +2679,8 @@ export default {
             });
         },
         tooltipContent() {
+            // console.log(this.parsedData);
+
             const totalApprovals = this.parsedData.length;
             const approvedCount = this.parsedData.filter(
                 (item) => item.status === "Y" || item.status === "T"
@@ -2491,9 +2994,331 @@ export default {
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.6; transform: scale(1.1); }
         }
-            </style>
-        `;
+    </style>
+`;
         },
+        //     tooltipContent() {
+        //         const totalApprovals = this.parsedData.length;
+        //         const approvedCount = this.parsedData.filter(
+        //             (item) => item.status === "Y"
+        //         ).length;
+        //         const rejectedCount = this.parsedData.filter(
+        //             (item) => item.status === "T"
+        //         ).length;
+        //         const progressCount = this.parsedData.filter(
+        //             (item) => item.status === "N"
+        //         ).length;
+        //         const approvalRate = Math.round(
+        //             (approvedCount / totalApprovals) * 100
+        //         );
+
+        //         // Find active step
+        //         const firstRejected = this.parsedData.findIndex(
+        //             (item) => item.status === "T"
+        //         );
+        //         const firstPending = this.parsedData.findIndex(
+        //             (item) => item.status === "N"
+        //         );
+        //         const activeIndex =
+        //             firstRejected >= 0
+        //                 ? firstRejected
+        //                 : firstPending >= 0
+        //                 ? firstPending
+        //                 : -1;
+
+        //         return `
+        //     <div class="approval-tooltip">
+        //         <div class="tooltip-header">
+        //             <span class="header-title">Progress Persetujuan</span>
+        //             <span class="approval-rate">
+        //                 <span class="rate-value">${approvalRate}%</span>
+        //                 <span class="rate-label">Complete</span>
+        //             </span>
+        //         </div>
+
+        //         <div class="approval-steps">
+        //             ${this.parsedData
+        //                 .map((item, index) => {
+        //                     const isActive = index === activeIndex;
+        //                     const isApproved = item.status === "Y";
+        //                     const isRejected = item.status === "T";
+        //                     const isPending = item.status === "N";
+
+        //                     return `
+        //                     <div class="approval-step ${
+        //                         isActive ? "active-step" : ""
+        //                     }">
+        //                         <div class="step-icon ${
+        //                             isApproved
+        //                                 ? "approved"
+        //                                 : isRejected
+        //                                 ? "rejected"
+        //                                 : isPending
+        //                                 ? "pending"
+        //                                 : "waiting"
+        //                         }">
+        //                             ${
+        //                                 isApproved
+        //                                     ? "✓"
+        //                                     : isRejected
+        //                                     ? "✕"
+        //                                     : isPending
+        //                                     ? "⏳"
+        //                                     : "?"
+        //                             }
+        //                         </div>
+        //                         <div class="step-details">
+        //                             <div class="step-name">${item.name}</div>
+        //                             <div class="step-status ${
+        //                                 isApproved
+        //                                     ? "approved"
+        //                                     : isRejected
+        //                                     ? "rejected"
+        //                                     : isPending
+        //                                     ? "pending"
+        //                                     : "waiting"
+        //                             }">
+        //                                 ${
+        //                                     isApproved
+        //                                         ? "Disetujui"
+        //                                         : isRejected
+        //                                         ? "Ditolak"
+        //                                         : isPending
+        //                                         ? "Dalam Proses"
+        //                                         : "Menunggu"
+        //                                 }
+        //                             </div>
+        //                         </div>
+        //                         ${
+        //                             isActive
+        //                                 ? '<div class="step-indicator"></div>'
+        //                                 : ""
+        //                         }
+        //                     </div>
+        //                 `;
+        //                 })
+        //                 .join("")}
+        //         </div>
+
+        //         <div class="approval-summary">
+        //             <div class="summary-item approved">
+        //                 <div class="summary-count">${approvedCount}</div>
+        //                 <div class="summary-label">Disetujui</div>
+        //             </div>
+        //             <div class="summary-item pending">
+        //                 <div class="summary-count">${progressCount}</div>
+        //                 <div class="summary-label">Proses</div>
+        //             </div>
+        //             <div class="summary-item rejected">
+        //                 <div class="summary-count">${rejectedCount}</div>
+        //                 <div class="summary-label">Ditolak</div>
+        //             </div>
+        //         </div>
+        //     </div>
+
+        //     <style>
+        //         .approval-tooltip {
+        //             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        //             max-width: 320px;
+        //             padding: 0;
+        //             border-radius: 8px;
+        //             background: white;
+        //             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        //             border: 1px solid #e2e8f0;
+        //         }
+
+        //         .tooltip-header {
+        //             display: flex;
+        //             justify-content: space-between;
+        //             align-items: center;
+        //             padding: 12px 16px;
+        //             background: #f8fafc;
+        //             border-bottom: 1px solid #e2e8f0;
+        //             border-radius: 8px 8px 0 0;
+        //         }
+
+        //         .header-title {
+        //             font-weight: 600;
+        //             font-size: 14px;
+        //             color: #1e293b;
+        //         }
+
+        //         .approval-rate {
+        //             display: flex;
+        //             flex-direction: column;
+        //             align-items: flex-end;
+        //         }
+
+        //         .rate-value {
+        //             font-weight: 700;
+        //             font-size: 16px;
+        //             color: #3b82f6;
+        //         }
+
+        //         .rate-label {
+        //             font-size: 11px;
+        //             color: #64748b;
+        //             margin-top: 2px;
+        //         }
+
+        //         .approval-steps {
+        //             padding: 12px 16px;
+        //             max-height: 220px;
+        //             overflow-y: auto;
+        //         }
+
+        //         .approval-step {
+        //             display: flex;
+        //             align-items: center;
+        //             padding: 10px 8px;
+        //             margin-bottom: 6px;
+        //             border-radius: 6px;
+        //             transition: all 0.2s ease;
+        //         }
+
+        //         .active-step {
+        //             background: #f1f5f9;
+        //             box-shadow: 0 0 0 1px #e2e8f0;
+        //         }
+
+        //         .step-icon {
+        //             width: 24px;
+        //             height: 24px;
+        //             border-radius: 6px;
+        //             display: flex;
+        //             align-items: center;
+        //             justify-content: center;
+        //             margin-right: 12px;
+        //             font-size: 12px;
+        //             font-weight: 600;
+        //             flex-shrink: 0;
+        //         }
+
+        //         .approved {
+        //             background: #10b981;
+        //             color: white;
+        //             box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+        //         }
+
+        //         .rejected {
+        //             background: #ef4444;
+        //             color: white;
+        //             box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+        //         }
+
+        //         .pending {
+        //             background: #f59e0b;
+        //             color: white;
+        //             box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+        //         }
+
+        //         .waiting {
+        //             background: #e2e8f0;
+        //             color: #64748b;
+        //         }
+
+        //         .step-details {
+        //             flex: 1;
+        //             min-width: 0;
+        //         }
+
+        //         .step-name {
+        //             font-weight: 500;
+        //             font-size: 13px;
+        //             color: #1e293b;
+        //             margin-bottom: 4px;
+        //             overflow: hidden;
+        //             text-overflow: ellipsis;
+        //             white-space: nowrap;
+        //         }
+
+        //         .step-status {
+        //             font-size: 11px;
+        //             font-weight: 500;
+        //             padding: 3px 8px;
+        //             border-radius: 4px;
+        //             display: inline-block;
+        //         }
+
+        //         .step-status.approved {
+        //             color: #065f46;
+        //             background: #d1fae5;
+        //         }
+
+        //         .step-status.rejected {
+        //             color: #991b1b;
+        //             background: #fee2e2;
+        //         }
+
+        //         .step-status.pending {
+        //             color: #92400e;
+        //             background: #fef3c7;
+        //         }
+
+        //         .step-status.waiting {
+        //             color: #475569;
+        //             background: #f1f5f9;
+        //         }
+
+        //         .step-indicator {
+        //             width: 6px;
+        //             height: 6px;
+        //             border-radius: 50%;
+        //             background: #3b82f6;
+        //             margin-left: 8px;
+        //             animation: pulse 1.5s infinite;
+        //             flex-shrink: 0;
+        //         }
+
+        //         .approval-summary {
+        //             display: grid;
+        //             grid-template-columns: 1fr 1fr 1fr;
+        //             gap: 8px;
+        //             padding: 12px 16px;
+        //             border-top: 1px solid #e2e8f0;
+        //             background: #f8fafc;
+        //             border-radius: 0 0 8px 8px;
+        //         }
+
+        //         .summary-item {
+        //             text-align: center;
+        //             padding: 8px;
+        //             border-radius: 6px;
+        //             background: white;
+        //             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        //         }
+
+        //         .summary-count {
+        //             font-size: 16px;
+        //             font-weight: 700;
+        //             margin-bottom: 2px;
+        //         }
+
+        //         .summary-item.approved .summary-count {
+        //             color: #10b981;
+        //         }
+
+        //         .summary-item.pending .summary-count {
+        //             color: #f59e0b;
+        //         }
+
+        //         .summary-item.rejected .summary-count {
+        //             color: #ef4444;
+        //         }
+
+        //         .summary-label {
+        //             font-size: 11px;
+        //             font-weight: 500;
+        //             color: #64748b;
+        //         }
+
+        //         @keyframes pulse {
+        //             0%, 100% { opacity: 1; transform: scale(1); }
+        //             50% { opacity: 0.6; transform: scale(1.1); }
+        //         }
+        //     </style>
+        // `;
+        //     },
         filteredSuggestions() {
             if (!this.searchQuery) {
                 return this.searchSuggestions;
@@ -2517,7 +3342,8 @@ export default {
                         item.Alasan.toLowerCase().includes(query) ||
                         this.maknaStatus(item.Status)
                             .toLowerCase()
-                            .includes(query)
+                            .includes(query) ||
+                        item.nama_requester.toLowerCase().includes(query)
                 );
             }
             if (this.filterDropdown) {
@@ -2535,47 +3361,22 @@ export default {
                 );
             }
 
-            // if (this.selectedDateFilter) {
-            //     filtered = filtered.filter((item) => {
-            //         // Convert all dates to Date objects for reliable comparison
-            //         const selectedDate = new Date(this.selectedDateFilter);
-            //         const startDate = new Date(item.Tanggal_Mulai);
-            //         const endDate = new Date(item.Tanggal_Selesai);
-
-            //         // Check if selectedDate is greater than or equal to Tanggal_Mulai
-            //         // AND less than or equal to Tanggal_Selesai
-            //         return (
-            //             (selectedDate >= startDate &&
-            //                 selectedDate <= endDate) ||
-            //             null
-            //         );
-            //     });
-            // }
-
             if (this.selectedDateFilter) {
                 filtered = filtered.filter((item) => {
                     const selectedDate = new Date(this.selectedDateFilter);
-                    if (isNaN(selectedDate)) return false;
                     selectedDate.setHours(0, 0, 0, 0);
 
-                    const { startDate, endDate } = this.parseTanggalIzin(
-                        item.TanggalIzin
-                    );
-                    if (!startDate) return false;
+                    const startDate = new Date(item.Tanggal_Mulai);
+                    startDate.setHours(0, 0, 0, 0);
 
-                    const result = endDate
+                    const endDate = item.Tanggal_Selesai
+                        ? new Date(item.Tanggal_Selesai)
+                        : null;
+                    if (endDate) endDate.setHours(0, 0, 0, 0);
+
+                    return endDate
                         ? selectedDate >= startDate && selectedDate <= endDate
                         : selectedDate.getTime() === startDate.getTime();
-
-                    console.log("DEBUG:", {
-                        selected: selectedDate,
-                        start: startDate,
-                        end: endDate,
-                        hasil: result,
-                        raw: item.TanggalIzin,
-                    });
-
-                    return result;
                 });
             }
 
@@ -2592,11 +3393,12 @@ export default {
             return this.filteredPermissions.slice(start, end);
         },
         visiblePages() {
-            const maxVisible = 5;
+            const maxVisible = 5; // Maximum number of visible page buttons
             const half = Math.floor(maxVisible / 2);
             let start = Math.max(1, this.currentPage - half);
             let end = Math.min(this.totalPages, start + maxVisible - 1);
 
+            // Adjust start if we are near the end
             if (end - start + 1 < maxVisible) {
                 start = Math.max(1, end - maxVisible + 1);
             }
@@ -2605,84 +3407,15 @@ export default {
         },
 
         assignSelectedShift() {
+            // This is a placeholder. In a real app, you'd check if all required fields are filled.
             return this.assignIzinType && this.AssignDateRange;
         },
     },
     methods: {
-        parseTanggalIzin(str) {
-            if (!str) return { startDate: null, endDate: null };
-
-            // Mapping bulan
-            const monthMap = {
-                January: 0,
-                February: 1,
-                March: 2,
-                April: 3,
-                May: 4,
-                June: 5,
-                July: 6,
-                August: 7,
-                September: 8,
-                October: 9,
-                November: 10,
-                December: 11,
-            };
-
-            // Case rentang: "23-26 July 2025"
-            const rangeMatch = str.match(
-                /^(\d{1,2})-(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/
-            );
-            if (rangeMatch) {
-                const [, startDay, endDay, monthName, year] = rangeMatch;
-                const month = monthMap[monthName];
-                const startDate = new Date(year, month, parseInt(startDay));
-                const endDate = new Date(year, month, parseInt(endDay));
-
-                startDate.setHours(0, 0, 0, 0);
-                endDate.setHours(0, 0, 0, 0);
-
-                return { startDate, endDate };
-            }
-
-            // Case single date: "28 August 2025 08:30"
-            const singleMatch = str.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
-            if (singleMatch) {
-                const [, day, monthName, year] = singleMatch;
-                const month = monthMap[monthName];
-                const d = new Date(year, month, parseInt(day));
-                d.setHours(0, 0, 0, 0);
-
-                return { startDate: d, endDate: null };
-            }
-
-            // Default gagal
-            return { startDate: null, endDate: null };
-        },
-        formatDateToYYYYMMDD(date) {
-            const d = new Date(date);
-            const year = d.getFullYear();
-            // getMonth() adalah 0-indexed, jadi tambahkan 1
-            const month = (d.getMonth() + 1).toString().padStart(2, "0");
-            const day = d.getDate().toString().padStart(2, "0");
-            return `${year}-${month}-${day}`;
-        },
-        openDialogExport() {
-            if (this.selectedDateExport.length === 2) {
-                const [startStr, endStr] = this.selectedDateExport;
-                this.tempStartDateExport = new Date(startStr + "T00:00:00");
-                this.tempEndDateExport = new Date(endStr + "T00:00:00");
-                this.calendarDateExport = new Date(startStr + "T00:00:00");
-            } else {
-                this.tempStartDateExport = null;
-                this.tempEndDateExport = null;
-                this.calendarDateExport = new Date();
-            }
-            this.dialogVisibleExport = true;
-        },
         async getExportData() {
             try {
                 this.loading = true;
-                const response = await axios.get("/izin/getExportDH", {
+                const response = await axios.get("/izin/getExportAdmin", {
                     params: {
                         start: this.tempStartDateExport,
                         end: this.tempEndDateExport,
@@ -2718,14 +3451,14 @@ export default {
         async exportAbsensiExcel() {
             const ExcelJS = await import("exceljs");
             const workbook = new ExcelJS.Workbook();
-            const worksheet = workbook.addWorksheet("Izin Export");
+            const worksheet = workbook.addWorksheet("Absensi Export");
 
             try {
                 const headerStyle = {
                     fill: {
                         type: "pattern",
                         pattern: "solid",
-                        fgColor: { argb: "FFEB9C" },
+                        fgColor: { argb: "ffeb9c" },
                     },
                     font: { bold: true },
                     alignment: { vertical: "middle", horizontal: "center" },
@@ -2747,29 +3480,39 @@ export default {
                     alignment: { vertical: "middle", horizontal: "left" },
                 };
 
+                const centeredCellStyle = {
+                    ...cellStyle,
+                    alignment: { vertical: "middle", horizontal: "center" },
+                };
+
+                // helper untuk mapping tipe izin
                 const parseIzin = (tipe) => {
                     if (tipe === "izinFull") return "Izin Pribadi";
                     else if (tipe === "sakit") return "Izin Sakit";
                     else if (tipe === "pulangCepat") return "Pulang Cepat";
                     else if (tipe === "terlambat") return "Izin Terlambat";
-                    else if (["cuti", "CUTI", "cutiHutang"].includes(tipe))
+                    else if (
+                        tipe === "cuti" ||
+                        tipe === "CUTI" ||
+                        tipe === "cutiHutang"
+                    )
                         return "Cuti";
                     return tipe;
                 };
 
                 // Judul
-                worksheet.mergeCells("A1:H1");
-                worksheet.getCell(
-                    "A1"
-                ).value = `Export Data Izin Approver ${this.capitalize(
-                    this.namaKaryawan
-                )}`;
+                worksheet.mergeCells("B1:I1");
+                worksheet.getCell("B1").value = `Izin Karyawan Periode`;
+                worksheet.getCell("B1").style = headerStyle;
+
+                worksheet.getCell("A1").value = "Tanggal";
+                worksheet.mergeCells("A1:A2");
                 worksheet.getCell("A1").style = headerStyle;
 
-                // Header
+                // Header kolom
                 const headers = [
                     "No. Transaksi",
-                    "Nama Pengaju",
+                    "Nama Karyawan",
                     "Jenis Izin",
                     "Jam",
                     "Tanggal Mulai",
@@ -2778,13 +3521,14 @@ export default {
                     "Status",
                 ];
                 const headerRow = worksheet.getRow(2);
-                headerRow.values = headers;
-                headerRow.eachCell((cell) => {
-                    cell.style = headerStyle;
+                headerRow.values = [null, ...headers];
+                headerRow.eachCell((cell, colNumber) => {
+                    if (colNumber > 0) cell.style = headerStyle;
                 });
 
                 worksheet.columns = [
-                    { key: "noTransaksi", width: 20 },
+                    { key: "tanggal", width: 20 },
+                    { key: "noTrans", width: 20 },
                     { key: "nama", width: 25 },
                     { key: "jenisIzin", width: 20 },
                     { key: "jam", width: 15 },
@@ -2794,98 +3538,94 @@ export default {
                     { key: "status", width: 30 },
                 ];
 
-                let rowIndex = 3;
-                const today = new Date();
+                // Grouping
+                let grouped = {};
+                this.dataExport.forEach((item) => {
+                    let tanggalMulai = item.Tanggal_Mulai?.split(" ")[0];
+                    let tanggalSelesai = item.Tanggal_Selesai
+                        ? item.Tanggal_Selesai.split(" ")[0]
+                        : "Tidak ada";
+                    let rangeTanggal = `${tanggalMulai} s.d. ${tanggalSelesai}`;
 
-                this.dataExport.forEach((user) => {
-                    const row = worksheet.getRow(rowIndex);
+                    if (!grouped[rangeTanggal]) grouped[rangeTanggal] = {};
+                    if (!grouped[rangeTanggal][item.No_Transaksi])
+                        grouped[rangeTanggal][item.No_Transaksi] = [];
+                    grouped[rangeTanggal][item.No_Transaksi].push(item);
+                });
 
-                    let tglMulai = "-";
-                    let tglSelesai = "Tidak ada";
-                    let jam = "-";
+                // Isi data
+                let currentRowIndex = 3;
+                Object.entries(grouped).forEach(([rangeTanggal, transaksi]) => {
+                    const dateBlockStartRow = currentRowIndex;
 
-                    // Parsing tanggal izin
-                    if (
-                        user.Tipe_Izin === "izinFull" ||
-                        user.Tipe_Izin === "sakit" ||
-                        user.Tipe_Izin === "cuti"
-                    ) {
-                        if (user.TanggalIzin?.includes("-")) {
-                            // contoh: "18-20 August 2025"
-                            const parts = user.TanggalIzin.split(" ");
-                            if (parts.length >= 3 && parts[0].includes("-")) {
-                                const [start, end] = parts[0].split("-");
-                                tglMulai =
-                                    start + " " + parts[1] + " " + parts[2];
-                                tglSelesai =
-                                    end + " " + parts[1] + " " + parts[2];
-                            } else {
-                                tglMulai = user.TanggalIzin;
-                            }
-                        } else {
-                            tglMulai = user.TanggalIzin;
-                        }
-                    } else {
-                        // contoh: "26 August 2025 14:00"
-                        const parts = user.TanggalIzin?.split(" ");
-                        if (parts?.length >= 4) {
-                            jam = parts[3];
-                            tglMulai =
-                                parts[0] + " " + parts[1] + " " + parts[2];
-                        } else {
-                            tglMulai = user.TanggalIzin || "-";
-                        }
-                    }
+                    Object.entries(transaksi).forEach(([noTrans, details]) => {
+                        const transBlockStartRow = currentRowIndex;
 
-                    // Cek status
-                    let statusFinal = user.status;
-                    if (
-                        user.status?.toLowerCase() === "ditolak" &&
-                        user.Approver?.toLowerCase() === "sistem"
-                    ) {
-                        statusFinal = "Ditolak oleh Sistem (Expired)";
-                    } else {
-                        // Cek expired lebih dari 2 hari
-                        try {
-                            const izinDate = new Date(tglMulai);
-                            const diffDays = Math.floor(
-                                (today - izinDate) / (1000 * 60 * 60 * 24)
-                            );
+                        details.forEach((user) => {
+                            const row = worksheet.getRow(currentRowIndex);
+
+                            // Status handling
+                            let statusFinal = user.status;
                             if (
-                                diffDays > 2 &&
-                                user.status?.toLowerCase() === "diproses"
+                                user.status === "Ditolak" &&
+                                user.Approver === "Sistem"
                             ) {
                                 statusFinal = "Ditolak oleh Sistem (Expired)";
                             }
-                        } catch (e) {
-                            console.warn(
-                                "Tanggal izin tidak valid:",
-                                user.TanggalIzin
+
+                            row.values = {
+                                nama: user.Nama,
+                                jenisIzin: parseIzin(user.Tipe_Izin),
+                                jam: user.Jam_Mulai || "-",
+                                tglMulai: user.Tanggal_Mulai?.split(" ")[0],
+                                tglSelesai: user.Tanggal_Selesai
+                                    ? user.Tanggal_Selesai.split(" ")[0]
+                                    : "Tidak ada",
+                                alasan: user.Alasan || "-",
+                                status: statusFinal,
+                            };
+
+                            row.eachCell((cell, colNumber) => {
+                                if (colNumber > 1) cell.style = cellStyle;
+                            });
+
+                            currentRowIndex++;
+                        });
+
+                        // Merge kolom "No. Transaksi"
+                        const transBlockEndRow = currentRowIndex - 1;
+                        if (transBlockStartRow <= transBlockEndRow) {
+                            worksheet.mergeCells(
+                                `B${transBlockStartRow}:B${transBlockEndRow}`
                             );
+                            const cellB = worksheet.getCell(
+                                `B${transBlockStartRow}`
+                            );
+                            cellB.value = noTrans;
+                            cellB.style = centeredCellStyle;
                         }
-                    }
-
-                    row.values = {
-                        noTransaksi: user.No_Transaksi,
-                        nama: user.requester_Nama,
-                        jenisIzin: parseIzin(user.Tipe_Izin),
-                        jam,
-                        tglMulai,
-                        tglSelesai,
-                        alasan: user.Alasan || "-",
-                        status: statusFinal,
-                    };
-
-                    row.eachCell((cell) => {
-                        cell.style = cellStyle;
                     });
-                    rowIndex++;
+
+                    // Merge kolom "Tanggal"
+                    const dateBlockEndRow = currentRowIndex - 1;
+                    if (dateBlockStartRow <= dateBlockEndRow) {
+                        worksheet.mergeCells(
+                            `A${dateBlockStartRow}:A${dateBlockEndRow}`
+                        );
+                        const cellA = worksheet.getCell(
+                            `A${dateBlockStartRow}`
+                        );
+                        cellA.value = rangeTanggal;
+                        cellA.style = centeredCellStyle;
+                    }
                 });
 
+                // Download
                 const buffer = await workbook.xlsx.writeBuffer();
                 const blob = new Blob([buffer], {
                     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 });
+
                 const link = document.createElement("a");
                 link.href = URL.createObjectURL(blob);
                 link.download = `Export_Izin_${new Date()
@@ -2932,36 +3672,6 @@ export default {
                     this.tempEndDateExport = clickedDate;
                 }
             }
-        },
-        getCellClassExport(data) {
-            const classes = {};
-            const dateObj = new Date(data.date);
-            const formattedDate = this.formatDateToYYYYMMDD(dateObj); // Menggunakan fungsi pembantu
-            const checkDate = new Date(formattedDate);
-            checkDate.setHours(0, 0, 0, 0);
-
-            // Logika untuk rentang tanggal yang dipilih
-            const start = this.tempStartDateExport
-                ? this.tempStartDateExport.setHours(0, 0, 0, 0)
-                : null;
-            const end = this.tempEndDateExport
-                ? this.tempEndDateExport.setHours(0, 0, 0, 0)
-                : null;
-
-            if (start && checkDate.getTime() === start)
-                classes["is-start"] = true;
-            if (end && checkDate.getTime() === end) classes["is-end"] = true;
-            if (start && end && checkDate > start && checkDate < end) {
-                classes["is-in-range"] = true;
-            }
-
-            // Logika untuk hari Minggu (Weekend)
-            const dayOfWeek = dateObj.getDay(); // 0 = Minggu
-            if (dayOfWeek === 0) {
-                classes["is-red-date"] = true;
-            }
-
-            return classes;
         },
         handleCancelExport() {
             this.dialogVisibleExport = false;
@@ -3014,6 +3724,26 @@ export default {
                 bulan[end.getMonth()]
             } ${end.getFullYear()}`;
         },
+        parseStatus(status) {
+            if (!status) return "Diproses";
+
+            if (status == "Y") {
+                return "Disetujui";
+            } else if (status == "T") {
+                return "Ditolak";
+            } else if (status == "P") {
+                return "Ditolak oleh sistem";
+            } else {
+                return "Diproses";
+            }
+        },
+        checkScreenSize() {
+            if (window.innerWidth >= 768) {
+                this.viewMode = "table";
+            } else {
+                this.viewMode = "card";
+            }
+        },
         capitalize(value) {
             if (!value) return "";
             const words = value.split(" ");
@@ -3025,79 +3755,283 @@ export default {
             });
             return capitalizedWords.join(" ");
         },
-        pisahTanggal(tanggalIzin) {
-            if (!tanggalIzin) return null;
+        isSpecialDate(date) {
+            const formattedDate = this.formatDateToYYYYMMDD(date);
+            const checkDate = new Date(formattedDate);
+            checkDate.setHours(0, 0, 0, 0);
 
-            // 1. Handle date with time (18 July 2025 18:30)
-            const dateWithTimeMatch = tanggalIzin.match(
-                /^(\d{1,2}) ([A-Za-z]+) (\d{4}) (\d{1,2}):(\d{2})$/
-            );
-            if (dateWithTimeMatch) {
-                const [, day, month, year, hours, minutes] = dateWithTimeMatch;
-                const dateStr = `${month} ${day}, ${year} ${hours}:${minutes}`;
-                const date = new Date(dateStr);
-
-                if (!isNaN(date.getTime())) {
-                    return {
-                        startDate: new Date(date),
-                        endDate: new Date(date),
-                    };
-                }
-            }
-
-            // 2. Handle single date without time (18 July 2025)
-            const singleDateMatch = tanggalIzin.match(
-                /^(\d{1,2}) ([A-Za-z]+) (\d{4})$/
-            );
-            if (singleDateMatch) {
-                const [, day, month, year] = singleDateMatch;
-                const dateStr = `${month} ${day}, ${year}`;
-                const date = new Date(dateStr);
-
-                if (!isNaN(date.getTime())) {
-                    return {
-                        startDate: new Date(date.setHours(0, 0, 0, 0)),
-                        endDate: new Date(date.setHours(23, 59, 59, 999)),
-                    };
-                }
-            }
-
-            // 3. Handle date range (16-24 July 2025)
-            const rangeMatch = tanggalIzin.match(
-                /^(\d{1,2})-(\d{1,2}) ([A-Za-z]+) (\d{4})$/
-            );
-            if (rangeMatch) {
-                const [, startDay, endDay, month, year] = rangeMatch;
-                const startStr = `${month} ${startDay}, ${year}`;
-                const endStr = `${month} ${endDay}, ${year}`;
-
-                const startDate = new Date(startStr);
-                const endDate = new Date(endStr);
-
-                if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
-                    startDate.setHours(0, 0, 0, 0);
-                    endDate.setHours(23, 59, 59, 999);
-                    return { startDate, endDate };
-                }
-            }
-
-            console.error("Unrecognized date format:", tanggalIzin);
-            return null;
+            // This single `some()` call now checks all conditions
+            const data =
+                // 1. Check if it's a special day from specialDates
+                this.specialDates.some((sd) => sd.date === formattedDate) ||
+                // 2. Check if it's a Late/Early Leave day
+                this.TanggalPulangTerlambat.some((item) => {
+                    const start = new Date(item.Tanggal_Masuk_Pulang);
+                    start.setHours(0, 0, 0, 0);
+                    // Menggunakan getTime() untuk perbandingan objek Date yang akurat
+                    return checkDate.getTime() === start.getTime();
+                }) ||
+                // 3. Check if it's a Sick/Permit day
+                this.TanggalSakitIzin.some((item) => {
+                    const start = new Date(item.Tanggal_Sakit_Izin_Dari);
+                    const end = new Date(item.Tanggal_Sakit_Izin_Sampai);
+                    start.setHours(0, 0, 0, 0);
+                    end.setHours(0, 0, 0, 0);
+                    return checkDate >= start && checkDate <= end;
+                }) ||
+                // 4. Check if it's a Leave day
+                this.TanggalCuti.some((cuti) => {
+                    const start = new Date(cuti.Tanggal_Cuti_Dari);
+                    const end = new Date(cuti.Tanggal_Cuti_Sampai);
+                    start.setHours(0, 0, 0, 0);
+                    end.setHours(0, 0, 0, 0);
+                    return checkDate >= start && checkDate <= end;
+                });
+            // console.log(data);
+            return data;
         },
-        parseStatus(status, app) {
-            let nama = app.split(" ").slice(0, 1).join(" ");
-            if (status == "Ditolak") {
-                return `Ditolak oleh ${nama}`;
-            } else if (status == "Selesai") {
-                return "Disetujui";
-            } else {
-                return `Diproses oleh ${nama}`;
+        isSpecialDateSingle(date) {
+            const formattedDate = this.formatDateToYYYYMMDD(date);
+            const checkDate = new Date(formattedDate);
+            checkDate.setHours(0, 0, 0, 0);
+
+            // 1. Cek special date
+            const isSpecial = this.specialDates.some(
+                (sd) => sd.date === formattedDate
+            );
+
+            // 2. Cek tanggal terlambat / pulang terlambat
+            let isTerlambat = false;
+            let isPulangTerlambat = false;
+
+            if (this.assignIzinType2 === "terlambat") {
+                isTerlambat = this.TanggalPulangTerlambat.some((item) => {
+                    const start = new Date(item.Tanggal_Masuk_Pulang);
+                    start.setHours(0, 0, 0, 0);
+                    return (
+                        checkDate.getTime() === start.getTime() &&
+                        item.Jenis === "terlambat"
+                    );
+                });
+            } else if (this.assignIzinType2 === "pulangCepat") {
+                isPulangTerlambat = this.TanggalPulangTerlambat.some((item) => {
+                    const start = new Date(item.Tanggal_Masuk_Pulang);
+                    start.setHours(0, 0, 0, 0);
+                    return (
+                        checkDate.getTime() === start.getTime() &&
+                        item.Jenis === "pulangCepat"
+                    );
+                });
             }
+
+            // 3. Cek sakit / izin
+            const isSakitIzin = this.TanggalSakitIzin.some((item) => {
+                const start = new Date(item.Tanggal_Sakit_Izin_Dari);
+                const end = new Date(item.Tanggal_Sakit_Izin_Sampai);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return checkDate >= start && checkDate <= end;
+            });
+
+            // 4. Cek cuti
+            const isCuti = this.TanggalCuti.some((cuti) => {
+                const start = new Date(cuti.Tanggal_Cuti_Dari);
+                const end = new Date(cuti.Tanggal_Cuti_Sampai);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return checkDate >= start && checkDate <= end;
+            });
+
+            return (
+                isSpecial ||
+                isTerlambat ||
+                isPulangTerlambat ||
+                isSakitIzin ||
+                isCuti
+            );
+        },
+        getSpecialDateTooltip(date) {
+            const formattedDate = this.formatDateToYYYYMMDD(date);
+            const checkDate = new Date(formattedDate);
+            checkDate.setHours(0, 0, 0, 0);
+
+            // 1. Prioritas: Hari spesial yang terdaftar
+            const specialDay = this.specialDates.find(
+                (sd) => sd.date === formattedDate
+            );
+            if (specialDay) {
+                return specialDay.description;
+            }
+
+            // 2. Prioritas: Terlambat / Pulang Cepat (single day check)
+            const isTerlambatPulang = this.TanggalPulangTerlambat.find(
+                (item) => {
+                    const start = new Date(item.Tanggal_Masuk_Pulang);
+                    start.setHours(0, 0, 0, 0);
+                    // Menggunakan getTime() untuk perbandingan objek Date yang akurat
+                    return checkDate.getTime() === start.getTime();
+                }
+            );
+            if (isTerlambatPulang) {
+                return `${this.parseIzin(isTerlambatPulang.Jenis)} ${
+                    isTerlambatPulang.No_Transaksi
+                }`;
+            }
+
+            // 3. Prioritas: Sakit / Izin (date range check)
+            const isSakitIzin = this.TanggalSakitIzin.find((item) => {
+                const start = new Date(item.Tanggal_Sakit_Izin_Dari);
+                const end = new Date(item.Tanggal_Sakit_Izin_Sampai);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return (
+                    checkDate.getTime() >= start.getTime() &&
+                    checkDate.getTime() <= end.getTime()
+                );
+            });
+            if (isSakitIzin) {
+                return `${this.parseIzin(isSakitIzin.Jenis)} ${
+                    isSakitIzin.No_Transaksi
+                }`;
+            }
+
+            // 4. Prioritas: Cuti (date range check)
+            const cutiHariIni = this.TanggalCuti.find((cuti) => {
+                const start = new Date(cuti.Tanggal_Cuti_Dari);
+                const end = new Date(cuti.Tanggal_Cuti_Sampai);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return checkDate >= start && checkDate <= end;
+            });
+            if (cutiHariIni) {
+                return `${this.parseIzin(cutiHariIni.Jenis)} ${
+                    cutiHariIni.No_Transaksi
+                }`;
+            }
+
+            // Jika tidak ada yang cocok, kembalikan string kosong
+            return "";
+        },
+        getSpecialDateTooltipSingle(date) {
+            const formattedDate = this.formatDateToYYYYMMDD(date);
+            const checkDate = new Date(formattedDate);
+            checkDate.setHours(0, 0, 0, 0);
+
+            // 1. Prioritas: Hari spesial yang terdaftar
+            const specialDay = this.specialDates.find(
+                (sd) => sd.date === formattedDate
+            );
+            if (specialDay) {
+                return specialDay.description;
+            }
+
+            // 2. Prioritas: Terlambat / Pulang Cepat (hanya jika assignIzinType2 sesuai)
+            if (this.assignIzinType2 === "terlambat") {
+                const isTerlambat = this.TanggalPulangTerlambat.find((item) => {
+                    const start = new Date(item.Tanggal_Masuk_Pulang);
+                    start.setHours(0, 0, 0, 0);
+                    return (
+                        checkDate.getTime() === start.getTime() &&
+                        item.Jenis === "terlambat"
+                    );
+                });
+                if (isTerlambat) {
+                    return `${this.parseIzin(isTerlambat.Jenis)} ${
+                        isTerlambat.No_Transaksi
+                    }`;
+                }
+            } else if (this.assignIzinType2 === "pulangCepat") {
+                const isPulangCepat = this.TanggalPulangTerlambat.find(
+                    (item) => {
+                        const start = new Date(item.Tanggal_Masuk_Pulang);
+                        start.setHours(0, 0, 0, 0);
+                        return (
+                            checkDate.getTime() === start.getTime() &&
+                            item.Jenis === "pulangCepat"
+                        );
+                    }
+                );
+                if (isPulangCepat) {
+                    return `${this.parseIzin(isPulangCepat.Jenis)} ${
+                        isPulangCepat.No_Transaksi
+                    }`;
+                }
+            }
+
+            // 3. Prioritas: Sakit / Izin
+            const isSakitIzin = this.TanggalSakitIzin.find((item) => {
+                const start = new Date(item.Tanggal_Sakit_Izin_Dari);
+                const end = new Date(item.Tanggal_Sakit_Izin_Sampai);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return checkDate >= start && checkDate <= end;
+            });
+            if (isSakitIzin) {
+                return `${this.parseIzin(isSakitIzin.Jenis)} ${
+                    isSakitIzin.No_Transaksi
+                }`;
+            }
+
+            // 4. Prioritas: Cuti
+            const cutiHariIni = this.TanggalCuti.find((cuti) => {
+                const start = new Date(cuti.Tanggal_Cuti_Dari);
+                const end = new Date(cuti.Tanggal_Cuti_Sampai);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return checkDate >= start && checkDate <= end;
+            });
+            if (cutiHariIni) {
+                return `${this.parseIzin(cutiHariIni.Jenis)} ${
+                    cutiHariIni.No_Transaksi
+                }`;
+            }
+
+            // Jika tidak ada yang cocok
+            return "";
+        },
+        getClassCuti(angka) {
+            if (angka > 3) {
+                return "";
+            } else if (angka >= 1) {
+                return "border-warning";
+            } else {
+                return "border-danger";
+            }
+        },
+        getIconCuti(angka) {
+            if (angka > 3) {
+                return "bi bi-check-circle-fill text-success";
+            } else if (angka >= 1) {
+                return "bi bi-exclamation-triangle-fill text-warning";
+            } else {
+                return "bi bi-exclamation-circle-fill text-danger";
+            }
+        },
+        openDialogFilter() {
+            if (this.selectedDateFilter.length) {
+                const startStr = this.selectedDate;
+                this.tempStartDateFilter = new Date(startStr + "T00:00:00");
+                this.calendarDateFilter = new Date(startStr + "T00:00:00");
+            } else {
+                this.tempStartDateFilter = null;
+                this.calendarDateFilter = new Date();
+            }
+            this.dialogFilter = true;
+        },
+        maknaStatus(status) {
+            if (status === "Y") {
+                return "Disetujui";
+            } else if (status === null || status === undefined) {
+                return "Menunggu Persetujuan";
+            } else if (status === "T") {
+                return "Ditolak";
+            }
+            return "";
         },
         getStatusTagType(status, approver) {
-            if (status === null) return "warning";
-            if (status === "Y") return "success";
-            if (status === "T") return "danger";
+            if (status === "NO" && !approver) return "warning";
+            if (status === "Selesai") return "success";
+            if (status === "Ditolak") return "danger";
             return "info";
         },
 
@@ -3106,7 +4040,7 @@ export default {
             const lastApprovedIndex = parsed.findLastIndex(
                 (item) => item.status === "Y" || item.status === "T"
             );
-            return lastApprovedIndex + 1;
+            return lastApprovedIndex + 1 || 1;
         },
 
         getStepStatus(status) {
@@ -3129,6 +4063,48 @@ export default {
                     status: status.trim(),
                 };
             });
+        },
+        hasApprovedOrRejectedStatus(data) {
+            const allApprovals = data.split(", ");
+            const parsedApprovals = allApprovals.map((item) => {
+                const [name, status] = item.split(": ");
+                return {
+                    name: name.split(" ").slice(0, 1).join(" ").trim(),
+                    status: status.trim(),
+                };
+            });
+            // Check if any approval has a status of 'Y' (Yes) or 'T' (True/Approved)
+            return parsedApprovals.some(
+                (emp) => emp.status === "Y" || emp.status === "T"
+            );
+        },
+        parsedDatatoActive() {
+            const totalApprovals = this.parsedData.length;
+            const approvedCount = this.parsedData.filter(
+                (item) => item.status === "Y"
+            ).length;
+            const rejectedCount = this.parsedData.filter(
+                (item) => item.status === "T"
+            ).length;
+            const progressCount = this.parsedData.filter(
+                (item) => item.status === "N"
+            ).length;
+            const approvalRate = Math.round(
+                (approvedCount / totalApprovals) * 100
+            );
+            // Ambil urutan pertama yang memiliki status "T" jika ada, jika tidak ambil "N"
+            const firstT = this.parsedData.find((item) => item.status === "T");
+            const firstN = this.parsedData.find((item) => item.status === "N");
+
+            // Set state active sesuai prioritas
+            if (firstT) {
+                this.active = this.parsedData.indexOf(firstT); // Menyimpan index dari elemen dengan status "T"
+            } else if (firstN) {
+                this.active = this.parsedData.indexOf(firstN); // Menyimpan index dari elemen dengan status "N"
+            } else {
+                // Jika tidak ada "T" dan "N", mungkin set active ke default atau kondisi lain
+                this.active = -1;
+            }
         },
         async viewAttachment(attachmentPath) {
             if (!attachmentPath) {
@@ -3188,108 +4164,15 @@ export default {
                 this.loadingAttachment = false;
             }
         },
-        maknaStatus(status) {
-            if (status === "Y") {
+        parseStatus(status, app) {
+            let nama = app.split(" ").slice(0, 1).join(" ");
+            if (status == "Ditolak") {
+                return `Ditolak oleh ${nama}`;
+            } else if (status == "Selesai") {
                 return "Disetujui";
-            } else if (status === null || status === undefined) {
-                return "Menunggu Persetujuan";
-            } else if (status === "T") {
-                return "Ditolak";
+            } else {
+                return `Diproses oleh ${nama}`;
             }
-            return "";
-        },
-        showConfirmYesModal(decision, No_Transaksi, requester, approver) {
-            this.titleAlert = "Anda yakin ingin menerima pengajuan izin";
-            this.confirmIzinId = No_Transaksi;
-            this.decisionIzin = decision;
-            this.requesterConfirm = requester;
-            this.approverConfirm = approver;
-            this.buttonAlertModal = "Setuju";
-            this.iconConfirm = "bi bi-check-circle success-icon";
-            this.yesModal = () => this.confirmIzin();
-            this.showConfirmModal = true;
-        },
-        showConfirmNoModal(decision, No_Transaksi, requester, approver) {
-            this.titleAlert = "Anda yakin ingin Menolak pengajuan izin";
-            this.confirmIzinId = No_Transaksi;
-            this.decisionIzin = decision;
-            this.requesterConfirm = requester;
-            this.approverConfirm = approver;
-            this.buttonAlertModal = "Tolak";
-            this.iconConfirm = "bi bi-exclamation-triangle warning-icon";
-            this.yesModal = () => this.confirmIzin();
-            this.showConfirmModal = true;
-        },
-        closeConfirmModal() {
-            this.showConfirmModal = false;
-            this.titleAlert = "";
-            this.confirmIzinId = null;
-            this.requesterConfirm = null;
-            this.approverConfirm = null;
-            this.buttonAlertModal = null;
-            this.iconConfirmModal = "";
-            this.decisionIzin = null;
-            this.yesModal = null;
-        },
-        async confirmIzin() {
-            try {
-                this.loadingSimpan = true;
-                const formData = new FormData();
-                formData.append("No_Transaksi", this.confirmIzinId);
-                formData.append("tipeConfirm", this.decisionIzin);
-                formData.append("requester", this.requesterConfirm);
-                formData.append("approver", this.approverConfirm);
-
-                const response = await axios.post(
-                    "/izin/confirmIzin",
-                    formData
-                );
-
-                if (response.status === 200) {
-                    ElNotification({
-                        title: "Success",
-                        message:
-                            response.data.message ||
-                            "Konfirmasi izin berhasil!",
-                        type: "success",
-                    });
-                    this.getData();
-                } else {
-                    ElMessage({
-                        message:
-                            response.data.message ||
-                            "Terjadi kesalahan saat konfirmasi izin.",
-                        type: "warning",
-                    });
-                }
-            } catch (error) {
-                console.error("Error in ConfirmIzin:", error);
-
-                let errorMessage =
-                    "Terjadi kesalahan saat menyimpan, silakan coba lagi.";
-                if (
-                    error.response &&
-                    error.response.data &&
-                    error.response.data.message
-                ) {
-                    errorMessage = error.response.data.message;
-                }
-
-                ElMessage({
-                    message: errorMessage,
-                    type: "error",
-                    customStyle: {
-                        "z-index": "1050",
-                    },
-                });
-            } finally {
-                this.showDetailModal = false;
-                this.showConfirmModal = false;
-                this.loadingSimpan = false;
-            }
-        },
-        konfirmApprov() {
-            // console.log(object);
         },
         parseIzin(tipe) {
             if (tipe == "izinFull") {
@@ -3297,10 +4180,12 @@ export default {
             } else if (tipe == "sakit") {
                 return "Izin Sakit";
             } else if (tipe == "pulangCepat") {
-                return "Izin Pulang Cepat";
+                return "Pulang Cepat";
             } else if (tipe == "terlambat") {
                 return "Izin Terlambat";
             } else if (tipe == "cuti") {
+                return "Cuti";
+            } else if (tipe == "CUTI") {
                 return "Cuti";
             } else if (tipe == "cutiHutang") {
                 return "Cuti";
@@ -3317,14 +4202,40 @@ export default {
                     this.max = response.data.data.max;
                     this.AssignTime = response.data.data.min;
                     this.JamOptions = response.data.data.JamOptions;
+                    // console.log(this.JamOptions);
                 }
             } catch (error) {
                 console.log(error);
             }
         },
-
+        formatTanggalIzin(tipe, Mulai, Selesai, Jam) {
+            if (
+                tipe == "izinFull" ||
+                tipe == "sakit" ||
+                tipe == "cuti" ||
+                tipe == "cutiHutang"
+            ) {
+                if (
+                    this.formatDateToDMY(Mulai) == this.formatDateToDMY(Selesai)
+                ) {
+                    return this.formatDateToDMY(Mulai);
+                } else {
+                    return (
+                        this.formatDateToDMY(Mulai).split(" ").slice(0, 1) +
+                        " - " +
+                        this.formatDateToDMY(Selesai)
+                    );
+                }
+            } else {
+                return (
+                    this.formatDateToDMY(Mulai) +
+                    " " +
+                    Jam.split(":").slice(0, 2).join(":")
+                );
+            }
+        },
         log() {
-            // console.log(this.yesModal);
+            // console.log(this.permissionReason);
         },
         formatTimeForSubmission(sliderValue) {
             const numValue = parseFloat(sliderValue);
@@ -3346,57 +4257,96 @@ export default {
             return `${formattedHours}:${formattedMinutes}:00`;
         },
 
-        // async submitData() {
-        //     // console.log(this.AssignDateRange);
-        //     const formData = new FormData();
-        //     formData.append("jenisIzin", this.assignIzinType);
-        //     if (this.AssignDateRange && Array.isArray(this.AssignDateRange)) {
-        //         this.AssignDateRange.forEach((date) => {
-        //             formData.append("tanggal[]", date); // Ini yang benar!
-        //         });
-        //     } else {
-        //         console.warn(
-        //             "AssignDateRange is not a valid array or is empty."
-        //         );
-        //     }
-        //     const formattedTime = this.formatTimeForSubmission(this.AssignTime);
-        //     formData.append("waktu", formattedTime);
-        //     formData.append("Alasan", this.permissionReason);
-        //     if (this.AssignFile instanceof File) {
-        //         formData.append("file", this.AssignFile);
-        //         console.log("Appending 'file' to FormData as a File object.");
-        //     } else {
-        //         console.log(
-        //             "this.AssignFile is NOT a File object. NOT appending 'file' to FormData."
-        //         );
-        //     }
+        async submitData() {
+            const formData = new FormData();
 
-        //     try {
-        //         const response = await axios.post("/izin/submit", formData, {
-        //             headers: { "Content-Type": "multipart/form-data" },
-        //         });
-        //         if (response.status == 200) {
-        //             console.log(response.data.data);
-        //         }
-        //     } catch (error) {
-        //         console.log(error);
-        //         if (error.response.status == 422) {
-        //             ElMessage({
-        //                 message: error.response.data.errors,
-        //                 type: "warning",
-        //                 customStyle: {
-        //                     "z-index": "1050",
-        //                 },
-        //             });
-        //         }
-        //     }
-        // },
+            formData.append("jenisIzin", this.assignIzinType2);
+            if (this.AssignDateRange && Array.isArray(this.AssignDateRange)) {
+                this.AssignDateRange.forEach((date) => {
+                    formData.append("tanggal[]", date);
+                });
+            } else {
+                console.warn(
+                    "AssignDateRange is not a valid array or is empty."
+                );
+            }
+            const formattedTime = this.formatTimeForSubmission(this.AssignTime);
+            formData.append("waktu", formattedTime);
+            formData.append("jenisCuti", this.AssignJenisCuti || null);
+            formData.append("Alasan", this.permissionReason);
+            if (this.AssignFile instanceof File) {
+                formData.append("file", this.AssignFile);
+                console.log("Appending 'file' to FormData as a File object.");
+            } else {
+                console.log(
+                    "this.AssignFile is NOT a File object. NOT appending 'file' to FormData."
+                );
+            }
+
+            try {
+                this.loadingSimpan = true;
+                const response = await axios.post("/izin/submit", formData, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                });
+                if (response.status == 200) {
+                    this.getData();
+                    ElNotification({
+                        title: "Berhasil",
+                        message: "Pengajuan izin berhasil disimpan!",
+                        type: "success",
+                    });
+                }
+            } catch (error) {
+                console.log(error);
+                ElNotification({
+                    title: "Gagal!",
+                    message: "Terjadi error!",
+                    type: "error",
+                });
+                if (
+                    error.response.status === 404 &&
+                    error.response.data.message
+                ) {
+                    ElMessage({
+                        message: error.response.data.message,
+                        type: "warning",
+                        customStyle: {
+                            "z-index": "1050",
+                        },
+                    });
+                } else if (error.response.data.errors) {
+                    // Handle other types of validation errors or general backend errors
+                    this.errorMessage = error.response.data.errors;
+                } else if (error.response.status == 422) {
+                    ElMessage({
+                        message: error.response.data.errors,
+                        type: "warning",
+                        customStyle: {
+                            "z-index": "1050",
+                        },
+                    });
+                } else {
+                    this.errorMessage =
+                        "An unexpected error occurred. Please try again.";
+                }
+            } finally {
+                this.closeAssignModal();
+                this.loadingSimpan = false;
+            }
+        },
         async getData() {
             try {
-                const response = await axios.get("/izin/getDataIzinDH");
+                this.loading = true;
+                const response = await axios.get("/izin/getDataIzinAdmin");
 
                 if (response.status == 200) {
                     this.permissionRecords = response.data.data;
+                    this.dataCuti = response.data.dataCuti;
+                    this.TanggalPulangTerlambat =
+                        response.data.TanggalPulangTerlambat;
+                    this.TanggalCuti = response.data.TanggalCuti;
+                    this.TanggalSakitIzin = response.data.TanggalSakitIzin;
+                    this.specialDates = response.data.HariLibur;
                     // console.log(this.permissionRecords);
                 }
             } catch (error) {
@@ -3409,14 +4359,16 @@ export default {
             if (this.assignStep === 1) {
                 return (
                     this.assignIzinType !== null &&
+                    this.assignIzinType2 !== null &&
                     this.AssignDateRange !== null &&
                     this.AssignDateRange.length > 0
                 );
             }
             if (this.assignStep === 2) {
                 if (
-                    this.assignIzinType === "pulangCepat" ||
-                    this.assignIzinType === "terlambat"
+                    this.assignIzinType2 === "pulangCepat" ||
+                    this.assignIzinType2 === "terlambat" ||
+                    this.assignIzinType2 === "sakitTibaTiba"
                 ) {
                     return (
                         this.AssignTime !== null && this.permissionReason !== ""
@@ -3426,7 +4378,10 @@ export default {
                 return this.permissionReason !== "";
             }
             if (this.assignStep === 3) {
-                if (this.assignIzinType === "sakit") {
+                if (
+                    this.assignIzinType === "sakit" &&
+                    this.AssignDateRange[0] != this.AssignDateRange[1]
+                ) {
                     return this.AssignFile !== null;
                 }
                 return true;
@@ -3434,6 +4389,7 @@ export default {
             return true;
         },
         formatSliderTooltip(value) {
+            // console.log("Formatting tooltip for value:", value);
             const hours = Math.floor(value);
             const minutes = (value % 1) * 60;
             const formattedHours = String(hours).padStart(2, "0");
@@ -3501,7 +4457,11 @@ export default {
                     month: "long",
                     year: "numeric",
                 };
-                return new Intl.DateTimeFormat("id-ID", options).format(date);
+                let dating = new Intl.DateTimeFormat("id-ID", options).format(
+                    date
+                );
+                // console.log(dating);
+                return dating;
             } catch (error) {
                 console.error("Error formatting date:", error);
                 return dateString; // Fallback
@@ -3509,12 +4469,65 @@ export default {
         },
         disablePastDates(date) {
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // Normalize today to the start of the day
+            const dayOfWeek = date.getDay();
+            today.setHours(0, 0, 0, 0); // Normalisasi 'hari ini' ke awal hari
 
             const dateToCheck = new Date(date);
-            dateToCheck.setHours(0, 0, 0, 0); // Normalize the date to check to the start of the day
+            dateToCheck.setHours(0, 0, 0, 0); // Normalisasi tanggal yang dicek ke awal hari
 
-            return dateToCheck.getTime() < today.getTime();
+            // 1. Logika untuk meng-disable tanggal yang sudah lebih dari 4 hari lalu
+            const fourDaysAgo = new Date(today);
+            fourDaysAgo.setDate(today.getDate() - 4);
+            const isPastDate = dateToCheck.getTime() < fourDaysAgo.getTime();
+
+            // 2. Logika untuk meng-disable tanggal spesial (cuti, sakit, terlambat)
+            // Fungsi ini akan menggunakan isSpecialDate() yang sudah ada
+            const isSpecial = this.isSpecialDate(dateToCheck);
+            const minggu = dayOfWeek == 0;
+
+            // Kembalikan 'true' jika salah satu kondisi terpenuhi
+            return isPastDate || isSpecial || minggu;
+        },
+        disablePastDatesSingle(date) {
+            const today = new Date();
+            const dayOfWeek = date.getDay();
+            today.setHours(0, 0, 0, 0); // Normalisasi 'hari ini' ke awal hari
+
+            const dateToCheck = new Date(date);
+            dateToCheck.setHours(0, 0, 0, 0); // Normalisasi tanggal yang dicek ke awal hari
+
+            // 1. Logika untuk meng-disable tanggal yang sudah lebih dari 4 hari lalu
+            const fourDaysAgo = new Date(today);
+            fourDaysAgo.setDate(today.getDate() - 4);
+            const isPastDate = dateToCheck.getTime() < fourDaysAgo.getTime();
+
+            // 2. Logika untuk meng-disable tanggal spesial (cuti, sakit, terlambat)
+            // Fungsi ini akan menggunakan isSpecialDate() yang sudah ada
+            const isSpecial = this.isSpecialDateSingle(dateToCheck);
+            const minggu = dayOfWeek == 0;
+
+            // Kembalikan 'true' jika salah satu kondisi terpenuhi
+            return isPastDate || isSpecial || minggu;
+        },
+
+        disablePastDatesCuti(date) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Normalisasi 'hari ini' ke awal hari
+
+            const dateToCheck = new Date(date);
+            dateToCheck.setHours(0, 0, 0, 0); // Normalisasi tanggal yang dicek ke awal hari
+
+            // 1. Logika untuk meng-disable tanggal yang sudah lebih dari 4 hari lalu
+            const fourDaysAgo = new Date(today);
+            fourDaysAgo.setDate(today.getDate() + 10);
+            const isPastDate = dateToCheck.getTime() < fourDaysAgo.getTime();
+
+            // 2. Logika untuk meng-disable tanggal spesial (cuti, sakit, terlambat)
+            // Fungsi ini akan menggunakan isSpecialDate() yang sudah ada
+            const isSpecial = this.isSpecialDate(dateToCheck);
+
+            // Kembalikan 'true' jika salah satu kondisi terpenuhi
+            return isPastDate || isSpecial;
         },
         openDialog() {
             if (this.AssignDateRange && this.AssignDateRange.length === 2) {
@@ -3528,6 +4541,32 @@ export default {
                 this.calendarDate = new Date();
             }
             this.dialogVisible = true;
+        },
+        openDialogExport() {
+            if (this.selectedDateExport.length === 2) {
+                const [startStr, endStr] = this.selectedDateExport;
+                this.tempStartDateExport = new Date(startStr + "T00:00:00");
+                this.tempEndDateExport = new Date(endStr + "T00:00:00");
+                this.calendarDateExport = new Date(startStr + "T00:00:00");
+            } else {
+                this.tempStartDateExport = null;
+                this.tempEndDateExport = null;
+                this.calendarDateExport = new Date();
+            }
+            this.dialogVisibleExport = true;
+        },
+        openDialogCuti() {
+            if (this.AssignDateRange && this.AssignDateRange.length === 2) {
+                const [startStr, endStr] = this.AssignDateRange;
+                this.tempStartDate = new Date(startStr + "T00:00:00");
+                this.tempEndDate = new Date(endStr + "T00:00:00");
+                this.calendarDate = new Date(startStr + "T00:00:00");
+            } else {
+                this.tempStartDate = null;
+                this.tempEndDate = null;
+                this.calendarDate = new Date();
+            }
+            this.dialogVisibleCuti = true;
         },
         openDialogSingle() {
             if (this.AssignDateRange && this.AssignDateRange.length === 2) {
@@ -3543,11 +4582,31 @@ export default {
             this.dialogVisibleSingle = true;
         },
         handleAssignIzin(type) {
-            this.AssignDateRange = null;
-            this.assignIzinType = type;
-            this.tempStartDate = null;
-            this.tempEndDate = null;
-            this.AssignFile = null;
+            if (type == "cuti") {
+                this.AssignDateRange = null;
+                this.assignIzinType = type;
+                this.assignIzinType2 = "cuti";
+                this.tempStartDate = null;
+                this.tempEndDate = null;
+                this.AssignJenisCuti = null;
+                this.AssignFile = null;
+            } else if (type == "sakit") {
+                this.AssignDateRange = null;
+                this.assignIzinType = type;
+                this.assignIzinType2 = "sakit";
+                this.tempStartDate = null;
+                this.tempEndDate = null;
+                this.AssignFile = null;
+                this.AssignJenisCuti = null;
+            } else {
+                this.AssignJenisCuti = null;
+                this.AssignDateRange = null;
+                this.assignIzinType = type;
+                this.assignIzinType2 = null;
+                this.tempStartDate = null;
+                this.tempEndDate = null;
+                this.AssignFile = null;
+            }
         },
         handleCancel() {
             this.dialogVisible = false;
@@ -3557,6 +4616,8 @@ export default {
         },
         handleDateClick(data) {
             const clickedDate = data.date;
+
+            // 1. Cek apakah tanggal yang diklik adalah tanggal yang di-disable
             if (this.disablePastDates(clickedDate)) {
                 ElMessage({
                     message: "Tanggal ini tidak bisa dipilih.",
@@ -3565,36 +4626,97 @@ export default {
                 return;
             }
 
+            // 2. Jika rentang sudah terisi, mulai rentang baru
             if (this.tempStartDate && this.tempEndDate) {
                 this.tempStartDate = clickedDate;
                 this.tempEndDate = null;
             } else if (!this.tempStartDate) {
+                // 3. Jika belum ada tanggal mulai, tetapkan clickedDate sebagai tanggal mulai
                 this.tempStartDate = clickedDate;
             } else {
-                if (clickedDate.getTime() < this.tempStartDate.getTime()) {
-                    this.tempEndDate = this.tempStartDate;
-                    this.tempStartDate = clickedDate;
+                // 4. Jika sudah ada tanggal mulai, tetapkan tanggal akhir
+                const startDate = new Date(this.tempStartDate);
+                const endDate = new Date(clickedDate);
+
+                // Pastikan startDate tidak lebih dari endDate untuk loop
+                let currentStart = startDate;
+                let currentEnd = endDate;
+                if (currentEnd.getTime() < currentStart.getTime()) {
+                    [currentStart, currentEnd] = [currentEnd, currentStart];
+                }
+
+                // --- Logika Tambahan: Memeriksa rentang tanggal ---
+                let isDisabledInRange = false;
+                const currentDate = new Date(currentStart);
+                currentDate.setDate(currentStart.getDate() + 1); // Mulai dari hari setelah tanggal awal
+
+                while (currentDate < currentEnd) {
+                    if (this.disablePastDates(currentDate)) {
+                        isDisabledInRange = true;
+                        break;
+                    }
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+
+                if (isDisabledInRange) {
+                    ElMessage({
+                        message:
+                            "Tidak bisa memilih rentang tanggal yang mengandung tanggal tidak bisa dipilih.",
+                        type: "warning",
+                    });
+                    // Reset tanggal mulai dan akhir
+                    this.tempStartDate = null;
+                    this.tempEndDate = null;
                 } else {
-                    this.tempEndDate = clickedDate;
+                    // Jika tidak ada tanggal yang di-disable di tengah, tetapkan tanggal akhir
+                    if (clickedDate.getTime() < this.tempStartDate.getTime()) {
+                        this.tempEndDate = this.tempStartDate;
+                        this.tempStartDate = clickedDate;
+                    } else {
+                        this.tempEndDate = clickedDate;
+                    }
                 }
             }
         },
         handleDateClickSingle(data) {
             const clickedDate = data.date;
-            if (this.disablePastDates(clickedDate)) {
+
+            if (this.disablePastDatesSingle(clickedDate)) {
                 ElMessage({
                     message: "Tanggal ini tidak bisa dipilih.",
                     type: "warning",
                 });
                 return;
             }
-            this.tempStartDate = clickedDate;
-            this.tempEndDate = clickedDate;
+
+            // Toggle: kalau tanggal yang sama diklik lagi, reset
+            if (
+                this.tempStartDate &&
+                this.tempStartDate.getTime() === clickedDate.getTime()
+            ) {
+                this.tempStartDate = null;
+            } else {
+                this.tempStartDate = clickedDate;
+            }
+
+            this.tempEndDate = null;
+        },
+        formatDateToYYYYMMDD(date) {
+            const d = new Date(date);
+            const year = d.getFullYear();
+            // getMonth() adalah 0-indexed, jadi tambahkan 1
+            const month = (d.getMonth() + 1).toString().padStart(2, "0");
+            const day = d.getDate().toString().padStart(2, "0");
+            return `${year}-${month}-${day}`;
         },
         getCellClass(data) {
             const classes = {};
-            const currentDate = data.date.setHours(0, 0, 0, 0);
+            const dateObj = new Date(data.date);
+            const formattedDate = this.formatDateToYYYYMMDD(dateObj); // Menggunakan fungsi pembantu
+            const checkDate = new Date(formattedDate);
+            checkDate.setHours(0, 0, 0, 0);
 
+            // Logika untuk rentang tanggal yang dipilih
             const start = this.tempStartDate
                 ? this.tempStartDate.setHours(0, 0, 0, 0)
                 : null;
@@ -3602,22 +4724,184 @@ export default {
                 ? this.tempEndDate.setHours(0, 0, 0, 0)
                 : null;
 
-            if (start && currentDate === start) classes["is-start"] = true;
-            if (end && currentDate === end) classes["is-end"] = true;
-
-            if (start && end && currentDate > start && currentDate < end) {
+            if (start && checkDate.getTime() === start)
+                classes["is-start"] = true;
+            if (end && checkDate.getTime() === end) classes["is-end"] = true;
+            if (start && end && checkDate > start && checkDate < end) {
                 classes["is-in-range"] = true;
             }
+
+            // Logika untuk tanggal yang sudah lewat (disabled)
             if (this.disablePastDates(data.date)) {
                 classes["is-disabled-custom"] = true;
             }
 
+            // --- Logika Penentuan Kelas untuk Tanggal Spesial ---
+            // Pastikan untuk memeriksa semua jenis tanggal spesial
+
+            // 1. Cek Hari Spesial dari specialDates
+            const isAnySpecialDate = this.specialDates.some(
+                (sd) => sd.date === formattedDate
+            );
+            if (isAnySpecialDate) {
+                classes["is-orange-date"] = true;
+            }
+
+            // 2. Cek Tanggal Cuti
+            const isCuti = this.TanggalCuti.some((cuti) => {
+                const start = new Date(cuti.Tanggal_Cuti_Dari);
+                const end = new Date(cuti.Tanggal_Cuti_Sampai);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return checkDate >= start && checkDate <= end;
+            });
+            if (isCuti) {
+                classes["is-orange-date"] = true;
+                classes["is-disabled-custom"] = true;
+            }
+
+            // 3. Cek Tanggal Sakit/Izin
+            const isSakitIzin = this.TanggalSakitIzin.some((item) => {
+                const start = new Date(item.Tanggal_Sakit_Izin_Dari);
+                const end = new Date(item.Tanggal_Sakit_Izin_Sampai);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return checkDate >= start && checkDate <= end;
+            });
+            if (isSakitIzin) {
+                classes["is-orange-date"] = true;
+                classes["is-disabled-custom"] = true;
+            }
+
+            // 4. Cek Tanggal Terlambat/Pulang Cepat
+            const isTerlambatPulang = this.TanggalPulangTerlambat.some(
+                (item) => {
+                    const start = new Date(item.Tanggal_Masuk_Pulang);
+                    start.setHours(0, 0, 0, 0);
+                    // Menggunakan getTime() untuk perbandingan objek Date yang akurat
+                    return checkDate.getTime() === start.getTime();
+                }
+            );
+            if (isTerlambatPulang) {
+                classes["is-orange-date"] = true;
+                classes["is-disabled-custom"] = true;
+            }
+
+            // Logika untuk hari Minggu (Weekend)
+            const dayOfWeek = dateObj.getDay(); // 0 = Minggu
+            if (dayOfWeek === 0) {
+                classes["is-red-date"] = true;
+            }
+
             return classes;
         },
+        getCellClassExport(data) {
+            const classes = {};
+            const dateObj = new Date(data.date);
+            const formattedDate = this.formatDateToYYYYMMDD(dateObj); // Menggunakan fungsi pembantu
+            const checkDate = new Date(formattedDate);
+            checkDate.setHours(0, 0, 0, 0);
+
+            // Logika untuk rentang tanggal yang dipilih
+            const start = this.tempStartDateExport
+                ? this.tempStartDateExport.setHours(0, 0, 0, 0)
+                : null;
+            const end = this.tempEndDateExport
+                ? this.tempEndDateExport.setHours(0, 0, 0, 0)
+                : null;
+
+            if (start && checkDate.getTime() === start)
+                classes["is-start"] = true;
+            if (end && checkDate.getTime() === end) classes["is-end"] = true;
+            if (start && end && checkDate > start && checkDate < end) {
+                classes["is-in-range"] = true;
+            }
+
+            // Logika untuk hari Minggu (Weekend)
+            const dayOfWeek = dateObj.getDay(); // 0 = Minggu
+            if (dayOfWeek === 0) {
+                classes["is-red-date"] = true;
+            }
+
+            return classes;
+        },
+        getCellClassSingle(data) {
+            const classes = {};
+            const dateObj = new Date(data.date);
+            const formattedDate = this.formatDateToYYYYMMDD(dateObj); // Menggunakan fungsi pembantu
+            const checkDate = new Date(formattedDate);
+            checkDate.setHours(0, 0, 0, 0);
+
+            // Logika untuk rentang tanggal yang dipilih
+            const start = this.tempStartDate
+                ? this.tempStartDate.setHours(0, 0, 0, 0)
+                : null;
+            const end = this.tempEndDate
+                ? this.tempEndDate.setHours(0, 0, 0, 0)
+                : null;
+
+            if (start && checkDate.getTime() === start)
+                classes["is-start"] = true;
+            if (end && checkDate.getTime() === end) classes["is-end"] = true;
+            if (start && end && checkDate > start && checkDate < end) {
+                classes["is-in-range"] = true;
+            }
+
+            // Logika untuk tanggal yang sudah lewat (disabled)
+            if (this.disablePastDatesSingle(data.date)) {
+                classes["is-disabled-custom"] = true;
+            }
+
+            // --- Logika Penentuan Kelas untuk Tanggal Spesial ---
+            // Pastikan untuk memeriksa semua jenis tanggal spesial
+
+            // 1. Cek Hari Spesial dari specialDates
+            const isAnySpecialDate = this.specialDates.some(
+                (sd) => sd.date === formattedDate
+            );
+            if (isAnySpecialDate) {
+                classes["is-orange-date"] = true;
+            }
+
+            // 2. Cek Tanggal Cuti
+            const isCuti = this.TanggalCuti.some((cuti) => {
+                const start = new Date(cuti.Tanggal_Cuti_Dari);
+                const end = new Date(cuti.Tanggal_Cuti_Sampai);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return checkDate >= start && checkDate <= end;
+            });
+            if (isCuti) {
+                classes["is-orange-date"] = true;
+                classes["is-disabled-custom"] = true;
+            }
+
+            // 3. Cek Tanggal Sakit/Izin
+            const isSakitIzin = this.TanggalSakitIzin.some((item) => {
+                const start = new Date(item.Tanggal_Sakit_Izin_Dari);
+                const end = new Date(item.Tanggal_Sakit_Izin_Sampai);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return checkDate >= start && checkDate <= end;
+            });
+            if (isSakitIzin) {
+                classes["is-orange-date"] = true;
+                classes["is-disabled-custom"] = true;
+            }
+
+            // Logika untuk hari Minggu (Weekend)
+            const dayOfWeek = dateObj.getDay(); // 0 = Minggu
+            if (dayOfWeek === 0) {
+                classes["is-red-date"] = true;
+            }
+
+            return classes;
+        },
+
         confirmDate(jenis) {
             this.loading = true;
             if (jenis == "single") {
-                if (!this.tempEndDate) {
+                if (!this.tempStartDate) {
                     ElMessage({
                         message: "Silakan pilih tanggal izin.",
                         type: "warning",
@@ -3627,8 +4911,8 @@ export default {
                 }
 
                 this.AssignDateRange = [
-                    this.formatDateToString(this.tempEndDate),
-                    this.formatDateToString(this.tempEndDate),
+                    this.formatDateToString(this.tempStartDate),
+                    this.formatDateToString(this.tempStartDate),
                 ];
             } else {
                 if (!this.tempStartDate || !this.tempEndDate) {
@@ -3647,20 +4931,46 @@ export default {
 
             this.dialogVisible = false;
             this.dialogVisibleSingle = false;
+            this.dialogVisibleCuti = false;
             this.loading = false;
             // console.log(this.AssignDateRange);
         },
 
+        dayDiff(startDate, endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            return differenceInDays(end, start) + 1; // +1 agar inklusif
+        },
+        HitungHutang(hari) {
+            // console.log(hari);
+            let selisih = this.dataCuti.Sisa_Cuti - hari;
+            if (selisih >= 0) {
+                this.assignStep++;
+            } else {
+                this.hutangTerhitung = Math.abs(selisih);
+                this.showCutiAlertModal = true;
+            }
+        },
         nextAssignStep() {
             if (this.canProceedToNextStep()) {
                 if (this.assignStep == 1) {
                     if (
-                        this.assignIzinType == "pulangCepat" ||
-                        this.assignIzinType == "terlambat"
+                        this.assignIzinType2 == "pulangCepat" ||
+                        this.assignIzinType2 == "terlambat" ||
+                        this.assignIzinType2 === "sakitTibaTiba"
                     ) {
+                        this.isLoadingAssign = true;
                         this.getJamKerja().then(() => {
                             this.assignStep++;
+                            this.isLoadingAssign = false;
                         });
+                    } else if (this.assignIzinType === "cuti") {
+                        this.HitungHutang(
+                            this.dayDiff(
+                                this.AssignDateRange[0],
+                                this.AssignDateRange[1]
+                            )
+                        );
                     } else {
                         this.assignStep++;
                     }
@@ -3690,7 +5000,7 @@ export default {
                     "image/jpg",
                     "image/png",
                 ];
-                const maxSize = 5 * 1024 * 1024; // 5MB
+                const maxSize = 10 * 1024 * 1024; // 10MB
 
                 if (!allowedTypes.includes(file.type)) {
                     ElMessage({
@@ -3705,7 +5015,7 @@ export default {
 
                 if (file.size > maxSize) {
                     ElMessage({
-                        message: "Ukuran file terlalu besar. Maksimal 5MB.",
+                        message: "Ukuran file terlalu besar. Maksimal 10MB.",
                         type: "error",
                     });
                     this.AssignFile = null;
@@ -3735,7 +5045,7 @@ export default {
             // Implement actual deletion logic here
         },
         storeAlertButton() {
-            console.log("Storing alert/permission...");
+            // console.log("Storing alert/permission...");
             // You can access this.AssignFile here if it's needed for submission
             ElNotification({
                 title: "Berhasil",
@@ -3750,12 +5060,14 @@ export default {
             this.showAssignModal = false;
             this.assignStep = 1;
             this.assignIzinType = null;
+            this.assignIzinType2 = null;
             this.AssignDateRange = null;
             this.AssignTime = null;
             this.permissionReason = "";
             this.tempStartDate = null;
             this.tempEndDate = null;
             this.AssignFile = null;
+            this.AssignJenisCuti = null;
         },
         isMobile() {
             return this.windowWidth < 768;
@@ -3784,49 +5096,80 @@ export default {
             this.selectedItem = item;
             this.showDetailModal = true;
         },
-        showPicture(item) {
-            this.selectedItem = item;
-            this.showDetailModal = true;
-        },
         showDeleteConfirm(id) {
             this.deleteItemId = id;
             this.showDeleteModal = true;
             this.showActionPopup = false;
             this.showDetailModal = false;
         },
-        confirmDelete() {
-            this.permissionRecords = this.permissionRecords.filter(
-                (item) => item.No_Transaksi !== this.deleteItemId
-            );
-            this.showDeleteModal = false;
-            ElNotification({
-                title: "Berhasil",
-                message: "Pengajuan izin berhasil dihapus",
-                type: "success",
-                position: "bottom-right",
-            });
-            if (
-                this.selectedItem &&
-                this.selectedItem.No_Transaksi === this.deleteItemId
-            ) {
-                this.selectedItem = null;
+        async confirmDelete() {
+            try {
+                const formData = new FormData();
+                formData.append("No_Transaksi", this.deleteItemId);
+                const response = await axios.post("/izin/destroy", formData);
+                if ((response.status = 200)) {
+                    this.getData();
+                    ElNotification({
+                        title: "Berhasil",
+                        message: "Pengajuan izin berhasil dihapus",
+                        type: "success",
+                    });
+                }
+            } catch (error) {
+                // console.log(error);
+                ElMessage({
+                    message: `Terjadi Kesalahan ${error}`,
+                    type: "warning",
+                    customStyle: {
+                        "z-index": "1050",
+                    },
+                });
+            } finally {
+                this.deleteItemId = null;
+                this.showDeleteModal = false;
             }
         },
         showActionMenu(item, event) {
             this.selectedItem = item;
-            if (event) {
+
+            // Simpan referensi elemen yang diklik
+            this.clickedElement = event.target;
+
+            // Hitung posisi popup berdasarkan elemen yang diklik
+            this.updatePopupPosition();
+            this.showActionPopup = true;
+        },
+
+        // Fungsi untuk menghitung posisi popup
+        updatePopupPosition() {
+            // Pastikan clickedElement tidak null dan memiliki metode getBoundingClientRect
+            if (this.clickedElement) {
+                const rect = this.clickedElement.getBoundingClientRect();
+                const popupWidth = 200; // Lebar popup
+                const popupHeight = 150; // Tinggi popup
+
+                let top = rect.bottom + window.scrollY;
+                let left = rect.left + window.scrollX;
+
+                // Menghindari popup melampaui sisi layar
+                if (left + popupWidth > window.innerWidth) {
+                    left = window.innerWidth - popupWidth - 10;
+                }
+                if (top + popupHeight > window.innerHeight) {
+                    top = window.innerHeight - popupHeight - 10;
+                }
+                if (left < 0) {
+                    left = 10;
+                }
+                if (top < 0) {
+                    top = 10;
+                }
+
                 this.actionMenuPosition = {
-                    top: `${event.clientY}px`,
-                    left: `${event.clientX}px`,
-                };
-            } else {
-                this.actionMenuPosition = {
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
+                    top: `${top}px`,
+                    left: `${left}px`,
                 };
             }
-            this.showActionPopup = true;
         },
         editPermission(item) {
             this.showActionPopup = false;
@@ -3867,56 +5210,53 @@ export default {
             );
         },
         getStatusClass(status) {
-            if (status === "Y") {
-                return "status-approved";
-            } else if (status === null || status === undefined) {
-                return "status-pending";
-            } else if (status === "T") {
-                return "status-rejected";
-            }
-            return "";
+            return (
+                {
+                    Selesai: "status-approved",
+                    Diproses: "status-pending",
+                    Ditolak: "status-rejected",
+                }[status] || ""
+            );
         },
         getStatusHeaderClass(status) {
-            if (status === "Y") {
-                return "header-approved";
-            } else if (status === null || status === undefined) {
-                return "header-pending";
-            } else if (status === "T") {
-                return "header-rejected";
-            }
-            return "";
-        },
-        checkScreenSize() {
-            if (window.innerWidth >= 768) {
-                this.viewMode = "table";
-            } else {
-                this.viewMode = "card";
-            }
+            return (
+                {
+                    Selesai: "header-approved",
+                    Diproses: "header-pending",
+                    Ditolak: "header-rejected",
+                }[status] || "header-pending"
+            );
         },
     },
+    beforeDestroy() {
+        // Hapus event listener ketika komponen dihancurkan
+        window.removeEventListener("scroll", this.updatePopupPosition);
+    },
     mounted() {
+        this.checkScreenSize();
+
+        window.addEventListener("scroll", this.updatePopupPosition);
         // Set day/night based on current time for the header icon
         const currentHour = new Date().getHours();
         this.dayNight =
             currentHour >= 6 && currentHour < 18 ? "Siang" : "Malam";
 
         // Check preferred view mode from localStorage or detect device
-        const preferredMode = localStorage.getItem("preferredViewMode");
-        if (preferredMode) {
-            this.viewMode = preferredMode;
-        } else {
-            this.viewMode = this.isMobile() ? "card" : "table";
-        }
+        // const preferredMode = localStorage.getItem("preferredViewMode");
+        // if (preferredMode) {
+        //     this.viewMode = preferredMode;
+        // } else {
+        //     this.viewMode = this.isMobile() ? "card" : "table";
+        // }
 
         // Add event listener for window resize
-        window.addEventListener("resize", () => {
-            this.updateWindowWidth();
-            if (!localStorage.getItem("preferredViewMode")) {
-                this.viewMode = this.isMobile() ? "card" : "table";
-            }
-        });
+        // window.addEventListener("resize", () => {
+        //     this.updateWindowWidth();
+        //     if (!localStorage.getItem("preferredViewMode")) {
+        //         this.viewMode = this.isMobile() ? "card" : "table";
+        //     }
+        // });
         this.getData();
-        this.checkScreenSize();
         // Simulate fetching data
     },
     unmounted() {
@@ -3948,12 +5288,194 @@ export default {
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --danger-light: #f8d7da; /* Merah muda, lebih terang untuk latar belakang atau efek disabled */
+    --gray-light: #e9ecef;
+    --el-slider-main-bg-color: #6366f1;
 }
-.delete-modal-content {
-    padding-right: 0 !important;
-    padding-left: 0 !important;
+
+/* info bar */
+.leave-info-panel {
 }
-/* detail */
+.el-steps--vertical .el-step__title {
+    font-size: 0.8rem !important; /* judul */
+}
+
+.info-card {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 12px !important;
+}
+
+.info-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.el-calendar-day {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.icon-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Color variants */
+.bg-primary-light {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+.bg-warning-light {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+.bg-danger-light {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+/* Animation */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .icon-circle {
+        width: 30px;
+        height: 30px;
+        margin-top: 8px;
+        margin-right: 8px;
+        font-size: 0.9rem;
+        position: absolute;
+        right: 0;
+        top: 0;
+    }
+    .info-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: space-between;
+    }
+
+    .info-value {
+        font-size: 1.25rem !important;
+    }
+}
+
+/* akhir infobar */
+
+/* cell calendar skin */
+.is-red-date .date-cell {
+    color: red !important;
+}
+
+.is-orange-date .date-cell {
+    color: rgb(255, 166, 0) !important;
+}
+
+/* Style yang sudah ada untuk rentang tanggal */
+.is-start .date-cell {
+    background-color: lightblue;
+    border-radius: 50%; /* Contoh */
+}
+.is-end .date-cell {
+    background-color: lightblue;
+    border-radius: 50%; /* Contoh */
+}
+.is-in-range .date-cell {
+    background-color: lightcyan; /* Contoh */
+}
+
+/* Style untuk tanggal yang dinonaktifkan secara custom */
+.is-disabled-custom .date-cell {
+    opacity: 0.5; /* Membuat tanggal terlihat abu-abu atau pudar */
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Pastikan style dasar untuk .date-cell */
+.date-cell {
+    text-align: center;
+    line-height: 20px; /* Sesuaikan sesuai kebutuhan layout Anda */
+    /* Tambahkan style dasar lain jika diperlukan */
+}
+.is-red-date .date-cell {
+    color: red !important;
+}
+
+/* akhir cell calnedar */
+.glass-warning {
+    background: rgba(245, 158, 11, 0.2);
+    border-radius: 20px;
+    color: var(--surface);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    transition: all 0.3s ease;
+}
+.glass-success {
+    background: rgba(16, 185, 129, 0.2);
+    border-radius: 20px;
+    color: var(--surface);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    transition: all 0.3s ease;
+}
+.glass-danger {
+    background: rgba(239, 68, 68, 0.2);
+    border-radius: 20px;
+    color: var(--surface);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    transition: all 0.3s ease;
+}
+
+.infoBar {
+    background: rgba(99, 102, 241, 0.2);
+    border-radius: 20px;
+    color: var(--surface);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    transition: all 0.3s ease;
+}
+
+.infoBar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure tooltips are visible */
+.custom-tooltip .el-tooltip__popper {
+    opacity: 1 !important;
+    display: block !important;
+}
+
+/* Fix z-index issues */
+.el-slider__button-wrapper {
+    z-index: 100 !important;
+}
+
+/* Parent container should not hide overflow */
+.input-group {
+    overflow: visible !important;
+}
+
 /* overlay dialog */
 .el-overlay-dialog {
     display: flex;
@@ -3962,14 +5484,6 @@ export default {
     max-height: 100vh;
     max-width: 100vw;
     overflow: hidden;
-}
-
-.card-label {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    width: fit-content !important;
 }
 
 .el-dialog {
@@ -3993,6 +5507,24 @@ export default {
     flex-shrink: 0; /* Pastikan header/footer tidak mengecil */
 }
 /* akhir dialog */
+.animated-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.attachment-link.is-loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
 /* Modal container */
 .detail-modal {
     border-radius: 8px;
@@ -4011,7 +5543,10 @@ export default {
     border: none !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
     border-radius: 8px !important;
-    padding: 0 !important;
+    padding: 2px !important;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary) !important;
     background: white !important;
 }
 
@@ -4051,6 +5586,16 @@ export default {
 .detail-value {
     color: #303133;
     font-size: 15px;
+}
+
+.closeFilter {
+    transition: all 0.3s ease;
+    background: var(--surface);
+}
+
+.closeFilter:hover {
+    color: white;
+    background: var(--danger);
 }
 
 .detail-value.highlight {
@@ -4101,46 +5646,7 @@ export default {
         max-height: 100vh;
     }
 }
-
-/*  */
-
-.el-popper {
-    border: none !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
-    border-radius: 8px !important;
-    padding: 0 !important;
-    background: white !important;
-}
-
-.el-popper__arrow {
-    display: none !important;
-}
-
-.el-tooltip__popper.is-dark {
-    background: transparent !important;
-    border: none !important;
-}
-
-.buttonAccept {
-    width: 100%;
-    padding: 0.3rem 1rem;
-    text-align: center;
-    transition: all 0.3s ease;
-    background: var(--surface-soft);
-}
-
-.buttonAccept.left {
-    border-radius: 0px 20px 20px 0px;
-}
-.buttonAccept.right {
-    border-radius: 20px 0px 0px 20px;
-}
-
-.buttonAccept:hover {
-    background: var(--primary);
-    color: var(--surface) !important;
-}
-
+/* General Buttons */
 .btn-modern {
     display: flex;
     align-items: center;
@@ -4155,23 +5661,15 @@ export default {
     position: relative;
     overflow: hidden;
 }
-.animated-spin {
-    animation: spin 1s linear infinite;
+.action-menu {
+    position: absolute !important; /* Popup akan mengikuti posisi elemen yang diklik */
+    z-index: 1000; /* Pastikan popup tetap di atas elemen lainnya */
+    background-color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    padding: 10px;
 }
 
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-.attachment-link.is-loading {
-    pointer-events: none;
-    opacity: 0.7;
-}
 .btn-modern::before {
     content: "";
     position: absolute;
@@ -4240,6 +5738,25 @@ export default {
     box-shadow: var(--shadow);
 }
 
+#app
+    > div:nth-child(3)
+    > div
+    > div
+    > div
+    > div
+    > div:nth-child(6)
+    > div.card-body.row
+    > div.col-md-4.col-6
+    > div
+    > div.el-step.is-vertical.is-flex
+    > div.el-step__head.is-error
+    > div.el-step__icon.is-text
+    > i {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 .btn-danger {
     background: var(--danger);
     color: white;
@@ -4281,8 +5798,8 @@ export default {
     position: relative;
     border-radius: 24px;
     overflow: hidden;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-        0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--shadow);
+    /* box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); */
     min-height: 140px;
 }
 
@@ -4383,14 +5900,15 @@ export default {
     background: var(--surface);
     border-radius: 20px;
     padding: 0.5rem;
-    box-shadow: var(--shadow);
+    /* box-shadow: var(--shadow); */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     border: 1px solid var(--border);
 }
 
 .search-filter-section {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.5rem;
     flex-wrap: wrap;
 }
 
@@ -4468,7 +5986,7 @@ export default {
 .filters-container {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.5rem;
 }
 
 .filter-dropdown {
@@ -4526,6 +6044,7 @@ export default {
     background: var(--surface);
     border-radius: 20px;
     overflow: hidden;
+    /* box-shadow: var(--shadow); */
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     border: 1px solid var(--border);
 }
@@ -4765,6 +6284,12 @@ export default {
 .btn-action.delete-btn {
     color: var(--danger);
 }
+.btn-action.delete-btn:disabled {
+    color: var(--danger-light);
+    /* background-color: var(--gray-light); */
+    cursor: not-allowed;
+    opacity: 0.6;
+}
 .btn-action.delete-btn:hover {
     background: rgba(239, 68, 68, 0.1);
 }
@@ -4807,11 +6332,8 @@ export default {
 }
 .header-approved {
     background: linear-gradient(135deg, #34d399 0%, #059669ce 100%);
-
-    /* background: linear-gradient(135deg, #a78bfa 0%, #8a5cf6ce 100%); */
 }
 .header-pending {
-    /* background: linear-gradient(135deg, #34d399 0%, #059669ce 100%); */
     background: linear-gradient(135deg, #818cf8 0%, #6365f1ce 100%);
 }
 .header-rejected {
@@ -4819,7 +6341,7 @@ export default {
 }
 .card-date {
     font-weight: 500;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
 }
 .card-status {
     font-size: 0.75rem;
@@ -4873,8 +6395,7 @@ export default {
     padding: 0.75rem 1rem;
     border-top: 1px solid var(--border);
     display: flex;
-    /* justify-content: space-between; */
-    justify-content: end;
+    justify-content: space-between;
     gap: 0.5rem;
 }
 .card-btn {
@@ -4895,6 +6416,13 @@ export default {
 }
 .card-btn.delete-btn:hover {
     background: rgba(239, 68, 68, 0.2);
+}
+
+.card-btn.delete-btn:disabled {
+    color: var(--danger-light);
+    background-color: var(--gray-light);
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 .card-btn.more-btn {
     background: var(--surface-soft);
@@ -5014,11 +6542,6 @@ export default {
 .warning-icon {
     font-size: 3rem;
     color: var(--danger);
-    margin-bottom: 1rem;
-}
-.success-icon {
-    font-size: 3rem;
-    color: var(--success);
     margin-bottom: 1rem;
 }
 .delete-modal-footer {
@@ -5256,13 +6779,13 @@ export default {
 }
 
 .permission-type-card.selected {
-    border-color: #0d6efd;
+    border-color: var(--primary);
     background-color: rgba(13, 110, 253, 0.05);
 }
 
 .permission-type-icon {
     font-size: 1.5rem;
-    color: #0d6efd;
+    color: var(--primary);
     margin-bottom: 0.75rem;
 }
 
@@ -5387,7 +6910,7 @@ export default {
     height: 38px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: start;
     border-radius: 50%;
     cursor: pointer;
     transition: background-color 0.2s, color 0.2s;
@@ -5434,7 +6957,7 @@ export default {
     color: #c0c4cc !important;
     cursor: not-allowed !important;
     background-color: #f5f7fa !important;
-    pointer-events: none;
+    /* pointer-events: none; */
 }
 .is-disabled-custom .date-cell {
     background-color: transparent !important;
@@ -5621,8 +7144,8 @@ export default {
         min-width: 150px;
         position: relative;
         left: auto;
-        z-index: 100;
-        box-shadow: none;
+        /* z-index: 100; */
+        /* box-shadow: none; */
     }
     .modal-container {
         margin: 0.5rem;
@@ -5662,11 +7185,16 @@ export default {
     .subtitle {
         font-size: 0.85rem;
     }
+    .el-calendar__body {
+        padding: 0 !important;
+        padding-top: 1rem !important;
+    }
     .control-panel {
         padding: 0.75rem;
         margin-bottom: 0.5rem;
     }
     .search-filter-section {
+        flex-direction: column;
         gap: 0.75rem;
     }
     .table-responsive-wrapper {

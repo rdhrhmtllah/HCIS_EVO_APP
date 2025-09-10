@@ -15,7 +15,7 @@ class EnsureUserIsAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        return auth()->check() && auth()->user()->Kode_Users === 'RIDHO RAHMAT'
+        return auth()->check() && (auth()->user()->Kode_Users === 'RIDHO RAHMAT' || auth()->user()->Kode_Users === 'H45')
         ? $next($request)
         : abort(403);
 

@@ -28,13 +28,13 @@ class AuthController extends Controller
         try{
 
 
-            if (!$this->verifyCloudflareCaptcha($request)) {
+            // if (!$this->verifyCloudflareCaptcha($request)) {
 
-            Session::flash('error', 'Tolong tunggu security check selesai!');
-            return back()
-                    ->withErrors(['captcha' => 'Please complete the security check'])
-                    ->withInput($request->except('password'));
-            }
+            // Session::flash('error', 'Tolong tunggu security check selesai!');
+            // return back()
+            //         ->withErrors(['captcha' => 'Please complete the security check'])
+            //         ->withInput($request->except('password'));
+            // }
 
             $userLogin = User::where('Username', $request->username)->first();
         if ($userLogin && Hash::check(env('SALT_FRONT').$request->password.env('SALT_BACK'), $userLogin->Password)) {
@@ -46,9 +46,11 @@ class AuthController extends Controller
                 // Check user role and redirect accordingly
                 switch ($user->Role) {
                     case 'superuser':
+                        User::where("Username", $user->Username)->update(['angka_login' => DB::raw('COALESCE(angka_login, 0) + 1')]);
                         Session::flash('success', 'Welcome back, Admin!');
                         return redirect()->intended('/uDash');
                     case 'user':
+                        User::where("Username", $user->Username)->update(['angka_login' => DB::raw('COALESCE(angka_login, 0) + 1')]);
                         Session::flash('success', 'Welcome back, Manager!');
                         return redirect()->intended('/uDash');
                         // return abort(403, 'Akses ditolak!');
@@ -109,34 +111,48 @@ class AuthController extends Controller
 
     public function update(Request $request)
     {
-        $validation = $request->validate([
+        $request->validate([
             'oldPass' => 'required',
             'newPass' => 'required|min:6',
-            'VerifyPass' => 'required|min:6|same:newPass'
         ]);
+
         try {
             DB::beginTransaction();
-            if (!Hash::check(env('SALT_FRONT').$request->oldPass.env('SALT_BACK'), $request->user()->Password)) {
+
+            // Cek password lama
+            if (!Hash::check(env('SALT_FRONT') . $request->oldPass . env('SALT_BACK'), $request->user()->Password)) {
                 DB::rollBack();
-                return back()->with('pesan', 'Password Lama Salah!!');
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Password lama salah!'
+                ], 422); // 422 Unprocessable Entity (umum untuk validasi)
             }
 
+            // Update password
             $request->user()->update([
-                'Password' => Hash::make(env('SALT_FRONT').$request->newPass.env('SALT_BACK'))
+                'Password' => Hash::make(env('SALT_FRONT') . $request->newPass . env('SALT_BACK'))
             ]);
 
-            Alert::Success('Success', 'Password Berhasil Diupdate');
             DB::commit();
-            return back();
-        } catch (Throwable $error) {
+            return response()->json([
+                'status' => 200,
+                'message' => 'Password berhasil diperbarui'
+            ], 200);
+
+        } catch (\Throwable $error) {
             DB::rollBack();
-            Log::channel('loginLog')->info("error ubah password resetPass", [
+
+            Log::channel('loginLog')->error("Error ubah password resetPass", [
                 'pesan' => $error->getMessage()
             ]);
-            Alert::Error('Error', 'Terjadi kesalahan');
-            return back();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan, silakan coba lagi'
+            ], 500);
         }
     }
+
 
     public function changeData(Request $request){
         // dd($request->all());

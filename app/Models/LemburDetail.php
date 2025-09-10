@@ -12,4 +12,5 @@ class LemburDetail extends Model
     protected $primaryKey = 'Urut_Oto';
     protected $guarded =[];
     public $timestamps = false;
+
 }

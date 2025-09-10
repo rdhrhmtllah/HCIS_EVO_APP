@@ -1,7 +1,7 @@
 <template>
     <div class="container-fluid hris-dashboard">
         <!-- Header Section -->
-        <div v-if="!loadingTop" class="row mb-4 gap-2 gap-md-0">
+        <div v-if="!loadingTop" class="row mb-4 gap-2 gap-md-0 fade-in">
             <div class="col-md-6 col-12 d-none d-md-block">
                 <div class="row m-0 dashboard-header">
                     <div class="col-md-6">
@@ -22,7 +22,7 @@
                     </div>
                     <div class="col-md-6 text-md-end">
                         <div class="current-date">
-                            <span class="date">{{ currentDate }}</span>
+                            <span class="date">{{ getCutoffPeriod() }}</span>
                             <span class="time">{{ currentTime }}</span>
                         </div>
                     </div>
@@ -54,7 +54,7 @@
         </div>
         <!-- Header Section -->
 
-        <div v-else class="row mb-4 gap-2 gap-md-0">
+        <div v-else class="row mb-4 gap-2 gap-md-0 fade-in">
             <div class="col-md-6 col-12 d-none d-md-block">
                 <div class="row m-0 dashboard-header skeleton-container">
                     <div class="col-md-6">
@@ -122,6 +122,7 @@
             </div>
         </div>
         <!-- Quick Stats Section -->
+
         <div
             v-if="!loadingQuick"
             class="row d-flex justify-content-center mb-3 fade-in align-items-center"
@@ -169,7 +170,7 @@
                                 </div>
                             </div>
                             <!-- Sisa Cuti -->
-                            <div class="col-4">
+                            <div v-if="LeaderTeam" class="col-4">
                                 <div
                                     class="info-card bg-white rounded shadow-sm p-3 h-100 position-relative"
                                 >
@@ -188,7 +189,48 @@
                                             <div
                                                 class="info-value text-dark fw-bold fs-4"
                                             >
-                                                {{ totalLembur
+                                                {{
+                                                    jumlahAntrianPengajuan?.toFixed(
+                                                        0
+                                                    )
+                                                }}<span
+                                                    class="p-1"
+                                                    style="
+                                                        font-size: 0.6rem;
+                                                        opacity: 0.5;
+                                                    "
+                                                    >Data</span
+                                                >
+                                            </div>
+                                            <div
+                                                class="info-label text-muted small"
+                                            >
+                                                Antrian Izin
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else class="col-4">
+                                <div
+                                    class="info-card bg-white rounded shadow-sm p-3 h-100 position-relative"
+                                >
+                                    <div
+                                        class="d-flex align-items-start h-100 flex-column flex-md-row justify-content-start justify-content-md-start w-100"
+                                    >
+                                        <div
+                                            style=""
+                                            class="icon-circle bg-warning-light me-md-3"
+                                        >
+                                            <i
+                                                class="fas fa-clock text-warning"
+                                            ></i>
+                                        </div>
+                                        <div>
+                                            <div
+                                                class="info-value text-dark fw-bold fs-4"
+                                            >
+                                                {{ totalLembur?.toFixed(0)
                                                 }}<span
                                                     class="p-1"
                                                     style="
@@ -245,7 +287,7 @@
         </div>
         <div
             v-else
-            class="row d-flex justify-content-center mb-3 align-items-center"
+            class="row d-flex justify-content-center mb-3 align-items-center fade-in"
         >
             <div class="col-md-12">
                 <div class="leave-info-panel skeleton-container">
@@ -365,7 +407,7 @@
             <!-- Right Column -->
             <div class="col-lg-4">
                 <!-- Calendar -->
-                <div v-if="!loadingCalendar" class="">
+                <div v-if="!loadingCalendar" class="fade-in">
                     <div class="position-relative wrapper-calendar">
                         <div
                             class="cardFloat position-absolute d-flex justify-content-between align-items-center"
@@ -431,7 +473,7 @@
                         </div>
                     </div>
                 </div>
-                <div v-else class="">
+                <div v-else class="fade-in">
                     <div class="position-relative wrapper-calendar">
                         <!-- Card Float Skeleton -->
                         <div
@@ -495,7 +537,10 @@
                         </div>
                     </div>
                 </div>
-                <div v-if="!loadingCard" class="p-3 px-md-3 px-4 mb-md-0">
+                <div
+                    v-if="!loadingCard"
+                    class="p-3 px-md-3 px-4 mb-md-0 fade-in"
+                >
                     <div class="row justify-content-center w-100">
                         <div
                             class="col-md-4 col-4 mb-3 px-1 px-md-1"
@@ -504,7 +549,7 @@
                         >
                             <a
                                 :href="action.url"
-                                class="btn btn-action"
+                                class="btn btn-action shadow-sm"
                                 :class="action.class"
                             >
                                 <i
@@ -516,7 +561,10 @@
                         </div>
                     </div>
                 </div>
-                <div v-else class="p-3 px-md-5 px-4 mb-md-3 skeleton-container">
+                <div
+                    v-else
+                    class="fade-in p-3 px-md-5 px-4 mb-md-3 skeleton-container"
+                >
                     <div class="row justify-content-center">
                         <!-- Repeat for each quick action (typically 3-6 items) -->
                         <div
@@ -546,23 +594,431 @@
                         </div>
                     </div>
                 </div>
-                <!-- LEMBUR -->
-                <div v-if="!loadingLembur" class="">
+
+                <section
+                    v-if="!LeaderTeam"
+                    class="profile-section shadow-sm leave-requests fade-in mb-4"
+                >
+                    <div
+                        class="section-header d-flex justify-content-between align-items-center flex-wrap"
+                    >
+                        <div class="fs-5 fw-bold">Riwayat Absensi</div>
+
+                        <!-- filter tanggal -->
+                        <div class="filter-container">
+                            <el-date-picker
+                                v-model="selectedDateAbsensi"
+                                type="date"
+                                placeholder="Pilih Tanggal"
+                                format="DD-MM-YYYY"
+                                :default-value="null"
+                                value-format="YYYY-MM-DD"
+                                @change="handleDateChange"
+                                :disabled="loadingRiwayatAbsen"
+                                style="width: 150px"
+                            >
+                            </el-date-picker>
+                        </div>
+                    </div>
+
+                    <div class="section-content">
+                        <!-- loading state -->
+                        <div
+                            v-if="loadingRiwayatAbsen"
+                            class="text-center py-4"
+                        >
+                            <div class="loading-spinner"></div>
+                            <p class="mt-2 text-muted">Memuat data...</p>
+                        </div>
+
+                        <!-- jika ada data -->
+                        <div class="p-2" v-else-if="allDataRiwayatAbsen.length">
+                            <div
+                                v-for="(item, idx) in allDataRiwayatAbsen"
+                                :key="idx"
+                                class="request-item d-flex justify-content-between align-items-center px-2"
+                                @click="showDetailAbsen(item)"
+                            >
+                                <div>
+                                    <div class="request-type fw-bold text-dark">
+                                        {{ formatDate(item.Tanggal) }}
+                                    </div>
+                                    <div class="request-date">
+                                        <small class="text-muted">{{
+                                            getDayName(item.Tanggal)
+                                        }}</small>
+                                    </div>
+                                </div>
+                                <div class="request-status">
+                                    <span
+                                        class="text-white status-badge bg-primary px-2 py-1 rounded-5"
+                                    >
+                                        <i class="fas fa-user-clock me-1"></i>
+                                        {{ item.JumlahAbsensi }} Absensi
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- jika tidak ada data -->
+                        <div v-else class="empty-state">
+                            <i class="fas fa-clipboard-list"></i>
+                            <p>Tidak ada data absensi</p>
+                            <small class="text-muted"
+                                >Coba pilih tanggal lain atau periode
+                                berbeda</small
+                            >
+                        </div>
+                    </div>
+
+                    <!-- pagination -->
+                    <div
+                        class="pagination-container"
+                        v-if="
+                            peginationRiwayatAbsen && allDataRiwayatAbsen.length
+                        "
+                    >
+                        <button
+                            class="btn btn-sm btn-pagination"
+                            :disabled="
+                                !peginationRiwayatAbsen.prev_page_url ||
+                                loadingRiwayatAbsen
+                            "
+                            @click="
+                                getRiwayatAbsen(
+                                    peginationRiwayatAbsen.prev_page_url
+                                )
+                            "
+                        >
+                            <i
+                                class="fas fa-chevron-left me-1 d-flex justify-content-center align-items-center"
+                            ></i>
+                        </button>
+
+                        <div class="page-info">
+                            Halaman
+                            {{ peginationRiwayatAbsen.current_page }} dari
+                            {{ peginationRiwayatAbsen.last_page }}
+                        </div>
+
+                        <button
+                            class="btn btn-sm btn-pagination"
+                            :disabled="
+                                !peginationRiwayatAbsen.next_page_url ||
+                                loadingRiwayatAbsen
+                            "
+                            @click="
+                                getRiwayatAbsen(
+                                    peginationRiwayatAbsen.next_page_url
+                                )
+                            "
+                        >
+                            <i
+                                class="fas fa-chevron-right ms-1 d-flex justify-content-center align-items-center"
+                            ></i>
+                        </button>
+                    </div>
+                </section>
+                <section v-else>
+                    <div v-if="!loadingShift" class="p3 fade-in">
+                        <div class="shift-timeline">
+                            <div class="card shadow-sm border-0">
+                                <div
+                                    class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center"
+                                >
+                                    <h5 class="mb-0 text-white">
+                                        <i
+                                            class="bi bi-calendar-week me-2 text-white"
+                                        ></i
+                                        >Jadwal Shift
+                                    </h5>
+                                    <div class="date-range fw-bold">
+                                        {{ getJustYear(dataShift[0]?.Tanggal) }}
+                                    </div>
+                                </div>
+
+                                <div class="card-body pt-4 pb-3">
+                                    <!-- 7-Day Timeline -->
+                                    <div class="timeline-container">
+                                        <div class="timeline-days">
+                                            <div
+                                                v-for="day in dataShift"
+                                                :key="day.Tanggal"
+                                                class="timeline-day"
+                                                :class="{
+                                                    active: day.isToday,
+                                                    'day-off':
+                                                        day.shiftType ===
+                                                        'NO SHIFT',
+                                                }"
+                                                @click="selectDay(day)"
+                                            >
+                                                <div class="day-header">
+                                                    <div class="day-name">
+                                                        {{ day.Nama_Shift }}
+                                                    </div>
+                                                    <div class="day-date">
+                                                        {{
+                                                            formatTanggaldanBulan(
+                                                                day.Tanggal
+                                                            )
+                                                        }}
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="day-shift text-white"
+                                                >
+                                                    <span
+                                                        class="shift-badge"
+                                                        :class="
+                                                            shiftBadgeClass(day)
+                                                        "
+                                                    >
+                                                        {{ day.Nama_Shift }}
+                                                    </span>
+                                                    <div
+                                                        class="shift-hours"
+                                                        v-if="
+                                                            day.Nama_Shift !==
+                                                            'NO SHIFT'
+                                                        "
+                                                    >
+                                                        {{ day.Jam_Masuk }} -
+                                                        {{ day.Jam_Keluar }}
+                                                    </div>
+                                                    <div
+                                                        v-else
+                                                        class="day-off-text"
+                                                    >
+                                                        <i
+                                                            class="bi bi-moon"
+                                                        ></i>
+                                                        OFF
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="d-flex gap-3 justify-content-center align-items-center mt-3"
+                                    >
+                                        <!-- <button
+                                            @click="prevWeekShift"
+                                            class="btn-modern btn-primary rounded-3 px-3 py-2"
+                                        >
+                                            <i
+                                                class="bi bi-chevron-left d-flex justify-content-center align-items-center"
+                                            ></i>
+                                        </button>
+                                        <div class="">
+                                            {{
+                                                getJustMonth(
+                                                    dataShift[0]?.Tanggal
+                                                )
+                                            }}
+                                        </div>
+                                        <button
+                                            @click="nextWeekShift"
+                                            class="btn-modern btn-primary rounded-3 px-3 py-2"
+                                        >
+                                            <i
+                                                class="bi bi-chevron-right d-flex justify-content-center align-items-center"
+                                            ></i>
+                                        </button> -->
+
+                                        <div
+                                            class="d-flex align-items-center justify-content-center"
+                                        >
+                                            <button
+                                                @click="prevWeekShift"
+                                                class="btn-pagination btn-primary btn-modern"
+                                            >
+                                                <i
+                                                    class="bi bi-chevron-left d-flex justify-content-center align-items-center"
+                                                ></i>
+                                            </button>
+                                            <div class="">
+                                                {{
+                                                    getJustMonth(
+                                                        dataShift[0]?.Tanggal
+                                                    )
+                                                }}
+                                            </div>
+                                            <button
+                                                @click="nextWeekShift"
+                                                class="btn-pagination btn-primary btn-modern"
+                                            >
+                                                <i
+                                                    class="bi bi-chevron-right d-flex justify-content-center align-items-center"
+                                                ></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="skeleton-container fade-in">
+                        <div class="card shadow-sm border-0">
+                            <!-- Card Header Skeleton -->
+                            <div
+                                class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center"
+                            >
+                                <div class="d-flex align-items-center">
+                                    <div
+                                        class="skeleton-icon"
+                                        style="
+                                            width: 24px;
+                                            height: 24px;
+                                            margin-right: 8px;
+                                            border-radius: 4px;
+                                        "
+                                    ></div>
+                                    <div
+                                        class="skeleton-text"
+                                        style="width: 120px; height: 24px"
+                                    ></div>
+                                </div>
+                                <div
+                                    class="skeleton-text"
+                                    style="width: 60px; height: 24px"
+                                ></div>
+                            </div>
+
+                            <!-- Card Body Skeleton -->
+                            <div class="card-body pt-4 pb-3">
+                                <!-- 7-Day Timeline Skeleton -->
+                                <div class="timeline-container">
+                                    <div class="timeline-days">
+                                        <div
+                                            class="timeline-day skeleton-day"
+                                            v-for="i in 7"
+                                            :key="i"
+                                        >
+                                            <div class="day-header">
+                                                <div
+                                                    class="skeleton-text"
+                                                    style="
+                                                        width: 80%;
+                                                        height: 16px;
+                                                        margin-bottom: 8px;
+                                                    "
+                                                ></div>
+                                                <div
+                                                    class="skeleton-text"
+                                                    style="
+                                                        width: 60%;
+                                                        height: 14px;
+                                                    "
+                                                ></div>
+                                            </div>
+                                            <div class="day-shift">
+                                                <div
+                                                    class="skeleton-badge"
+                                                    style="
+                                                        width: 80%;
+                                                        height: 24px;
+                                                        border-radius: 12px;
+                                                        margin-bottom: 4px;
+                                                    "
+                                                ></div>
+                                                <div
+                                                    class="skeleton-text"
+                                                    style="
+                                                        width: 90%;
+                                                        height: 14px;
+                                                    "
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Navigation Controls Skeleton -->
+                                <div
+                                    class="d-flex gap-3 justify-content-center align-items-center mt-3"
+                                >
+                                    <div
+                                        class="skeleton-button"
+                                        style="
+                                            width: 40px;
+                                            height: 40px;
+                                            border-radius: 8px;
+                                        "
+                                    ></div>
+                                    <div
+                                        class="skeleton-text"
+                                        style="width: 100px; height: 20px"
+                                    ></div>
+                                    <div
+                                        class="skeleton-button"
+                                        style="
+                                            width: 40px;
+                                            height: 40px;
+                                            border-radius: 8px;
+                                        "
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- approver izin -->
+                <!-- <div class="">
                     <div class="card leave-requests-card">
                         <div
                             class="card-header d-flex justify-content-between align-items-center"
                         >
-                            <h5 class="mb-0">Riwayat Lembur</h5>
+                            <h5 class="mb-0">Approver izin</h5>
+                        </div>
+                        <div class="card-body" style="max-height: 13rem">
+                            <div
+                                v-for="(data, idx) in nama_Approver"
+                                :key="idx"
+                                class="row fs-6 mt-3 ps-3 align-items-center justify-content-between"
+                            >
+                                <div
+                                    v-tooltip="data.Nama"
+                                    style="font-size: 0.9rem !important"
+                                    class="col-6 p-0 d-flex justify-content-start text-start align-items-center"
+                                >
+                                    {{
+                                        truncateText(capitalize(data?.Nama), 30)
+                                    }}
+                                </div>
+
+                                <div
+                                    style="font-size: 0.7rem !important"
+                                    class="col-6 p-0 d-flex justify-content-end px-2 align-items-center"
+                                >
+                                    <span
+                                        class=""
+                                        :class="
+                                            data.Status == 'Disetujui'
+                                                ? 'badge-lembur-selesai'
+                                                : 'badge-lembur'
+                                        "
+                                    >
+                                        Approver {{ data.order_flow }}
+                                    </span>
+                                </div>
+                            </div>
+
+
+                        </div>
+                    </div>
+                </div> -->
+
+                <!-- anggota team -->
+                <!-- <div class="">
+                    <div class="card leave-requests-card">
+                        <div
+                            class="card-header d-flex justify-content-between align-items-center"
+                        >
+                            <h5 class="mb-0">Anggota Team</h5>
                             <div class="d-flex gap-2">
                                 <button
-                                    :disabled="
-                                        paginationLembur.current_page <= 1
-                                    "
-                                    @click="
-                                        getAllIzin(
-                                            paginationLembur.prev_page_url
-                                        )
-                                    "
+                                    @click="prevPageAnggota"
                                     class="btn-modern btn-primary p-1"
                                     style="border-radius: 8px !important"
                                 >
@@ -571,19 +1027,12 @@
                                     ></i>
                                 </button>
                                 <span
-                                    >{{ paginationLembur.current_page }} of
-                                    {{ paginationLembur.last_page }}</span
+                                    >{{ currentPageAnggota }}
+                                    of
+                                    {{ totalPagesAnggota }}</span
                                 >
                                 <button
-                                    :disabled="
-                                        paginationLembur.current_page ==
-                                        paginationLembur.last_page
-                                    "
-                                    @click="
-                                        getAllIzin(
-                                            paginationLembur.next_page_url
-                                        )
-                                    "
+                                    @click="nextPageAnggota"
                                     class="btn-modern btn-primary p-1"
                                     style="border-radius: 8px !important"
                                 >
@@ -595,39 +1044,35 @@
                         </div>
                         <div class="card-body" style="height: 13rem">
                             <div
-                                v-for="(data, idx) in allDataLembur"
+                                v-for="(data, idx) in paginatedAnggota"
                                 :key="idx"
-                                class="row fs-6 mt-3"
+                                class="row fs-6 mt-3 ps-3"
                             >
                                 <div
+                                    v-tooltip="data.Nama"
                                     style="font-size: 0.9rem !important"
-                                    class="col-4 p-0 d-flex justify-content-center align-items-center"
+                                    class="col-4 p-0 d-flex justify-content-start text-start align-items-center"
                                 >
                                     {{
-                                        formatTanggal_Lembur(
-                                            data.Tanggal_Lembur_Dari,
-                                            data.Tanggal_Lembur_Sampai
-                                        )
+                                        truncateText(capitalize(data?.Nama), 10)
                                     }}
                                 </div>
                                 <div
-                                    v-tooltip="
-                                        data.Tanggal_Lembur_Dari +
-                                        '-' +
-                                        data.Tanggal_Lembur_Sampai
-                                    "
+                                    v-tooltip="data.divisi"
                                     style="
                                         font-size: 0.9rem !important;
                                         cursor: pointer;
                                     "
                                     class="col-4 p-0 d-flex justify-content-center align-items-center"
                                 >
-                                    {{
-                                        truncateText(data.durasi?.toFixed(2), 4)
-                                    }}
-                                    jam
+                                    {{ truncateText(data.divisi, 10) }}
                                 </div>
                                 <div
+                                    v-tooltip="
+                                        data.HP == '-'
+                                            ? 'silahkan hubungi admin untuk mengubah No HP'
+                                            : ''
+                                    "
                                     style="font-size: 0.7rem !important"
                                     class="col-4 p-0 d-flex justify-content-center align-items-center"
                                 >
@@ -639,95 +1084,16 @@
                                                 : 'badge-lembur'
                                         "
                                     >
-                                        {{ data.Status }}
+                                        {{ data.HP }}
                                     </span>
                                 </div>
                             </div>
 
-                            <!-- <button
-                                class="btn btn-primary w-100 mt-3"
-                                @click="newLeaveRequest"
-                            >
-                                <i class="bi bi-plus-circle"></i> Buat Pengajuan
-                                Baru
-                            </button> -->
-                        </div>
-                    </div>
-                </div>
-                <div v-else class="skeleton-container">
-                    <div class="card leave-requests-card">
-                        <!-- Card Header Skeleton -->
-                        <div
-                            class="card-header d-flex justify-content-between align-items-center skeleton-container"
-                        >
-                            <div
-                                class="skeleton-text"
-                                style="width: 120px; height: 24px"
-                            ></div>
-                            <div class="d-flex gap-2 align-items-center">
-                                <div
-                                    class="skeleton-button"
-                                    style="
-                                        width: 32px;
-                                        height: 32px;
-                                        border-radius: 8px;
-                                    "
-                                ></div>
-                                <div
-                                    class="skeleton-text"
-                                    style="width: 60px; height: 20px"
-                                ></div>
-                                <div
-                                    class="skeleton-button"
-                                    style="
-                                        width: 32px;
-                                        height: 32px;
-                                        border-radius: 8px;
-                                    "
-                                ></div>
-                            </div>
-                        </div>
 
-                        <!-- Card Body Skeleton -->
-                        <div class="card-body" style="height: 13rem">
-                            <!-- Repeat skeleton rows (typically 3-5 items) -->
-                            <div
-                                class="row fs-6 mt-3 skeleton-row"
-                                v-for="i in 4"
-                                :key="i"
-                            >
-                                <div
-                                    class="col-4 d-flex justify-content-center align-items-center"
-                                >
-                                    <div
-                                        class="skeleton-text"
-                                        style="width: 80%; height: 16px"
-                                    ></div>
-                                </div>
-                                <div
-                                    class="col-4 d-flex justify-content-center align-items-center"
-                                >
-                                    <div
-                                        class="skeleton-text"
-                                        style="width: 90%; height: 16px"
-                                    ></div>
-                                </div>
-                                <div
-                                    class="col-4 d-flex justify-content-center align-items-center"
-                                >
-                                    <div
-                                        class="skeleton-badge"
-                                        style="
-                                            width: 70px;
-                                            height: 24px;
-                                            border-radius: 12px;
-                                        "
-                                    ></div>
-                                </div>
-                            </div>
                         </div>
                     </div>
-                </div>
+                </div> -->
+
                 <!-- <div class="card holiday-card mb-4">
                     <div
                         class="card-header d-flex justify-content-between align-items-center"
@@ -771,47 +1137,227 @@
             </div>
             <!-- Left Column -->
             <div class="col-lg-8 mb-1">
-                <div class="row justify-content-between">
+                <div class="row justify-content-between fade-in">
                     <!-- Leave Requests -->
-                    <div v-if="!loadingIzin" class="col-md-6">
-                        <div class="card leave-requests-card">
+
+                    <div v-if="LeaderTeam" class="col-md-6">
+                        <section
+                            class="profile-section shadow-sm leave-requests fade-in mb-4"
+                        >
                             <div
-                                class="card-header d-flex justify-content-between align-items-center"
+                                class="section-header d-flex justify-content-between align-items-center flex-wrap"
                             >
-                                <h5 class="mb-0">Pengajuan Izin</h5>
-                                <div class="d-flex gap-2">
+                                <div class="fs-5 fw-bold">Riwayat Absensi</div>
+
+                                <!-- filter tanggal -->
+                                <div class="filter-container">
+                                    <el-date-picker
+                                        v-model="selectedDateAbsensi"
+                                        type="date"
+                                        placeholder="Pilih Tanggal"
+                                        format="DD-MM-YYYY"
+                                        :default-value="null"
+                                        value-format="YYYY-MM-DD"
+                                        @change="handleDateChange"
+                                        :disabled="loadingRiwayatAbsen"
+                                        style="width: 150px"
+                                    >
+                                    </el-date-picker>
+                                </div>
+                            </div>
+
+                            <div class="section-content leader">
+                                <!-- loading state -->
+                                <div
+                                    v-if="loadingRiwayatAbsen"
+                                    class="text-center py-4"
+                                >
+                                    <div class="loading-spinner"></div>
+                                    <p class="mt-2 text-muted">
+                                        Memuat data...
+                                    </p>
+                                </div>
+
+                                <!-- jika ada data -->
+                                <div
+                                    class="p-2"
+                                    v-else-if="allDataRiwayatAbsen.length"
+                                >
+                                    <div
+                                        v-for="(
+                                            item, idx
+                                        ) in allDataRiwayatAbsen"
+                                        :key="idx"
+                                        class="request-item d-flex justify-content-between align-items-center px-2"
+                                        @click="showDetailAbsen(item)"
+                                    >
+                                        <div>
+                                            <div
+                                                class="request-type fw-bold text-dark"
+                                            >
+                                                {{ formatDate(item.Tanggal) }}
+                                            </div>
+                                            <div class="request-date">
+                                                <small class="text-muted">{{
+                                                    getDayName(item.Tanggal)
+                                                }}</small>
+                                            </div>
+                                        </div>
+                                        <div class="request-status">
+                                            <span
+                                                class="text-white status-badge bg-primary px-2 py-1 rounded-5"
+                                            >
+                                                <i
+                                                    class="fas fa-user-clock me-1"
+                                                ></i>
+                                                {{ item.JumlahAbsensi }} Absensi
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- jika tidak ada data -->
+                                <div v-else class="empty-state">
+                                    <i class="fas fa-clipboard-list"></i>
+                                    <p>Tidak ada data absensi</p>
+                                    <small class="text-muted"
+                                        >Coba pilih tanggal lain atau periode
+                                        berbeda</small
+                                    >
+                                </div>
+                            </div>
+
+                            <!-- pagination -->
+                            <!-- <div class="pagination-container">
+                                <button
+                                    class="btn btn-sm btn-pagination"
+                                    :disabled="
+                                        !peginationRiwayatAbsen.prev_page_url ||
+                                        loadingRiwayatAbsen
+                                    "
+                                    @click="
+                                        getRiwayatAbsen(
+                                            peginationRiwayatAbsen.prev_page_url
+                                        )
+                                    "
+                                >
+                                    <i
+                                        class="fas fa-chevron-left me-1 d-flex justify-content-center align-items-center"
+                                    ></i>
+                                </button>
+
+                                <div class="page-info">
+
+                                    {{ peginationRiwayatAbsen.current_page }}
+                                    of
+                                    {{ peginationRiwayatAbsen.last_page }}
+                                </div>
+
+                                <button
+                                    class="btn btn-sm btn-pagination"
+                                    :disabled="
+                                        !peginationRiwayatAbsen.next_page_url ||
+                                        loadingRiwayatAbsen
+                                    "
+                                    @click="
+                                        getRiwayatAbsen(
+                                            peginationRiwayatAbsen.next_page_url
+                                        )
+                                    "
+                                >
+                                    <i
+                                        class="fas fa-chevron-right ms-1 d-flex justify-content-center align-items-center"
+                                    ></i>
+                                </button>
+                            </div> -->
+                            <div
+                                class="d-flex align-items-center justify-content-center pt-2"
+                            >
+                                <button
+                                    class="btn-pagination btn-primary btn-modern"
+                                    :disabled="
+                                        !peginationRiwayatAbsen.prev_page_url ||
+                                        loadingRiwayatAbsen
+                                    "
+                                    @click="
+                                        getRiwayatAbsen(
+                                            peginationRiwayatAbsen.prev_page_url
+                                        )
+                                    "
+                                >
+                                    <i
+                                        class="bi bi-chevron-left d-flex justify-content-center align-items-center"
+                                    ></i>
+                                </button>
+                                <div class="page-info">
+                                    {{ peginationRiwayatAbsen.current_page }}
+                                    of
+                                    {{ peginationRiwayatAbsen.last_page }}
+                                </div>
+                                <button
+                                    :disabled="
+                                        !peginationRiwayatAbsen.next_page_url ||
+                                        loadingRiwayatAbsen
+                                    "
+                                    @click="
+                                        getRiwayatAbsen(
+                                            peginationRiwayatAbsen.next_page_url
+                                        )
+                                    "
+                                    class="btn-pagination btn-primary btn-modern"
+                                >
+                                    <i
+                                        class="bi bi-chevron-right d-flex justify-content-center align-items-center"
+                                    ></i>
+                                </button>
+                            </div>
+                        </section>
+                    </div>
+                    <div v-else class="col-md-6">
+                        <div
+                            v-if="!loadingLembur"
+                            style="height: 25rem"
+                            class="lembur-history-card card"
+                        >
+                            <div
+                                class="card-header d-flex justify-content-between align-items-center w-100"
+                            >
+                                <h5 class="mb-0">Riwayat Lembur</h5>
+                                <div
+                                    class="lembur-pagination justify-content-end w-100"
+                                >
                                     <button
                                         :disabled="
-                                            paginationIzin.current_page <= 1
+                                            paginationLembur.current_page <=
+                                                1 ||
+                                            !paginationLembur.prev_page_url
                                         "
                                         @click="
-                                            getAllIzin(
-                                                paginationIzin.prev_page_url
+                                            getAllLembur(
+                                                paginationLembur.prev_page_url
                                             )
                                         "
-                                        class="btn-modern btn-primary p-1"
-                                        style="border-radius: 8px !important"
+                                        class="lembur-pagination-btn btn-primary btn-modern"
                                     >
                                         <i
                                             class="bi bi-arrow-left d-flex justify-content-center align-items-center"
                                         ></i>
                                     </button>
-                                    <span
-                                        >{{ paginationIzin.current_page }} of
-                                        {{ paginationIzin.last_page }}</span
+                                    <span class=""
+                                        >{{ paginationLembur.current_page }} of
+                                        {{ paginationLembur.last_page }}</span
                                     >
                                     <button
                                         :disabled="
-                                            paginationIzin.current_page ==
-                                            paginationIzin.last_page
+                                            paginationLembur.current_page ==
+                                            paginationLembur.last_page
                                         "
                                         @click="
-                                            getAllIzin(
-                                                paginationIzin.next_page_url
+                                            getAllLembur(
+                                                paginationLembur.next_page_url
                                             )
                                         "
-                                        class="btn-modern btn-primary p-1"
-                                        style="border-radius: 8px !important"
+                                        class="lembur-pagination-btn btn-primary btn-modern"
                                     >
                                         <i
                                             class="bi bi-arrow-right d-flex justify-content-center align-items-center"
@@ -819,143 +1365,104 @@
                                     </button>
                                 </div>
                             </div>
-                            <div
-                                class="card-body d-flex flex-column justify-content-between"
-                                style="height: 19.5rem"
-                            >
-                                <div>
-                                    <div
-                                        class="leave-request py-3"
-                                        v-for="(request, idx) in allDataIzin"
-                                        :key="idx"
-                                    >
-                                        <div
-                                            class="request-type"
-                                            :class="
-                                                getTypeClass(request.Tipe_Izin)
-                                            "
-                                        >
-                                            {{ parseIzin(request.Tipe_Izin) }}
-                                        </div>
-                                        <div class="request-dates">
-                                            {{
-                                                formatTanggal_Izin(
-                                                    request.Tanggal_Mulai,
-                                                    request.Tanggal_Selesai
-                                                )
-                                            }}
-                                        </div>
-                                        <div
-                                            class="request-status"
-                                            :class="'status-' + request.status"
-                                        >
-                                            {{ request.status }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <a
-                                    href="/izin"
-                                    class="btn-modern btn-primary d-flex justify-content-center align-items-center w-100 mt-3"
+                            <div class="card-body">
+                                <div
+                                    v-if="allDataLembur.length === 0"
+                                    class="lembur-empty"
                                 >
                                     <i
-                                        class="bi bi-plus-circle d-flex justify-content-center align-items-center me-2"
+                                        class="bi bi-clock-history d-flex justify-content-center align-items-center"
                                     ></i>
-                                    Lihat Selengkapnya
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div v-else class="col-md-6 skeleton-container">
-                        <div class="card leave-requests-card">
-                            <!-- Card Header Skeleton -->
-                            <div
-                                class="card-header d-flex justify-content-between align-items-center"
-                            >
+                                    <p>Belum ada riwayat lembur</p>
+                                </div>
                                 <div
-                                    class="skeleton-text"
-                                    style="width: 120px; height: 24px"
-                                ></div>
-                                <div class="d-flex gap-2 align-items-center">
+                                    v-else
+                                    v-for="(data, idx) in allDataLembur"
+                                    :key="idx"
+                                    class="lembur-item"
+                                    @click="showLemburDetail(data)"
+                                >
+                                    <div class="lembur-date">
+                                        {{
+                                            formatTanggal_Lembur(
+                                                data.Tanggal_Lembur_Dari,
+                                                data.Tanggal_Lembur_Sampai
+                                            )
+                                        }}
+                                    </div>
+                                    <div class="lembur-duration">
+                                        {{ data.durasi.toFixed(2) }} jam
+                                    </div>
                                     <div
-                                        class="skeleton-button"
-                                        style="
-                                            width: 32px;
-                                            height: 32px;
-                                            border-radius: 8px;
+                                        class="lembur-status"
+                                        :class="
+                                            'status-' +
+                                            data.Status.toLowerCase()
                                         "
-                                    ></div>
-                                    <div
-                                        class="skeleton-text"
-                                        style="width: 60px; height: 20px"
-                                    ></div>
-                                    <div
-                                        class="skeleton-button"
-                                        style="
-                                            width: 32px;
-                                            height: 32px;
-                                            border-radius: 8px;
-                                        "
-                                    ></div>
+                                    >
+                                        {{ data.Status }}
+                                    </div>
                                 </div>
                             </div>
-
-                            <!-- Card Body Skeleton -->
-                            <div
-                                class="card-body d-flex flex-column justify-content-between"
-                                style="height: 19.1rem"
-                            >
-                                <!-- Leave Request Items (4-5 items typical) -->
-                                <div class="">
+                        </div>
+                        <div
+                            style="height: 25rem"
+                            v-else
+                            class="skeleton-container"
+                        >
+                            <div class="lembur-history-card card">
+                                <div
+                                    class="card-header d-flex justify-content-between align-items-center"
+                                >
                                     <div
-                                        class="leave-request-skeleton py-1"
+                                        class="skeleton-text"
+                                        style="width: 120px; height: 24px"
+                                    ></div>
+                                    <div
+                                        class="d-flex gap-2 align-items-center"
+                                    >
+                                        <div
+                                            class="skeleton-button"
+                                            style="
+                                                width: 32px;
+                                                height: 32px;
+                                                border-radius: 8px;
+                                            "
+                                        ></div>
+                                        <div
+                                            class="skeleton-text"
+                                            style="width: 60px; height: 20px"
+                                        ></div>
+                                        <div
+                                            class="skeleton-button"
+                                            style="
+                                                width: 32px;
+                                                height: 32px;
+                                                border-radius: 8px;
+                                            "
+                                        ></div>
+                                    </div>
+                                </div>
+                                <div style="height: 21rem" class="card-body">
+                                    <div
+                                        class="lembur-skeleton"
                                         v-for="i in 5"
                                         :key="i"
                                     >
+                                        <div class="lembur-skeleton-date"></div>
                                         <div
-                                            class="d-flex justify-content-between align-items-center mb-3"
-                                        >
-                                            <div
-                                                class="skeleton-badge"
-                                                style="
-                                                    width: 80px;
-                                                    height: 24px;
-                                                    border-radius: 12px;
-                                                "
-                                            ></div>
-                                            <div
-                                                class="skeleton-text"
-                                                style="
-                                                    width: 120px;
-                                                    height: 16px;
-                                                "
-                                            ></div>
-                                            <div
-                                                class="skeleton-badge"
-                                                style="
-                                                    width: 70px;
-                                                    height: 24px;
-                                                    border-radius: 12px;
-                                                "
-                                            ></div>
-                                        </div>
+                                            class="lembur-skeleton-duration"
+                                        ></div>
+                                        <div
+                                            class="lembur-skeleton-status"
+                                        ></div>
                                     </div>
                                 </div>
-                                <!-- "Lihat Selengkapnya" Button Skeleton -->
-                                <div
-                                    class="skeleton-button"
-                                    style="
-                                        width: 100%;
-                                        height: 40px;
-                                        border-radius: 8px;
-                                        margin-top: 16px;
-                                    "
-                                ></div>
                             </div>
                         </div>
                     </div>
-
                     <div class="col-md-6">
-                        <div class="shift-timeline">
+                        <div class="shift-timeline h-full">
                             <div class="card shadow-sm border-0">
                                 <div
                                     class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center"
@@ -964,9 +1471,9 @@
                                         <i
                                             class="bi bi-calendar-week me-2 text-white"
                                         ></i
-                                        >{{ currentMonthAndDate }}
+                                        >Statistik Absensi
                                     </h5>
-                                    <select
+                                    <!-- <select
                                         @change="getChartData"
                                         v-model="chartStateLoad"
                                         class="btn-modern btn-primary p-1"
@@ -975,12 +1482,23 @@
                                         <option value="week">Perminggu</option>
                                         <option value="month">Perbulan</option>
                                         <option value="year">Pertahun</option>
-                                    </select>
+                                    </select> -->
+                                    <el-date-picker
+                                        v-model="chartStateLoad"
+                                        type="month"
+                                        :default-value="new Date()"
+                                        format="MM-YYYY"
+                                        value-format="MM-YYYY"
+                                        class="bg-primary text-white"
+                                        @change="getChartData"
+                                        :placeholder="currentMonthAndDate"
+                                        style="width: 140px"
+                                    />
                                 </div>
                                 <div
                                     v-if="!loadingChart"
-                                    style="height: 19rem"
-                                    class="p-3 d-md-flex flex-column justify-content-center gap-2"
+                                    style="height: 21rem"
+                                    class="p-3 d-md-flex py-0 py-md-3 flex-column justify-content-center gap-2"
                                 >
                                     <div id="chart-donut">
                                         <apexchart
@@ -1008,10 +1526,10 @@
                                                         ],
                                                 }"
                                             ></span>
-                                            <span class="legend-text"
-                                                >{{ label }}
-                                                {{ series[index] }}</span
-                                            >
+                                            <span class="legend-text">
+                                                {{ label }}:
+                                                {{ series[index] ?? 0 }}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -1019,7 +1537,7 @@
                                 <!-- Card Body Skeleton -->
                                 <div
                                     v-else
-                                    style="height: 19rem"
+                                    style="height: 21rem"
                                     class="p-7 d-md-flex flex-column justify-content-center gap-2"
                                 >
                                     <!-- Donut Chart Placeholder -->
@@ -1071,252 +1589,1119 @@
                         </div>
                     </div>
                 </div>
-                <div v-if="!loadingShift" class="p3">
-                    <div class="shift-timeline">
-                        <div class="card shadow-sm border-0">
+                <!-- Chart Container (opsional) -->
+                <div v-if="LeaderTeam" class="card summary-card fade-in">
+                    <div
+                        class="card-header leader gap-4 d-flex justify-content-between align-items-center"
+                    >
+                        <h5 class="mb-0 text-bold fs-5 fw-bold">
+                            Ringkasan Tim
+                        </h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="search-container">
+                                <i
+                                    class="bi bi-search search-icon d-flex justify-content-center align-items-center"
+                                ></i>
+                                <input
+                                    type="text"
+                                    class="search-input"
+                                    v-model="serachQueryRingkasanTim"
+                                    placeholder="Cari nama"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="!loadingRingkasan" class="card-body p-0">
+                        <div
+                            v-for="(data, idx) in paginatedRingkasanTim"
+                            :key="idx"
+                            class="team-member"
+                        >
+                            <div class="member-rank d-md-flex d-none">
+                                {{ getInitials(data.nama) }}
+                            </div>
+                            <div class="member-details">
+                                <div class="d-flex align-items-center">
+                                    <div class="member-rank d-flex d-md-none">
+                                        {{ getInitials(data.nama) }}
+                                    </div>
+                                    <div class="member-name d-md-block d-none">
+                                        {{
+                                            truncateText(
+                                                capitalize(data.nama),
+                                                30
+                                            )
+                                        }}
+                                    </div>
+                                    <div
+                                        class="member-name d-md-none d-block"
+                                        v-tooltip="capitalize(data.nama)"
+                                    >
+                                        {{
+                                            truncateText(
+                                                capitalize(data.nama),
+                                                10
+                                            )
+                                        }}
+                                    </div>
+
+                                    <span class="badge shift-badge text-black"
+                                        >{{ data.shift_hari_ini }} ({{
+                                            data.jam_masuk_hari_ini +
+                                            " - " +
+                                            data.jam_keluar_hari_ini
+                                        }})</span
+                                    >
+                                    <div
+                                        class="status-badge present d-md-none d-block"
+                                    >
+                                        {{ data.status_hari_ini }}
+                                    </div>
+                                </div>
+                                <div class="member-stats">
+                                    <div class="stat-badge">
+                                        <span class="badge-value">{{
+                                            data.total_hadir +
+                                            "/" +
+                                            data.total_hari
+                                        }}</span>
+                                        <span class="badge-label">{{
+                                            data.status_hari_ini
+                                        }}</span>
+                                    </div>
+                                    <div class="stat-badge">
+                                        <span class="badge-value"
+                                            >{{
+                                                data.total_keterlambatan_menit
+                                            }}
+                                            Menit</span
+                                        >
+                                        <span class="badge-label"
+                                            >Terlambat</span
+                                        >
+                                    </div>
+                                    <div class="stat-badge">
+                                        <span class="badge-value"
+                                            >{{ data.total_izin }} Hari</span
+                                        >
+                                        <span class="badge-label">Izin</span>
+                                    </div>
+                                    <div class="stat-badge">
+                                        <span class="badge-value"
+                                            >{{ data.total_sakit }} Hari</span
+                                        >
+                                        <span class="badge-label">Sakit</span>
+                                    </div>
+                                    <div class="stat-badge">
+                                        <span class="badge-value"
+                                            >{{
+                                                data.total_lembur_jam
+                                            }}
+                                            Jam</span
+                                        >
+                                        <span class="badge-label">Lembur</span>
+                                    </div>
+                                    <div class="stat-badge">
+                                        <span class="badge-value">{{
+                                            data.total_cuti
+                                        }}</span>
+                                        <span class="badge-label"
+                                            >Sisa Cuti</span
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="status-badge present d-md-block d-none">
+                                {{ data.status_hari_ini }}
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="card-body p-0">
+                        <!-- Skeleton untuk anggota tim (dibuat 5 item sebagai contoh) -->
+                        <div
+                            v-for="i in 5"
+                            :key="i"
+                            class="team-member skeleton-container"
+                        >
                             <div
-                                class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center"
-                            >
-                                <h5 class="mb-0 text-white">
-                                    <i
-                                        class="bi bi-calendar-week me-2 text-white"
-                                    ></i
-                                    >Jadwal Shift
-                                </h5>
-                                <div class="date-range fw-bold">2025</div>
+                                class="member-rank skeleton-circle"
+                                style="width: 40px; height: 40px"
+                            ></div>
+
+                            <div class="member-details">
+                                <div class="d-flex align-items-center">
+                                    <div class="member-name">
+                                        <div
+                                            class="skeleton-text"
+                                            style="
+                                                width: 180px;
+                                                height: 20px;
+                                                margin-bottom: 8px;
+                                            "
+                                        ></div>
+                                    </div>
+                                    <div
+                                        class="skeleton-text"
+                                        style="
+                                            width: 120px;
+                                            height: 24px;
+                                            margin-left: 12px;
+                                        "
+                                    ></div>
+                                </div>
+
+                                <div class="member-stats">
+                                    <!-- Skeleton untuk stat badge (6 item) -->
+                                    <div
+                                        v-for="j in 6"
+                                        :key="j"
+                                        class="stat-badge"
+                                    >
+                                        <div
+                                            class="skeleton-text"
+                                            style="
+                                                width: 50px;
+                                                height: 16px;
+                                                margin-bottom: 4px;
+                                            "
+                                        ></div>
+                                        <div
+                                            class="skeleton-text"
+                                            style="width: 40px; height: 14px"
+                                        ></div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="card-body pt-4 pb-3">
-                                <!-- 7-Day Timeline -->
-                                <div class="timeline-container">
-                                    <div class="timeline-days">
-                                        <div
-                                            v-for="day in dataShift"
-                                            :key="day.Tanggal"
-                                            class="timeline-day"
-                                            :class="{
-                                                active: day.isToday,
-                                                'day-off':
-                                                    day.shiftType ===
-                                                    'NO SHIFT',
-                                            }"
-                                            @click="selectDay(day)"
-                                        >
-                                            <div class="day-header">
-                                                <div class="day-name">
-                                                    {{ day.Nama_Shift }}
+                            <div
+                                class="status-badge skeleton-text"
+                                style="width: 80px; height: 28px"
+                            ></div>
+                        </div>
+                    </div>
+                    <div
+                        style="border-top: 1px solid #e2e8f0"
+                        class="d-flex py-3 justify-content-center align-items-center"
+                    >
+                        <div
+                            class="d-flex align-items-center justify-content-end"
+                        >
+                            <button
+                                @click="prevPageRingkasanTim"
+                                class="btn-pagination btn-primary btn-modern"
+                                :disabled="currentPageRingkasanTim <= 1"
+                            >
+                                <i
+                                    class="bi bi-chevron-left d-flex justify-content-center align-items-center"
+                                ></i>
+                            </button>
+                            <span class="mx-2 pagination-text"
+                                >{{ currentPageRingkasanTim }} of
+                                {{ totalPagesRingkasanTim }}</span
+                            >
+                            <button
+                                @click="nextPageRingkasanTim"
+                                :disabled="
+                                    currentPageRingkasanTim ==
+                                    totalPagesRingkasanTim
+                                "
+                                class="btn-pagination btn-primary btn-modern"
+                            >
+                                <i
+                                    class="bi bi-chevron-right d-flex justify-content-center align-items-center"
+                                ></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div v-else class="col-md-12 fade-in">
+                    <div class="card">
+                        <div
+                            class="card-header d-flex justify-content-between align-items-center"
+                        >
+                            <h5 class="mb-0">Statistik Lembur Bulanan</h5>
+                            <el-date-picker
+                                v-model="yearLembur"
+                                :default-value="new Date()"
+                                type="year"
+                                format="YYYY"
+                                value-format="YYYY"
+                                @change="getDataChartLembur"
+                                :placeholder="new Date().getFullYear()"
+                                style="width: 100px"
+                            />
+                        </div>
+                        <div class="card-body chart" style="overflow: visible">
+                            <apexchart
+                                v-if="chartOptionsLembur && chartSeriesLembur"
+                                type="bar"
+                                height="250"
+                                :options="chartOptionsLembur"
+                                :series="chartSeriesLembur"
+                            ></apexchart>
+                        </div>
+                    </div>
+                </div>
+                <section v-if="!LeaderTeam">
+                    <div v-if="!loadingShift" class="p3 fade-in">
+                        <div class="shift-timeline">
+                            <div class="card shadow-sm border-0">
+                                <div
+                                    class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center"
+                                >
+                                    <h5 class="mb-0 text-white">
+                                        <i
+                                            class="bi bi-calendar-week me-2 text-white"
+                                        ></i
+                                        >Jadwal Shift
+                                    </h5>
+                                    <div class="date-range fw-bold">
+                                        {{ getJustYear(dataShift[0]?.Tanggal) }}
+                                    </div>
+                                </div>
+
+                                <div class="card-body pt-4 pb-3">
+                                    <!-- 7-Day Timeline -->
+                                    <div class="timeline-container">
+                                        <div class="timeline-days">
+                                            <div
+                                                v-for="day in dataShift"
+                                                :key="day.Tanggal"
+                                                class="timeline-day"
+                                                :class="{
+                                                    active: day.isToday,
+                                                    'day-off':
+                                                        day.shiftType ===
+                                                        'NO SHIFT',
+                                                }"
+                                                @click="selectDay(day)"
+                                            >
+                                                <div class="day-header">
+                                                    <div class="day-name">
+                                                        {{ day.Nama_Shift }}
+                                                    </div>
+                                                    <div class="day-date">
+                                                        {{
+                                                            formatTanggaldanBulan(
+                                                                day.Tanggal
+                                                            )
+                                                        }}
+                                                    </div>
                                                 </div>
-                                                <div class="day-date">
-                                                    {{
-                                                        formatTanggaldanBulan(
-                                                            day.Tanggal
-                                                        )
-                                                    }}
-                                                </div>
-                                            </div>
-                                            <div class="day-shift text-white">
-                                                <span
-                                                    class="shift-badge"
-                                                    :class="
-                                                        shiftBadgeClass(day)
-                                                    "
-                                                >
-                                                    {{ day.Nama_Shift }}
-                                                </span>
                                                 <div
-                                                    class="shift-hours"
-                                                    v-if="
-                                                        day.Nama_Shift !==
-                                                        'NO SHIFT'
-                                                    "
+                                                    class="day-shift text-white"
                                                 >
-                                                    {{ day.Jam_Masuk }} -
-                                                    {{ day.Jam_Keluar }}
-                                                </div>
-                                                <div
-                                                    v-else
-                                                    class="day-off-text"
-                                                >
-                                                    <i class="bi bi-moon"></i>
-                                                    OFF
+                                                    <span
+                                                        class="shift-badge"
+                                                        :class="
+                                                            shiftBadgeClass(day)
+                                                        "
+                                                    >
+                                                        {{ day.Nama_Shift }}
+                                                    </span>
+                                                    <div
+                                                        class="shift-hours"
+                                                        v-if="
+                                                            day.Nama_Shift !==
+                                                            'NO SHIFT'
+                                                        "
+                                                    >
+                                                        {{ day.Jam_Masuk }} -
+                                                        {{ day.Jam_Keluar }}
+                                                    </div>
+                                                    <div
+                                                        v-else
+                                                        class="day-off-text"
+                                                    >
+                                                        <i
+                                                            class="bi bi-moon"
+                                                        ></i>
+                                                        OFF
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div
-                                    class="d-flex gap-3 justify-content-center align-items-center mt-3"
-                                >
-                                    <button
-                                        @click="prevWeekShift"
-                                        class="btn-modern btn-primary rounded-3 px-3 py-2"
+                                    <div
+                                        class="d-flex gap-3 justify-content-center align-items-center mt-3"
                                     >
-                                        <i
-                                            class="bi bi-chevron-left d-flex justify-content-center align-items-center"
-                                        ></i>
-                                    </button>
-                                    <div class="">
-                                        {{
-                                            getJustMonth(dataShift[0]?.Tanggal)
-                                        }}
+                                        <button
+                                            @click="prevWeekShift"
+                                            class="btn-modern btn-primary rounded-3 px-3 py-2"
+                                        >
+                                            <i
+                                                class="bi bi-chevron-left d-flex justify-content-center align-items-center"
+                                            ></i>
+                                        </button>
+                                        <div class="">
+                                            {{
+                                                getJustMonth(
+                                                    dataShift[0]?.Tanggal
+                                                )
+                                            }}
+                                        </div>
+                                        <button
+                                            @click="nextWeekShift"
+                                            class="btn-modern btn-primary rounded-3 px-3 py-2"
+                                        >
+                                            <i
+                                                class="bi bi-chevron-right d-flex justify-content-center align-items-center"
+                                            ></i>
+                                        </button>
                                     </div>
-                                    <button
-                                        @click="nextWeekShift"
-                                        class="btn-modern btn-primary rounded-3 px-3 py-2"
-                                    >
-                                        <i
-                                            class="bi bi-chevron-right d-flex justify-content-center align-items-center"
-                                        ></i>
-                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div v-else class="skeleton-container">
-                    <div class="card shadow-sm border-0">
-                        <!-- Card Header Skeleton -->
-                        <div
-                            class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center"
-                        >
-                            <div class="d-flex align-items-center">
+                    <div v-else class="skeleton-container fade-in">
+                        <div class="card shadow-sm border-0">
+                            <!-- Card Header Skeleton -->
+                            <div
+                                class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center"
+                            >
+                                <div class="d-flex align-items-center">
+                                    <div
+                                        class="skeleton-icon"
+                                        style="
+                                            width: 24px;
+                                            height: 24px;
+                                            margin-right: 8px;
+                                            border-radius: 4px;
+                                        "
+                                    ></div>
+                                    <div
+                                        class="skeleton-text"
+                                        style="width: 120px; height: 24px"
+                                    ></div>
+                                </div>
                                 <div
-                                    class="skeleton-icon"
-                                    style="
-                                        width: 24px;
-                                        height: 24px;
-                                        margin-right: 8px;
-                                        border-radius: 4px;
-                                    "
+                                    class="skeleton-text"
+                                    style="width: 60px; height: 24px"
                                 ></div>
+                            </div>
+
+                            <!-- Card Body Skeleton -->
+                            <div class="card-body pt-4 pb-3">
+                                <!-- 7-Day Timeline Skeleton -->
+                                <div class="timeline-container">
+                                    <div class="timeline-days">
+                                        <div
+                                            class="timeline-day skeleton-day"
+                                            v-for="i in 7"
+                                            :key="i"
+                                        >
+                                            <div class="day-header">
+                                                <div
+                                                    class="skeleton-text"
+                                                    style="
+                                                        width: 80%;
+                                                        height: 16px;
+                                                        margin-bottom: 8px;
+                                                    "
+                                                ></div>
+                                                <div
+                                                    class="skeleton-text"
+                                                    style="
+                                                        width: 60%;
+                                                        height: 14px;
+                                                    "
+                                                ></div>
+                                            </div>
+                                            <div class="day-shift">
+                                                <div
+                                                    class="skeleton-badge"
+                                                    style="
+                                                        width: 80%;
+                                                        height: 24px;
+                                                        border-radius: 12px;
+                                                        margin-bottom: 4px;
+                                                    "
+                                                ></div>
+                                                <div
+                                                    class="skeleton-text"
+                                                    style="
+                                                        width: 90%;
+                                                        height: 14px;
+                                                    "
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Navigation Controls Skeleton -->
+                                <div
+                                    class="d-flex gap-3 justify-content-center align-items-center mt-3"
+                                >
+                                    <div
+                                        class="skeleton-button"
+                                        style="
+                                            width: 40px;
+                                            height: 40px;
+                                            border-radius: 8px;
+                                        "
+                                    ></div>
+                                    <div
+                                        class="skeleton-text"
+                                        style="width: 100px; height: 20px"
+                                    ></div>
+                                    <div
+                                        class="skeleton-button"
+                                        style="
+                                            width: 40px;
+                                            height: 40px;
+                                            border-radius: 8px;
+                                        "
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Modal untuk Detail Lembur -->
+                <div
+                    class="modal fade"
+                    id="lemburDetailModal"
+                    tabindex="-1"
+                    aria-hidden="true"
+                >
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header text-black">
+                                <h5 class="modal-title">Detail Lembur</h5>
+                                <button
+                                    type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close"
+                                ></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="detail-item">
+                                    <span class="detail-label">Tanggal</span>
+                                    <span
+                                        class="detail-value"
+                                        id="modalTanggal"
+                                    ></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Durasi</span>
+                                    <span
+                                        class="detail-value"
+                                        id="modalDurasi"
+                                    ></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Status</span>
+                                    <span
+                                        class="detail-value"
+                                        id="modalStatus"
+                                    ></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Alasan</span>
+                                    <span
+                                        class="detail-value"
+                                        id="modalAlasan"
+                                    ></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Jam Aktual</span>
+                                    <span
+                                        class="detail-value"
+                                        id="modalJamAktual"
+                                    ></span>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    data-bs-dismiss="modal"
+                                >
+                                    Tutup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row justify-content-between">
+                    <!-- pengajuan izin -->
+                    <!-- <div v-if="!loadingIzin" class="col-md-6">
+                        <div class="card leave-requests-card">
+                            <div
+                                class="card-header d-flex justify-content-between align-items-center"
+                            >
+                                <h5 class="mb-0">Pengajuan Izin</h5>
+                                <div class="d-flex gap-2">
+                                    <button
+                                        :disabled="
+                                            paginationIzin.current_page <= 1
+                                        "
+                                        @click="
+                                            getAllIzin(
+                                                paginationIzin.prev_page_url
+                                            )
+                                        "
+                                        class="btn-modern btn-primary p-1"
+                                        style="border-radius: 8px !important"
+                                    >
+                                        <i
+                                            class="bi bi-arrow-left d-flex justify-content-center align-items-center"
+                                        ></i>
+                                    </button>
+                                    <span
+                                        >{{ paginationIzin.current_page }}
+                                        of
+                                        {{ paginationIzin.last_page }}</span
+                                    >
+                                    <button
+                                        :disabled="
+                                            paginationIzin.current_page ==
+                                            paginationIzin.last_page
+                                        "
+                                        @click="
+                                            getAllIzin(
+                                                paginationIzin.next_page_url
+                                            )
+                                        "
+                                        class="btn-modern btn-primary p-1"
+                                        style="border-radius: 8px !important"
+                                    >
+                                        <i
+                                            class="bi bi-arrow-right d-flex justify-content-center align-items-center"
+                                        ></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div
+                                class="card-body d-flex flex-column justify-content-between"
+                                style="height: 13rem"
+                            >
+                                <div>
+                                    <div
+                                        class="leave-request py-3"
+                                        v-for="(request, idx) in allDataIzin"
+                                        :key="idx"
+                                    >
+                                        <div
+                                            class="request-type"
+                                            :class="
+                                                getTypeClass(request.Tipe_Izin)
+                                            "
+                                        >
+                                            {{ parseIzin(request.Tipe_Izin) }}
+                                        </div>
+                                        <div class="request-dates">
+                                            {{
+                                                formatTanggal_Izin(
+                                                    request.Tanggal_Mulai,
+                                                    request.Tanggal_Selesai
+                                                )
+                                            }}
+                                        </div>
+                                        <div
+                                            class="request-status"
+                                            :class="'status-' + request.status"
+                                        >
+                                            {{ request.status }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="col-md-6 skeleton-container">
+                        <div class="card leave-requests-card">
+                            <div
+                                class="card-header d-flex justify-content-between align-items-center"
+                            >
                                 <div
                                     class="skeleton-text"
                                     style="width: 120px; height: 24px"
                                 ></div>
-                            </div>
-                            <div
-                                class="skeleton-text"
-                                style="width: 60px; height: 24px"
-                            ></div>
-                        </div>
-
-                        <!-- Card Body Skeleton -->
-                        <div class="card-body pt-4 pb-3">
-                            <!-- 7-Day Timeline Skeleton -->
-                            <div class="timeline-container">
-                                <div class="timeline-days">
+                                <div class="d-flex gap-2 align-items-center">
                                     <div
-                                        class="timeline-day skeleton-day"
-                                        v-for="i in 7"
+                                        class="skeleton-button"
+                                        style="
+                                            width: 32px;
+                                            height: 32px;
+                                            border-radius: 8px;
+                                        "
+                                    ></div>
+                                    <div
+                                        class="skeleton-text"
+                                        style="width: 60px; height: 20px"
+                                    ></div>
+                                    <div
+                                        class="skeleton-button"
+                                        style="
+                                            width: 32px;
+                                            height: 32px;
+                                            border-radius: 8px;
+                                        "
+                                    ></div>
+                                </div>
+                            </div>
+
+                            <div
+                                class="card-body d-flex flex-column justify-content-between"
+                                style="height: 19.1rem"
+                            >
+                                <div class="">
+                                    <div
+                                        class="leave-request-skeleton py-1"
+                                        v-for="i in 5"
                                         :key="i"
                                     >
-                                        <div class="day-header">
-                                            <div
-                                                class="skeleton-text"
-                                                style="
-                                                    width: 80%;
-                                                    height: 16px;
-                                                    margin-bottom: 8px;
-                                                "
-                                            ></div>
-                                            <div
-                                                class="skeleton-text"
-                                                style="width: 60%; height: 14px"
-                                            ></div>
-                                        </div>
-                                        <div class="day-shift">
+                                        <div
+                                            class="d-flex justify-content-between align-items-center mb-3"
+                                        >
                                             <div
                                                 class="skeleton-badge"
                                                 style="
-                                                    width: 80%;
+                                                    width: 80px;
                                                     height: 24px;
                                                     border-radius: 12px;
-                                                    margin-bottom: 4px;
                                                 "
                                             ></div>
                                             <div
                                                 class="skeleton-text"
-                                                style="width: 90%; height: 14px"
+                                                style="
+                                                    width: 120px;
+                                                    height: 16px;
+                                                "
+                                            ></div>
+                                            <div
+                                                class="skeleton-badge"
+                                                style="
+                                                    width: 70px;
+                                                    height: 24px;
+                                                    border-radius: 12px;
+                                                "
                                             ></div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- Navigation Controls Skeleton -->
-                            <div
-                                class="d-flex gap-3 justify-content-center align-items-center mt-3"
-                            >
                                 <div
                                     class="skeleton-button"
                                     style="
-                                        width: 40px;
+                                        width: 100%;
                                         height: 40px;
                                         border-radius: 8px;
-                                    "
-                                ></div>
-                                <div
-                                    class="skeleton-text"
-                                    style="width: 100px; height: 20px"
-                                ></div>
-                                <div
-                                    class="skeleton-button"
-                                    style="
-                                        width: 40px;
-                                        height: 40px;
-                                        border-radius: 8px;
+                                        margin-top: 16px;
                                     "
                                 ></div>
                             </div>
                         </div>
+                    </div> -->
+
+                    <!-- tergabung pada team -->
+                    <div class="col-md-6">
+                        <!-- <div class="card leave-requests-card">
+                            <div
+                                class="card-header d-flex justify-content-between align-items-center"
+                            >
+                                <h5 class="mb-0">Tergabung pada team</h5>
+                                <div class="d-flex gap-2">
+                                    <button
+                                        @click="prevPageTergabung"
+                                        class="btn-modern btn-primary p-1"
+                                        style="border-radius: 8px !important"
+                                    >
+                                        <i
+                                            class="bi bi-arrow-left d-flex justify-content-center align-items-center"
+                                        ></i>
+                                    </button>
+                                    <span
+                                        >{{ currentPageTergabung }}
+                                        of
+                                        {{ totalPagesTergabung }}</span
+                                    >
+                                    <button
+                                        @click="nextPageTergabung"
+                                        class="btn-modern btn-primary p-1"
+                                        style="border-radius: 8px !important"
+                                    >
+                                        <i
+                                            class="bi bi-arrow-right d-flex justify-content-center align-items-center"
+                                        ></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body" style="height: 13rem">
+                                <div
+                                    v-for="(data, idx) in paginatedTergabung"
+                                    :key="idx"
+                                    class="row fs-6 mt-3 ps-3"
+                                >
+                                    <div
+                                        v-tooltip="data.Nama"
+                                        style="font-size: 0.9rem !important"
+                                        class="col-4 p-0 d-flex justify-content-start text-start align-items-center"
+                                    >
+                                        {{
+                                            truncateText(
+                                                capitalize(data?.Nama),
+                                                10
+                                            )
+                                        }}
+                                    </div>
+                                    <div
+                                        v-tooltip="data.divisi"
+                                        style="
+                                            font-size: 0.9rem !important;
+                                            cursor: pointer;
+                                        "
+                                        class="col-4 p-0 d-flex justify-content-center align-items-center"
+                                    >
+                                        {{ truncateText(data.divisi, 10) }}
+                                    </div>
+                                    <div
+                                        style="font-size: 0.7rem !important"
+                                        class="col-4 p-0 d-flex justify-content-center align-items-center"
+                                    >
+                                        <span
+                                            class=""
+                                            :class="
+                                                data.Status == 'Disetujui'
+                                                    ? 'badge-lembur-selesai'
+                                                    : 'badge-lembur'
+                                            "
+                                        >
+                                            {{ data.HP }}
+                                        </span>
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        </div> -->
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- buletin  -->
-
-        <div
-            class="modal-backdrop"
-            v-if="showModalBuletin"
-            @click.self="showModalBuletin = false"
-        >
-            <div class="glass-modal">
-                <div class="glass-modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title text-white">
-                            {{ judulBerita }}
-                        </h5>
-                        <button
-                            type="button"
-                            class="close"
-                            @click="showModalBuletin = false"
-                        >
-                            &times;
-                        </button>
-                    </div>
-                    <div v-html="convertedHtml" class="modal-body"></div>
-                    <div class="modal-footer">
-                        <!-- <button
-                            type="button"
-                            class="btn-modern btn-secondary me-2"
-                            @click="showModalBuletin = false"
-                        >
-                            Tutup
-                        </button> -->
-                        <button
-                            @click="showModalBuletin = false"
-                            type="button"
-                            class="btn-modern btn-primary"
-                        >
-                            Mengerti
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
         <!-- Shift Information -->
         <div class="row"></div>
+    </div>
+
+    <!-- buletin  -->
+    <!-- <div
+        class="modal-backdrop"
+        v-if="showModalBuletin"
+        @click.self="showModalBuletin = false"
+    >
+        <div class="glass-modal">
+            <div class="glass-modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-white">
+                        {{ judulBerita }}
+                    </h5>
+                    <button
+                        type="button"
+                        class="close"
+                        @click="showModalBuletin = false"
+                    >
+                        &times;
+                    </button>
+                </div>
+                <div v-html="convertedHtml" class="modal-body"></div>
+                <div class="modal-footer">
+
+                    <button
+                        @click="showModalBuletin = false"
+                        type="button"
+                        class="btn-modern btn-primary"
+                    >
+                        Mengerti
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div> -->
+
+    <!-- Modal detail absen -->
+    <div
+        v-if="showModalDetailAbsen"
+        class="absensi-modal-overlay"
+        @click.self="showModalDetailAbsen = false"
+    >
+        <div class="absensi-modal-container">
+            <div class="absensi-modal-card">
+                <!-- Header -->
+                <div class="absensi-modal-head">
+                    <div class="absensi-header-content">
+                        <h5 class="absensi-modal-title">
+                            Detail Absensi -
+                            {{ formatDateTime(detailCheckinout?.Tanggal) }}
+                        </h5>
+                        <div class="absensi-shift-badge">
+                            <i class="fas fa-clock"></i>
+                            {{ detailCheckinout?.Nama_Shift }}
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        class="absensi-close-btn"
+                        @click="showModalDetailAbsen = false"
+                    >
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="absensi-modal-body">
+                    <!-- Info Shift -->
+                    <div class="absensi-info-card">
+                        <div class="absensi-info-header">
+                            <i class="fas fa-calendar-day"></i>
+                            <h6>Informasi Shift</h6>
+                        </div>
+                        <div class="absensi-info-grid">
+                            <div class="absensi-info-item">
+                                <span class="absensi-info-label"
+                                    >Jam Masuk Shift:</span
+                                >
+                                <span class="absensi-info-value">{{
+                                    formatDateTime(detailCheckinout?.Jam_Masuk)
+                                }}</span>
+                            </div>
+                            <div class="absensi-info-item">
+                                <span class="absensi-info-label"
+                                    >Jam Keluar Shift:</span
+                                >
+                                <span class="absensi-info-value">{{
+                                    formatDateTime(detailCheckinout?.Jam_Keluar)
+                                }}</span>
+                            </div>
+                            <div class="absensi-info-item">
+                                <span class="absensi-info-label"
+                                    >Check In Ideal:</span
+                                >
+                                <span class="absensi-ideal-time">{{
+                                    formatDateTime(detailCheckinout?.CheckIn)
+                                }}</span>
+                            </div>
+                            <div class="absensi-info-item">
+                                <span class="absensi-info-label"
+                                    >Check Out Ideal:</span
+                                >
+                                <span class="absensi-ideal-time">{{
+                                    formatDateTime(detailCheckinout?.CheckOut)
+                                }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Absensi -->
+                    <div class="absensi-history-section">
+                        <div class="absensi-section-header">
+                            <i class="fas fa-history"></i>
+                            <h6>Riwayat Absen</h6>
+                        </div>
+                        <div class="absensi-timeline">
+                            <div
+                                v-for="(item, idx) in getCheckinoutList()"
+                                :key="idx"
+                                class="absensi-timeline-item"
+                                :class="
+                                    'absensi-' +
+                                    item.type.toLowerCase().replace(' ', '-')
+                                "
+                            >
+                                <div class="absensi-timeline-marker">
+                                    <i
+                                        v-if="item.type === 'Check In'"
+                                        class="fas fa-sign-in-alt"
+                                    ></i>
+                                    <i
+                                        v-else-if="item.type === 'Check Out'"
+                                        class="fas fa-sign-out-alt"
+                                    ></i>
+                                    <i v-else class="fas fa-fingerprint"></i>
+                                </div>
+                                <div class="absensi-timeline-content">
+                                    <span class="absensi-timeline-type">{{
+                                        item.type
+                                    }}</span>
+                                    <span class="absensi-timeline-time">{{
+                                        item.time
+                                    }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="absensi-modal-footer">
+                    <button
+                        @click="showModalDetailAbsen = false"
+                        type="button"
+                        class="absensi-primary-btn"
+                    >
+                        <i class="fas fa-check"></i>
+                        Mengerti
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div v-if="ladingDetailAbsensi" class="absensi-modal-container">
+            <div class="absensi-modal-card">
+                <!-- Header Skeleton -->
+                <div class="absensi-modal-head skeleton-container">
+                    <div class="absensi-header-content">
+                        <h5
+                            class="absensi-modal-title skeleton-text"
+                            style="width: 200px; height: 24px"
+                        ></h5>
+                        <div
+                            class="absensi-shift-badge skeleton-text"
+                            style="width: 120px; height: 20px"
+                        ></div>
+                    </div>
+                    <button
+                        type="button"
+                        class="absensi-close-btn skeleton-circle"
+                        style="width: 24px; height: 24px"
+                    ></button>
+                </div>
+
+                <!-- Body Skeleton -->
+                <div class="absensi-modal-body">
+                    <!-- Info Shift Skeleton -->
+                    <div class="absensi-info-card skeleton-container">
+                        <div class="absensi-info-header">
+                            <i
+                                class="skeleton-circle"
+                                style="width: 20px; height: 20px"
+                            ></i>
+                            <h6
+                                class="skeleton-text"
+                                style="
+                                    width: 150px;
+                                    height: 20px;
+                                    margin-left: 8px;
+                                "
+                            ></h6>
+                        </div>
+                        <div class="absensi-info-grid">
+                            <div class="absensi-info-item">
+                                <span
+                                    class="absensi-info-label skeleton-text"
+                                    style="width: 140px; height: 16px"
+                                ></span>
+                                <span
+                                    class="absensi-info-value skeleton-text"
+                                    style="width: 80px; height: 16px"
+                                ></span>
+                            </div>
+                            <div class="absensi-info-item">
+                                <span
+                                    class="absensi-info-label skeleton-text"
+                                    style="width: 140px; height: 16px"
+                                ></span>
+                                <span
+                                    class="absensi-info-value skeleton-text"
+                                    style="width: 80px; height: 16px"
+                                ></span>
+                            </div>
+                            <div class="absensi-info-item">
+                                <span
+                                    class="absensi-info-label skeleton-text"
+                                    style="width: 140px; height: 16px"
+                                ></span>
+                                <span
+                                    class="absensi-ideal-time skeleton-text"
+                                    style="width: 80px; height: 16px"
+                                ></span>
+                            </div>
+                            <div class="absensi-info-item">
+                                <span
+                                    class="absensi-info-label skeleton-text"
+                                    style="width: 140px; height: 16px"
+                                ></span>
+                                <span
+                                    class="absensi-ideal-time skeleton-text"
+                                    style="width: 80px; height: 16px"
+                                ></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Absensi History Skeleton -->
+                    <div class="absensi-history-section skeleton-container">
+                        <div class="absensi-section-header">
+                            <i
+                                class="skeleton-circle"
+                                style="width: 20px; height: 20px"
+                            ></i>
+                            <h6
+                                class="skeleton-text"
+                                style="
+                                    width: 150px;
+                                    height: 20px;
+                                    margin-left: 8px;
+                                "
+                            ></h6>
+                        </div>
+                        <div class="absensi-timeline">
+                            <div class="absensi-timeline-item">
+                                <div
+                                    class="absensi-timeline-marker skeleton-circle"
+                                    style="width: 24px; height: 24px"
+                                ></div>
+                                <div class="absensi-timeline-content">
+                                    <span
+                                        class="absensi-timeline-type skeleton-text"
+                                        style="width: 80px; height: 16px"
+                                    ></span>
+                                    <span
+                                        class="absensi-timeline-time skeleton-text"
+                                        style="
+                                            width: 60px;
+                                            height: 14px;
+                                            margin-top: 4px;
+                                        "
+                                    ></span>
+                                </div>
+                            </div>
+                            <div class="absensi-timeline-item">
+                                <div
+                                    class="absensi-timeline-marker skeleton-circle"
+                                    style="width: 24px; height: 24px"
+                                ></div>
+                                <div class="absensi-timeline-content">
+                                    <span
+                                        class="absensi-timeline-type skeleton-text"
+                                        style="width: 80px; height: 16px"
+                                    ></span>
+                                    <span
+                                        class="absensi-timeline-time skeleton-text"
+                                        style="
+                                            width: 60px;
+                                            height: 14px;
+                                            margin-top: 4px;
+                                        "
+                                    ></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Skeleton -->
+                <div class="absensi-modal-footer">
+                    <button
+                        class="absensi-primary-btn skeleton-button"
+                        style="width: 120px; height: 38px"
+                    ></button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -1334,9 +2719,11 @@ import {
     ElStep,
     ElNotification,
     ElSlider,
+    ElDatePicker,
 } from "element-plus";
 import "element-plus/dist/index.css";
 import DOMPurify from "dompurify"; // Untuk sanitasi HTML (SANGAT PENTING!)
+import { capitalize } from "vue";
 
 export default {
     components: {
@@ -1350,8 +2737,11 @@ export default {
         ElTooltip,
         ElSlider,
         ElTag,
+        ElDatePicker,
     },
     props: {
+        jumlahAntrianPengajuan: String,
+        LeaderTeam: Boolean,
         accessPage: Array,
         namaKaryawan: String,
         shiftHariIni: String,
@@ -1363,6 +2753,10 @@ export default {
         sisaCuti: String,
         judulBerita: String,
         isiBerita: String,
+        nama_mengapprove: Array,
+        nama_Approver: Array,
+        nama_tergabung: Array,
+        nama_anggota: Array,
     },
     watch: {
         // Ini penting jika prop bisa berubah setelah komponen di-mount
@@ -1370,6 +2764,81 @@ export default {
     name: "HRISDashboard",
     data() {
         return {
+            windowWidth: window.innerWidth,
+            loadingRingkasan: false,
+            RingkasanTim: [],
+            serachQueryRingkasanTim: "",
+            currentPageRingkasanTim: 1,
+            itemPerPageRingkasanTim: 5,
+
+            loadingRiwayatAbsen: false,
+            monthNames: [
+                "Januari",
+                "Februari",
+                "Maret",
+                "April",
+                "Mei",
+                "Juni",
+                "Juli",
+                "Agustus",
+                "September",
+                "Oktober",
+                "November",
+                "Desember",
+            ],
+            monthChart: null,
+            yearLembur: null,
+            chartOptionsLembur: {
+                chart: {
+                    type: "bar",
+                    toolbar: { show: true },
+                },
+                responsive: [
+                    {
+                        breakpoint: 768, // ukuran tablet/HP
+                        options: {
+                            chart: {
+                                height: 100,
+                                width: 100, // lebih kecil di HP
+                            },
+                            xaxis: {
+                                labels: {
+                                    show: true,
+                                    rotate: -45, // biar label muat
+                                },
+                            },
+                        },
+                    },
+                ],
+                xaxis: {
+                    categories: [],
+                },
+            },
+            chartSeriesLembur: [
+                {
+                    name: "Lembur",
+                    data: [], // isi dari API / data kamu
+                },
+            ],
+
+            detailData: [],
+            detailCheckinout: [],
+            showModalDetailAbsen: false,
+            allDataRiwayatAbsen: [],
+            peginationRiwayatAbsen: {},
+            selectedDateAbsensi: null,
+            searchKeywordAbsensi: "",
+            currentPageAbsensi: 1,
+            loadingRiwayatAbsen: false,
+
+            itemPerPageCard: 5,
+
+            serachQueryTergabung: "",
+            currentPageTergabung: 1,
+
+            serachQueryAnggota: "",
+            currentPageAnggota: 1,
+
             convertedHtml: "",
             showModalBuletin: false,
 
@@ -1386,7 +2855,7 @@ export default {
             paginationIzin: [],
             allDataIzin: [],
             allDataLembur: [],
-            chartStateLoad: "month",
+            chartStateLoad: null,
             dataShift: [],
             dataDateAbsen: [],
             weekSchedule: [
@@ -1449,49 +2918,38 @@ export default {
             ],
             selectedDay: {},
 
-            series: [20, 5, 2, 3], // Sesuai dengan "Kehadiran", "Terlambat", "Pulang cepat", "Izin"
+            series: [0, 0, 0, 0], // Sesuai dengan "Kehadiran", "Terlambat", "Pulang cepat", "Izin"
 
             // Konfigurasi untuk tampilan chart
             chartOptions: {
-                chart: {
-                    type: "donut",
-                },
-                // Label untuk setiap segmen donut
-                labels: ["Kehadiran", "Izin Terlambat", "Pulang cepat", "Izin"],
-                // Warna untuk setiap segmen
-                colors: ["#00BFFF", "#FFD700", "#FF0000", "#32CD32"], // Contoh warna yang mirip
-                // Konfigurasi untuk tampilan di tengah donut
+                chart: { type: "donut" },
+                labels: ["Kehadiran", "Terlambat", "Pulang Cepat", "Izin"],
+                colors: ["#00BFFF", "#FFD700", "#FF0000", "#32CD32"],
                 plotOptions: {
                     pie: {
                         donut: {
-                            size: "65%", // Ukuran lubang tengah
+                            size: "65%",
                             labels: {
                                 show: true,
                                 total: {
                                     show: true,
-                                    label: "Persentase kehadiran",
-                                    formatter: () => "86%", // Teks persentase di tengah
-                                    fontSize: "16px",
-                                    fontWeight: 600,
-                                },
-                                name: {
-                                    show: false, // Menyembunyikan nama di bawah persentase
-                                },
-                                value: {
-                                    show: false, // Menyembunyikan nilai angka di bawah persentase
+                                    label: "Kehadiran",
+                                    formatter: () =>
+                                        `${
+                                            this.chartSummary
+                                                ?.kehadiran_percent ?? 0
+                                        }%`, // langsung dari backend
+                                    style: {
+                                        fontSize: "16px",
+                                        fontWeight: 600,
+                                    },
                                 },
                             },
                         },
                     },
                 },
-                // Konfigurasi untuk legend (keterangan)
-                legend: {
-                    show: false, // Menyembunyikan legend bawaan, karena kita akan buat manual
-                },
-                // Mengubah warna teks di tengah
-                dataLabels: {
-                    enabled: false,
-                },
+                legend: { show: false },
+                dataLabels: { enabled: false },
             },
             // TANGGAL
             currentDate: new Date(),
@@ -1541,7 +2999,15 @@ export default {
                 },
 
                 {
-                    id: "leave",
+                    id: "IzinPageAdmin",
+                    label: "Izin Admin",
+                    icon: "bi bi-back",
+                    class: "btn-leave",
+                    akses: "IzinPageAdmin",
+                    url: "/izinAdmin",
+                },
+                {
+                    id: "IzinPageApprover",
                     label: "Izin Approval",
                     icon: "bi bi-ui-checks-grid",
                     class: "btn-leave",
@@ -1579,6 +3045,14 @@ export default {
                     class: "btn-shift",
                     akses: "ShiftManagementAdmin",
                     url: "/swapShiftAdmin",
+                },
+                {
+                    id: "addKaryawanTeam",
+                    label: "Setting Users",
+                    icon: "bi bi-gear",
+                    class: "btn-shift",
+                    akses: "addKaryawanTeam",
+                    url: "/add-karyawan-team",
                 },
                 {
                     id: "shift",
@@ -1680,6 +3154,88 @@ export default {
             this.weekSchedule[0];
     },
     computed: {
+        filteredAnggota() {
+            const filtered = this.nama_anggota;
+
+            // console.log(this.nama_anggota);
+
+            if (this.serachQueryAnggota) {
+                this.currentPageAnggota = 1;
+                filtered = filtered.filter((emp) => {
+                    emp.Nama.toLowerCase().includes(
+                        this.serachQueryAnggota.toLowerCase()
+                    );
+                });
+            }
+
+            return filtered;
+        },
+        paginatedAnggota() {
+            const start = (this.currentPageAnggota - 1) * this.itemPerPageCard;
+            const end = start + this.itemPerPageCard;
+            return this.filteredAnggota.slice(start, end);
+        },
+        totalPagesAnggota() {
+            return Math.ceil(
+                this.filteredAnggota.length / this.itemPerPageCard
+            );
+        },
+        filteredTergabung() {
+            const filtered = this.nama_tergabung;
+
+            // console.log(this.nama_anggota);
+
+            if (this.serachQueryTergabung) {
+                this.currentPageTergabung = 1;
+                filtered = filtered.filter((emp) => {
+                    emp.Nama.toLowerCase().includes(
+                        this.serachQueryTergabung.toLowerCase()
+                    );
+                });
+            }
+
+            return filtered;
+        },
+        paginatedTergabung() {
+            const start =
+                (this.currentPageTergabung - 1) * this.itemPerPageCard;
+            const end = start + this.itemPerPageCard;
+            return this.filteredTergabung.slice(start, end);
+        },
+        totalPagesTergabung() {
+            return Math.ceil(
+                this.filteredTergabung.length / this.itemPerPageCard
+            );
+        },
+        filteredRingkasanTim() {
+            let filtered = this.RingkasanTim;
+
+            if (this.serachQueryRingkasanTim) {
+                this.currentPageRingkasanTim = 1;
+                filtered = filtered.filter((emp) =>
+                    emp.nama
+                        .toLowerCase()
+                        .includes(this.serachQueryRingkasanTim.toLowerCase())
+                );
+            }
+
+            return filtered;
+        },
+
+        paginatedRingkasanTim() {
+            const start =
+                (this.currentPageRingkasanTim - 1) *
+                this.itemPerPageRingkasanTim;
+            const end = start + this.itemPerPageRingkasanTim;
+            return this.filteredRingkasanTim.slice(start, end);
+        },
+
+        totalPagesRingkasanTim() {
+            return Math.ceil(
+                this.RingkasanTim.length / this.itemPerPageRingkasanTim
+            );
+        },
+
         filteredQuickActions() {
             // Normalize access page names to match case (optional)
             const normalizedAccessPages = this.accessPage.map((page) =>
@@ -1716,6 +3272,10 @@ export default {
                 month: "long",
             });
         },
+        currentFullMonth() {
+            const currentMonthIndex = new Date().getMonth();
+            return this.monthNames[currentMonthIndex];
+        },
         calendarDays() {
             const year = this.currentYear;
             const month = this.currentMonth;
@@ -1746,7 +3306,321 @@ export default {
             return days;
         },
     },
+
     methods: {
+        getCutoffPeriod(input = new Date()) {
+            const d = input instanceof Date ? input : new Date(input);
+            if (isNaN(d)) return null;
+
+            const monthNames = [
+                "Januari",
+                "Februari",
+                "Maret",
+                "April",
+                "Mei",
+                "Juni",
+                "Juli",
+                "Agustus",
+                "September",
+                "Oktober",
+                "November",
+                "Desember",
+            ];
+
+            const day = d.getDate();
+            const month = d.getMonth(); // 0..11
+            const year = d.getFullYear();
+
+            // Jika hari >= 21 => periode mulai bulan sekarang
+            // Jika hari <= 20 => periode mulai bulan sebelumnya
+            let startMonth, startYear;
+            if (day >= 21) {
+                startMonth = month;
+                startYear = year;
+            } else {
+                startMonth = (month - 1 + 12) % 12;
+                startYear = month === 0 ? year - 1 : year;
+            }
+
+            const endMonth = (startMonth + 1) % 12;
+            const endYear = startMonth === 11 ? startYear + 1 : startYear;
+
+            const periodName = `${monthNames[startMonth]} Periode`;
+            const range = `21 ${monthNames[startMonth]} ${startYear} - 20 ${monthNames[endMonth]} ${endYear}`;
+
+            return `${periodName}, ${range}`;
+        },
+        isMobile() {
+            return window.innerWidth < 768;
+        },
+
+        getInitials(name) {
+            return name
+                .split(" ")
+                .map((word) => word[0])
+                .join("")
+                .substring(0, 2)
+                .toUpperCase();
+        },
+        async getRingkasanTeam() {
+            if (!this.LeaderTeam) return;
+
+            this.loadingRingkasan = true;
+
+            try {
+                const res = await axios.get("/uDash/getRingkasanTeam");
+
+                if (res.status === 200) {
+                    this.RingkasanTim = res.data.data;
+                }
+            } catch (error) {
+                console.log(error);
+            } finally {
+                this.loadingRingkasan = false;
+            }
+        },
+        showLemburDetail(item) {
+            // Format tanggal untuk modal
+            const fromDate = this.formatDate(item.Tanggal_Lembur_Dari);
+            const toDate = this.formatDate(item.Tanggal_Lembur_Sampai);
+            const dateRange =
+                fromDate === toDate ? fromDate : `${fromDate} - ${toDate}`;
+
+            // Set modal content
+            document.getElementById("modalTanggal").textContent = dateRange;
+            document.getElementById(
+                "modalDurasi"
+            ).textContent = `${item.durasi.toFixed(2)} jam`;
+            document.getElementById("modalStatus").textContent = item.Status;
+            document.getElementById("modalAlasan").textContent = item.Alasan;
+            document.getElementById("modalJamAktual").textContent =
+                this.formatDateTime(item.JamAktual);
+
+            // Show modal
+            const modal = new bootstrap.Modal(
+                document.getElementById("lemburDetailModal")
+            );
+            modal.show();
+        },
+
+        formatDate(dateString) {
+            const options = {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+            };
+            return new Date(dateString).toLocaleDateString("id-ID", options);
+        },
+
+        formatDateTime(dateString) {
+            const options = {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+            };
+            return new Date(dateString).toLocaleDateString("id-ID", options);
+        },
+
+        // Method untuk inisialisasi chart dengan ApexCharts
+        initLemburChart() {
+            this.chartOptionsLembur = {
+                chart: {
+                    type: "bar",
+                    height: 250,
+                    toolbar: { show: false },
+                },
+                colors: ["#6366f1"],
+                plotOptions: {
+                    bar: { borderRadius: 4, horizontal: false },
+                },
+                dataLabels: { enabled: false },
+                xaxis: {
+                    categories: [], // kita isi dari API
+                },
+                yaxis: {
+                    title: { text: "Jam" },
+                },
+                tooltip: {
+                    y: {
+                        formatter: (val, opts) => {
+                            // Ambil index bar yg dihover
+                            const index = opts.dataPointIndex;
+                            const range = this.chartRangesLembur?.[index] ?? "";
+                            return `${range} | Jam Lembur: ${val}`;
+                        },
+                    },
+                },
+            };
+
+            this.chartSeriesLembur = [
+                {
+                    name: "Jam Lembur",
+                    data: Array(12).fill(0),
+                },
+            ];
+
+            this.chartRangesLembur = []; // simpan range cutoff
+        },
+
+        async getDataChartLembur(year) {
+            try {
+                const res = await axios.get("/uDash/getChartLembur", {
+                    params: { year: this.yearLembur },
+                });
+
+                if (res.status === 200) {
+                    // Isi chart data
+                    this.chartSeriesLembur = [
+                        {
+                            name: "data",
+                            data: res.data.data,
+                        },
+                    ];
+
+                    // Isi label bulan & range cutoff
+                    this.chartOptionsLembur = {
+                        ...this.chartOptionsLembur,
+                        xaxis: { categories: res.data.labels },
+                    };
+
+                    this.chartRangesLembur = res.data.ranges;
+                }
+            } catch (error) {
+                console.log(error);
+            } finally {
+                this.loadingLembur = false;
+            }
+        },
+
+        formatTanggal_Lembur(dari, sampai) {
+            // Implementasi fungsi format tanggal Anda di sini
+            // Contoh sederhana:
+            const fromDate = new Date(dari);
+            const toDate = new Date(sampai);
+
+            if (fromDate.toDateString() === toDate.toDateString()) {
+                return fromDate.toLocaleDateString("id-ID", {
+                    day: "2-digit",
+                    month: "short",
+                });
+            } else {
+                return `${fromDate.toLocaleDateString("id-ID", {
+                    day: "2-digit",
+                    month: "short",
+                })} - ${toDate.toLocaleDateString("id-ID", {
+                    day: "2-digit",
+                    month: "short",
+                })}`;
+            }
+        },
+        getCheckinoutList() {
+            if (!this.detailData || !this.detailCheckinout) return [];
+
+            return this.detailData.map((c, idx) => {
+                let type = `Absen ${idx + 1}`;
+                if (c.CheckTime === this.detailCheckinout.CheckIn) {
+                    type = "Check In";
+                } else if (c.CheckTime === this.detailCheckinout.CheckOut) {
+                    type = "Check Out";
+                }
+                return {
+                    time: this.formatDateTime(c.CheckTime),
+                    type,
+                };
+            });
+        },
+        formatDateTime(datetime) {
+            if (!datetime) return "-";
+            const d = new Date(datetime);
+            return d.toLocaleString("id-ID", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+            });
+        },
+
+        handleDateChange() {
+            // Reset ke halaman pertama saat tanggal berubah
+            this.peginationRiwayatAbsen.current_page = 1;
+            this.getRiwayatAbsen("/uDash/getRiwayatAbsen");
+        },
+
+        showDetailAbsen(item) {
+            this.loadingDetailAbsensi = true;
+            this.showModalDetailAbsen = true;
+
+            const datePickDetail = item.Tanggal;
+
+            axios
+                .get("/uDash/getAbsenDetail", {
+                    params: { tanggal: datePickDetail },
+                })
+                .then((res) => {
+                    console.log("Response data:", res.data);
+
+                    if (res.status === 200) {
+                        this.detailData = res.data.data || [];
+                        this.detailCheckinout =
+                            res.data.checkInOut?.[0] || null;
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error showing detail:", error);
+                    this.detailData = [];
+                    this.detailCheckinout = null;
+                })
+                .finally(() => {
+                    this.loadingDetailAbsensi = false;
+                    console.log(
+                        "loadingDetailAbsensi sudah false:",
+                        this.loadingDetailAbsensi
+                    );
+                });
+        },
+        formatDate(dateString) {
+            const options = { day: "numeric", month: "long", year: "numeric" };
+            return new Date(dateString).toLocaleDateString("id-ID", options);
+        },
+        getDayName(dateString) {
+            const days = [
+                "Minggu",
+                "Senin",
+                "Selasa",
+                "Rabu",
+                "Kamis",
+                "Jumat",
+                "Sabtu",
+            ];
+            const date = new Date(dateString);
+            return days[date.getDay()];
+        },
+
+        nextPageTergabung() {
+            if (this.currentPageAnggota < this.totalPagesTergabung)
+                this.currentPageAnggota++;
+        },
+        prevPageTergabung() {
+            if (this.currentPageAnggota > 1) this.currentPageAnggota--;
+        },
+        nextPageRingkasanTim() {
+            if (this.currentPageRingkasanTim < this.totalPagesRingkasanTim)
+                this.currentPageRingkasanTim++;
+        },
+        prevPageRingkasanTim() {
+            if (this.currentPageRingkasanTim > 1)
+                this.currentPageRingkasanTim--;
+        },
+        nextPageAnggota() {
+            if (this.currentPageAnggota < this.totalPagesAnggota)
+                this.currentPageAnggota++;
+        },
+        prevPageAnggota() {
+            if (this.currentPageAnggota > 1) this.currentPageAnggota--;
+        },
         convertAndSanitize(markdown) {
             if (markdown) {
                 const rawHtml = marked(markdown);
@@ -1774,14 +3648,6 @@ export default {
                     .then((response) => {
                         this.allDataIzin = response.data.data;
                         this.paginationIzin = response.data;
-                        console.log(
-                            "Current Page:",
-                            this.paginationIzin.current_page
-                        );
-                        console.log(
-                            "Next Page URL:",
-                            this.paginationIzin.next_page_url
-                        );
                     })
                     .catch((error) => {
                         console.error(error);
@@ -1793,14 +3659,55 @@ export default {
             }
         },
         async getChartData() {
+            // alert(this.loadingChart);
+            // this.loadingChart = true;
+            this.loadingChart = true;
+            // console.log("Tanggal dipilih:", this.chartStateLoad);
             try {
-                this.loadingChart = true;
-                const response = await axios.get("/uDash/getChartData", {
-                    params: { jenis: this.chartStateLoad },
-                });
-                if (response.status == 200) {
-                    this.series = response.data.data;
-                }
+                const [bulan, tahun] = (
+                    this.chartStateLoad ??
+                    `${new Date().getMonth() + 1}-${new Date().getFullYear()}`
+                ).split("-");
+
+                await axios
+                    .get("/uDash/getChartData", { params: { bulan, tahun } })
+                    .then((res) => {
+                        const d = res.data.data;
+
+                        this.series = [
+                            d.kehadiran,
+                            d.terlambat,
+                            d.pulangCepat,
+                            d.izin,
+                            d.sakit,
+                            d.cuti,
+                        ];
+
+                        this.chartOptions.labels = [
+                            "Kehadiran",
+                            "Terlambat",
+                            "Pulang Cepat",
+                            "Izin",
+                            "Sakit",
+                            "Cuti",
+                        ];
+
+                        this.chartOptions.colors = [
+                            "#00BFFF", // Kehadiran
+                            "#FFD700", // Terlambat
+                            "#FF0000", // Pulang Cepat
+                            "#32CD32", // Izin
+                            "#FF69B4", // Sakit
+                            "#8A2BE2", // Cuti
+                        ];
+
+                        this.chartSummary = res.data.summary;
+                    });
+
+                // if (response.status == 200) {
+                //     this.series = response.data.data;
+                //     this.chartSummary = response.data.summary; // simpan ke variabel
+                // }
             } catch (error) {
                 console.log(error);
             } finally {
@@ -1857,7 +3764,6 @@ export default {
                 });
                 if (response.status == 200) {
                     this.dataShift = response.data.data;
-                    console.log(this.dataShift);
                 }
             } catch (error) {
                 console.log(error);
@@ -1877,7 +3783,7 @@ export default {
                 });
                 if (response.status == 200) {
                     this.dataShift = response.data.data;
-                    console.log(this.dataShift);
+                    // console.log(this.dataShift);
                 }
             } catch (error) {
                 console.log(error);
@@ -1896,7 +3802,7 @@ export default {
                 });
                 if (response.status == 200) {
                     this.dataDateAbsen = response.data.data;
-                    console.log(this.dataDateAbsen);
+                    // console.log(this.dataDateAbsen);
                 }
             } catch (error) {
                 console.log(error);
@@ -1916,7 +3822,7 @@ export default {
                 });
                 if (response.status == 200) {
                     this.dataDateAbsen = response.data.data;
-                    console.log(this.dataDateAbsen);
+                    // console.log(this.dataDateAbsen);
                 }
             } catch (error) {
                 console.log(error);
@@ -2003,31 +3909,31 @@ export default {
         getClassAbsensi(data) {
             if (!data) return "";
 
-            if (data.Nama_Shift != "NO SHIFT" && !data.CheckIn) {
-                return "dateCard weekday";
-            }
-            // Prioritize specific conditions
+            // 1. Prioritaskan kondisi cuti (cuti dianggap hari libur)
             if (data.Cuti_No_Transaksi || data.CutiHutang_No_Transaksi) {
-                return "dateCard holiday"; // Leave
-            }
-            if (data.Sakit_No_Transaksi || data.Izin_No_Transaksi) {
-                return "dateCard holiday"; // Sick/Permission
+                return "dateCard holiday";
             }
 
-            // Check for non-shift days
-            const date = new Date(data.Tanggal);
-            const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+            // 2. Prioritaskan kondisi sakit atau izin
+            if (
+                (data.Sakit_No_Transaksi &&
+                    data.Sakit_No_Transaksi.trim() !== "") ||
+                (data.Izin_No_Transaksi && data.Izin_No_Transaksi.trim() !== "")
+            ) {
+                return "dateCard holiday";
+            }
 
+            // 3. Periksa hari tanpa shift (termasuk hari Minggu)
             if (data.Nama_Shift === "NO SHIFT") {
-                // If it's a Sunday and has 'NO SHIFT', classify as 'hari-libur'
-                if (dayOfWeek === 0) {
-                    return "dateCard lost"; // Sunday holiday
-                }
-                // Otherwise, it's a general non-shift day
                 return "dateCard lost";
             }
 
-            // Default case for a regular shift
+            // 4. Periksa jika ada shift tapi belum check-in (absen)
+            if (data.Nama_Shift !== "NO SHIFT" && !data.CheckIn) {
+                return "dateCard weekday";
+            }
+
+            // 5. Default: Jika semua kondisi di atas tidak terpenuhi, anggap ini hari kerja normal
             return "dateCard";
         },
         getTooltipContent(itemData) {
@@ -2042,7 +3948,7 @@ export default {
         </div>
          <style>
         .dashboard-tooltip {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            // font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             max-width: 240px;
             padding: 12px;
             border-radius: 10px;
@@ -2342,7 +4248,7 @@ export default {
         </div>
          <style>
         .dashboard-tooltip {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            // font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             max-width: 240px;
             padding: 12px;
             border-radius: 10px;
@@ -2555,7 +4461,7 @@ export default {
         </div>
          <style>
         .dashboard-tooltip {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            // font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             max-width: 240px;
             padding: 12px;
             border-radius: 10px;
@@ -2775,7 +4681,7 @@ export default {
         </div>
          <style>
         .dashboard-tooltip {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            // font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             max-width: 240px;
             padding: 12px;
             border-radius: 10px;
@@ -2981,13 +4887,15 @@ export default {
                 mainShift.Jam_Masuk &&
                 mainShift.CheckIn &&
                 new Date(`1970-01-01T${formatTime(mainShift.CheckIn)}`) >
-                    new Date(`1970-01-01T${mainShift.Jam_Masuk}`);
+                    new Date(`1970-01-01T${mainShift.Jam_Masuk}`) &&
+                !mainShift.Terlambat_No_Transaksi;
 
             const isEarlyOut =
                 mainShift.Jam_Keluar &&
                 mainShift.CheckOut &&
                 new Date(`1970-01-01T${formatTime(mainShift.CheckOut)}`) <
-                    new Date(`1970-01-01T${mainShift.Jam_Keluar}`);
+                    new Date(`1970-01-01T${mainShift.Jam_Keluar}`) &&
+                !mainShift.Pulang_No_Transaksi;
 
             const isLateLeave = mainShift.Pulang_No_Transaksi;
             const hasOvertime = mainShift.Lembur_No_Transaksi;
@@ -3025,7 +4933,7 @@ export default {
                 }
                 ${
                     mainShift.Terlambat_No_Transaksi
-                        ? '<span class="attendance-badge terlambat">Terlambat</span>'
+                        ? '<span class="attendance-badge terlambat">Izin Terlambat</span>'
                         : ""
                 }
             </div>
@@ -3047,7 +4955,7 @@ export default {
                 }
                 ${
                     isLateLeave
-                        ? '<span class="attendance-badge lateleave">Telat</span>'
+                        ? '<span class="attendance-badge lateleave">Izin Awal</span>'
                         : ""
                 }
                 ${
@@ -3083,7 +4991,7 @@ export default {
 
     <style>
         .dashboard-tooltip {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            // font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             max-width: 240px;
             padding: 12px;
             border-radius: 10px;
@@ -3255,6 +5163,8 @@ export default {
         .lateleave, .attendance-badge.lateleave {
             background-color: #FEFCBF;
             color: #B7791F;
+            border-radius:12px;
+            padding: 3px 3px
         }
 
         .attendance-badge.terlambat {
@@ -3286,1089 +5196,6 @@ export default {
     </style>
     `;
         },
-        //     getTooltipContent(itemData) {
-        //         // Check if itemData exists
-        //         if (!itemData) {
-        //             return `
-        //     <div class="dashboard-tooltip no-data">
-        //         <div class="tooltip-content">
-        //             <span class="status-icon">ℹ️</span>
-        //             <span>No shift data available</span>
-        //         </div>
-        //     </div>
-        //     <style>
-        //     .dashboard-tooltip {
-        //         font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        //         max-width: 240px;
-        //         padding: 12px;
-        //         border-radius: 10px;
-        //         background: #FFFFFF;
-        //         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        //         font-size: 13px;
-        //         color: #2D3748;
-        //         border: 1px solid #E2E8F0;
-        //     }
-
-        //     /* Status Card Styling */
-        //     .status-card {
-        //         text-align: center;
-        //         padding: 12px 16px;
-        //     }
-
-        //     .status-header {
-        //         display: flex;
-        //         align-items: center;
-        //         justify-content: center;
-        //         gap: 8px;
-        //         margin-bottom: 6px;
-        //     }
-
-        //     .status-icon {
-        //         font-size: 18px;
-        //     }
-
-        //     .status-title {
-        //         font-weight: 600;
-        //         font-size: 14px;
-        //         color: #2D3748;
-        //     }
-
-        //     .status-dates {
-        //         font-size: 12px;
-        //         color: #718096;
-        //         margin-bottom: 6px;
-        //     }
-
-        //     .status-footer {
-        //         font-size: 11px;
-        //         color: #718096;
-        //         padding-top: 4px;
-        //         border-top: 1px dashed #E2E8F0;
-        //     }
-
-        //     .absent {
-        //         background-color: #FFF5F5;
-        //         border-color: #FED7D7;
-        //     }
-
-        //     /* Shift Card Styling */
-        //     .shift-card {
-        //         padding: 12px;
-        //     }
-
-        //     .shift-header {
-        //         display: flex;
-        //         align-items: center;
-        //         gap: 8px;
-        //         margin-bottom: 10px;
-        //     }
-
-        //     .shift-icon {
-        //         font-size: 16px;
-        //     }
-
-        //     .shift-name {
-        //         font-weight: 600;
-        //         flex-grow: 1;
-        //         color: #4C51BF;
-        //     }
-
-        //     .shift-date {
-        //         font-size: 12px;
-        //         color: #718096;
-        //     }
-
-        //     .shift-schedule {
-        //         display: flex;
-        //         justify-content: space-between;
-        //         align-items: center;
-        //         padding: 8px 0;
-        //         margin-bottom: 8px;
-        //         border-bottom: 1px dashed #E2E8F0;
-        //     }
-
-        //     .shift-duration {
-        //         background: #EDF2F7;
-        //         color: #4C51BF;
-        //         padding: 2px 8px;
-        //         border-radius: 12px;
-        //         font-size: 11px;
-        //         font-weight: 600;
-        //     }
-
-        //     .attendance-record {
-        //         margin: 8px 0;
-        //     }
-
-        //     .attendance-row {
-        //         display: flex;
-        //         justify-content: space-between;
-        //         align-items: center;
-        //         padding: 6px 0;
-        //     }
-
-        //     .attendance-time {
-        //         font-weight: 500;
-        //     }
-
-        //     .attendance-badge {
-        //         font-size: 11px;
-        //         font-weight: 600;
-        //         padding: 2px 8px;
-        //         border-radius: 12px;
-        //         margin-left: 8px;
-        //     }
-
-        //     .late {
-        //         color: #E53E3E;
-        //     }
-
-        //     .attendance-badge.late {
-        //         background-color: #FED7D7;
-        //         color: #E53E3E;
-        //     }
-
-        //     .early {
-        //         color: #DD6B20;
-        //     }
-
-        //     .attendance-badge.early {
-        //         background-color: #FEEBC8;
-        //         color: #DD6B20;
-        //     }
-
-        //     .working {
-        //         color: #D69E2E;
-        //     }
-
-        //     .attendance-badge.overtime {
-        //         background-color: #EBF4FF;
-        //         color: #4C51BF;
-        //     }
-
-        //     .attendance-badge.lateleave {
-        //         background-color: #FEFCBF;
-        //         color: #B7791F;
-        //     }
-
-        //     .overtime-info {
-        //         font-size: 12px;
-        //         padding: 8px;
-        //         background: #F8FAFC;
-        //         border-radius: 6px;
-        //         margin-top: 8px;
-        //         display: flex;
-        //         align-items: center;
-        //         gap: 6px;
-        //     }
-
-        //     .no-data {
-        //         text-align: center;
-        //         padding: 16px;
-        //         background: #F8FAFC;
-        //     }
-        // </style>
-        //     `;
-        //         }
-
-        //         const mainShift = itemData;
-        //         const today = new Date();
-        //         today.setHours(0, 0, 0, 0);
-        //         const shiftDate = new Date(mainShift.Tanggal);
-        //         // shiftDate.setHours(0, 0, 0, 0);
-
-        //         // Format time function
-        //         const formatTime = (timeString) => {
-        //             if (!timeString) return "-";
-        //             const timePart = timeString.includes(" ")
-        //                 ? timeString.split(" ")[1]
-        //                 : timeString;
-        //             return timePart ? timePart.substring(0, 5) : "-";
-        //         };
-
-        //         // Format date function
-        //         const formatDate = (dateString) => {
-        //             if (!dateString) return "";
-        //             try {
-        //                 const date = new Date(dateString);
-        //                 return date.toLocaleDateString("id-ID", {
-        //                     weekday: "short",
-        //                     day: "2-digit",
-        //                     month: "short",
-        //                 });
-        //             } catch (e) {
-        //                 return dateString.split(" ")[0];
-        //             }
-        //         };
-
-        //         // Check for leave/sick first (priority)
-        //         if (
-        //             mainShift.Cuti_No_Transaksi ||
-        //             mainShift.Sakit_Izin_No_Transaksi
-        //         ) {
-        //             let type = "Izin";
-        //             let icon = "📝";
-
-        //             if (mainShift.Cuti_No_Transaksi) {
-        //                 type = "Cuti";
-        //                 icon = "🏖️";
-        //             } else if (mainShift.Sakit_Izin_No_Transaksi) {
-        //                 type = "Sakit";
-        //                 icon = "🏥";
-        //             }
-
-        //             const startDate = formatDate(
-        //                 mainShift.Cuti_Mulai || mainShift.Sakit_Izin_Mulai
-        //             );
-        //             const endDate = formatDate(
-        //                 mainShift.Cuti_Selesai || mainShift.Sakit_Izin_Selesai
-        //             );
-
-        //             return `
-        //     <div class="dashboard-tooltip status-card">
-        //         <div class="status-header">
-        //             <span class="status-icon">${icon}</span>
-        //             <span class="status-title">${type}</span>
-        //         </div>
-        //         <div class="status-dates">${startDate} - ${endDate}</div>
-        //         ${
-        //             mainShift.Cuti_No_Transaksi
-        //                 ? '<div class="status-footer">Cuti resmi</div>'
-        //                 : ""
-        //         }
-        //         ${
-        //             mainShift.Sakit_Izin_No_Transaksi
-        //                 ? '<div class="status-footer">Surat sakit</div>'
-        //                 : ""
-        //         }
-        //     </div>
-        //     <style>
-        //     .dashboard-tooltip {
-        //         font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        //         max-width: 240px;
-        //         padding: 12px;
-        //         border-radius: 10px;
-        //         background: #FFFFFF;
-        //         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        //         font-size: 13px;
-        //         color: #2D3748;
-        //         border: 1px solid #E2E8F0;
-        //     }
-
-        //     /* Status Card Styling */
-        //     .status-card {
-        //         text-align: center;
-        //         padding: 12px 16px;
-        //     }
-
-        //     .status-header {
-        //         display: flex;
-        //         align-items: center;
-        //         justify-content: center;
-        //         gap: 8px;
-        //         margin-bottom: 6px;
-        //     }
-
-        //     .status-icon {
-        //         font-size: 18px;
-        //     }
-
-        //     .status-title {
-        //         font-weight: 600;
-        //         font-size: 14px;
-        //         color: #2D3748;
-        //     }
-
-        //     .status-dates {
-        //         font-size: 12px;
-        //         color: #718096;
-        //         margin-bottom: 6px;
-        //     }
-
-        //     .status-footer {
-        //         font-size: 11px;
-        //         color: #718096;
-        //         padding-top: 4px;
-        //         border-top: 1px dashed #E2E8F0;
-        //     }
-
-        //     .absent {
-        //         background-color: #FFF5F5;
-        //         border-color: #FED7D7;
-        //     }
-
-        //     /* Shift Card Styling */
-        //     .shift-card {
-        //         padding: 12px;
-        //     }
-
-        //     .shift-header {
-        //         display: flex;
-        //         align-items: center;
-        //         gap: 8px;
-        //         margin-bottom: 10px;
-        //     }
-
-        //     .shift-icon {
-        //         font-size: 16px;
-        //     }
-
-        //     .shift-name {
-        //         font-weight: 600;
-        //         flex-grow: 1;
-        //         color: #4C51BF;
-        //     }
-
-        //     .shift-date {
-        //         font-size: 12px;
-        //         color: #718096;
-        //     }
-
-        //     .shift-schedule {
-        //         display: flex;
-        //         justify-content: space-between;
-        //         align-items: center;
-        //         padding: 8px 0;
-        //         margin-bottom: 8px;
-        //         border-bottom: 1px dashed #E2E8F0;
-        //     }
-
-        //     .shift-duration {
-        //         background: #EDF2F7;
-        //         color: #4C51BF;
-        //         padding: 2px 8px;
-        //         border-radius: 12px;
-        //         font-size: 11px;
-        //         font-weight: 600;
-        //     }
-
-        //     .attendance-record {
-        //         margin: 8px 0;
-        //     }
-
-        //     .attendance-row {
-        //         display: flex;
-        //         justify-content: space-between;
-        //         align-items: center;
-        //         padding: 6px 0;
-        //     }
-
-        //     .attendance-time {
-        //         font-weight: 500;
-        //     }
-
-        //     .attendance-badge {
-        //         font-size: 11px;
-        //         font-weight: 600;
-        //         padding: 2px 8px;
-        //         border-radius: 12px;
-        //         margin-left: 8px;
-        //     }
-
-        //     .late {
-        //         color: #E53E3E;
-        //     }
-
-        //     .attendance-badge.late {
-        //         background-color: #FED7D7;
-        //         color: #E53E3E;
-        //     }
-
-        //     .early {
-        //         color: #DD6B20;
-        //     }
-
-        //     .attendance-badge.early {
-        //         background-color: #FEEBC8;
-        //         color: #DD6B20;
-        //     }
-
-        //     .working {
-        //         color: #D69E2E;
-        //     }
-
-        //     .attendance-badge.overtime {
-        //         background-color: #EBF4FF;
-        //         color: #4C51BF;
-        //     }
-
-        //     .attendance-badge.lateleave {
-        //         background-color: #FEFCBF;
-        //         color: #B7791F;
-        //     }
-
-        //     .overtime-info {
-        //         font-size: 12px;
-        //         padding: 8px;
-        //         background: #F8FAFC;
-        //         border-radius: 6px;
-        //         margin-top: 8px;
-        //         display: flex;
-        //         align-items: center;
-        //         gap: 6px;
-        //     }
-
-        //     .no-data {
-        //         text-align: center;
-        //         padding: 16px;
-        //         background: #F8FAFC;
-        //     }
-        // </style>
-        //     `;
-        //         }
-
-        //         // Handle NO SHIFT case
-        //         if (!mainShift.Nama_Shift || mainShift.Nama_Shift === "NO SHIFT") {
-        //             return `
-        //     <div class="dashboard-tooltip status-card">
-        //         <div class="status-header">
-        //             <span class="status-icon">🌴</span>
-        //             <span class="status-title">Hari Libur</span>
-        //         </div>
-        //         <div class="status-dates">${formatDate(mainShift.Tanggal)}</div>
-        //     </div>
-        //     <style>
-        //     .dashboard-tooltip {
-        //         font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        //         max-width: 240px;
-        //         padding: 12px;
-        //         border-radius: 10px;
-        //         background: #FFFFFF;
-        //         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        //         font-size: 13px;
-        //         color: #2D3748;
-        //         border: 1px solid #E2E8F0;
-        //     }
-
-        //     /* Status Card Styling */
-        //     .status-card {
-        //         text-align: center;
-        //         padding: 12px 16px;
-        //     }
-
-        //     .status-header {
-        //         display: flex;
-        //         align-items: center;
-        //         justify-content: center;
-        //         gap: 8px;
-        //         margin-bottom: 6px;
-        //     }
-
-        //     .status-icon {
-        //         font-size: 18px;
-        //     }
-
-        //     .status-title {
-        //         font-weight: 600;
-        //         font-size: 14px;
-        //         color: #2D3748;
-        //     }
-
-        //     .status-dates {
-        //         font-size: 12px;
-        //         color: #718096;
-        //         margin-bottom: 6px;
-        //     }
-
-        //     .status-footer {
-        //         font-size: 11px;
-        //         color: #718096;
-        //         padding-top: 4px;
-        //         border-top: 1px dashed #E2E8F0;
-        //     }
-
-        //     .absent {
-        //         background-color: #FFF5F5;
-        //         border-color: #FED7D7;
-        //     }
-
-        //     /* Shift Card Styling */
-        //     .shift-card {
-        //         padding: 12px;
-        //     }
-
-        //     .shift-header {
-        //         display: flex;
-        //         align-items: center;
-        //         gap: 8px;
-        //         margin-bottom: 10px;
-        //     }
-
-        //     .shift-icon {
-        //         font-size: 16px;
-        //     }
-
-        //     .shift-name {
-        //         font-weight: 600;
-        //         flex-grow: 1;
-        //         color: #4C51BF;
-        //     }
-
-        //     .shift-date {
-        //         font-size: 12px;
-        //         color: #718096;
-        //     }
-
-        //     .shift-schedule {
-        //         display: flex;
-        //         justify-content: space-between;
-        //         align-items: center;
-        //         padding: 8px 0;
-        //         margin-bottom: 8px;
-        //         border-bottom: 1px dashed #E2E8F0;
-        //     }
-
-        //     .shift-duration {
-        //         background: #EDF2F7;
-        //         color: #4C51BF;
-        //         padding: 2px 8px;
-        //         border-radius: 12px;
-        //         font-size: 11px;
-        //         font-weight: 600;
-        //     }
-
-        //     .attendance-record {
-        //         margin: 8px 0;
-        //     }
-
-        //     .attendance-row {
-        //         display: flex;
-        //         justify-content: space-between;
-        //         align-items: center;
-        //         padding: 6px 0;
-        //     }
-
-        //     .attendance-time {
-        //         font-weight: 500;
-        //     }
-
-        //     .attendance-badge {
-        //         font-size: 11px;
-        //         font-weight: 600;
-        //         padding: 2px 8px;
-        //         border-radius: 12px;
-        //         margin-left: 8px;
-        //     }
-
-        //     .late {
-        //         color: #E53E3E;
-        //     }
-
-        //     .attendance-badge.late {
-        //         background-color: #FED7D7;
-        //         color: #E53E3E;
-        //     }
-
-        //     .early {
-        //         color: #DD6B20;
-        //     }
-
-        //     .attendance-badge.early {
-        //         background-color: #FEEBC8;
-        //         color: #DD6B20;
-        //     }
-
-        //     .working {
-        //         color: #D69E2E;
-        //     }
-
-        //     .attendance-badge.overtime {
-        //         background-color: #EBF4FF;
-        //         color: #4C51BF;
-        //     }
-
-        //     .attendance-badge.lateleave {
-        //         background-color: #FEFCBF;
-        //         color: #B7791F;
-        //     }
-
-        //     .overtime-info {
-        //         font-size: 12px;
-        //         padding: 8px;
-        //         background: #F8FAFC;
-        //         border-radius: 6px;
-        //         margin-top: 8px;
-        //         display: flex;
-        //         align-items: center;
-        //         gap: 6px;
-        //     }
-
-        //     .no-data {
-        //         text-align: center;
-        //         padding: 16px;
-        //         background: #F8FAFC;
-        //     }
-        // </style>
-        //     `;
-        //         }
-
-        //         // Check if future date
-        //         const isFutureDate = shiftDate > today;
-
-        //         // Check if user didn't check in (null CheckIn) and it's today or past date
-        //         if (mainShift.CheckIn === null && !isFutureDate) {
-        //             return `
-        //     <div class="dashboard-tooltip status-card absent">
-        //         <div class="status-header">
-        //             <span class="status-icon">❌</span>
-        //             <span class="status-title">Tidak Masuk</span>
-        //         </div>
-        //         <div class="shift-schedule">
-        //             <span>Shift ${mainShift.Nama_Shift}</span>
-        //             <span>${mainShift.Jam_Masuk} - ${mainShift.Jam_Keluar}</span>
-        //         </div>
-        //         <div class="status-dates">${formatDate(mainShift.Tanggal)}</div>
-        //     </div>
-        //     <style>
-        //     .dashboard-tooltip {
-        //         font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        //         max-width: 240px;
-        //         padding: 12px;
-        //         border-radius: 10px;
-        //         background: #FFFFFF;
-        //         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        //         font-size: 13px;
-        //         color: #2D3748;
-        //         border: 1px solid #E2E8F0;
-        //     }
-
-        //     /* Status Card Styling */
-        //     .status-card {
-        //         text-align: center;
-        //         padding: 12px 16px;
-        //     }
-
-        //     .status-header {
-        //         display: flex;
-        //         align-items: center;
-        //         justify-content: center;
-        //         gap: 8px;
-        //         margin-bottom: 6px;
-        //     }
-
-        //     .status-icon {
-        //         font-size: 18px;
-        //     }
-
-        //     .status-title {
-        //         font-weight: 600;
-        //         font-size: 14px;
-        //         color: #2D3748;
-        //     }
-
-        //     .status-dates {
-        //         font-size: 12px;
-        //         color: #718096;
-        //         margin-bottom: 6px;
-        //     }
-
-        //     .status-footer {
-        //         font-size: 11px;
-        //         color: #718096;
-        //         padding-top: 4px;
-        //         border-top: 1px dashed #E2E8F0;
-        //     }
-
-        //     .absent {
-        //         background-color: #FFF5F5;
-        //         border-color: #FED7D7;
-        //     }
-
-        //     /* Shift Card Styling */
-        //     .shift-card {
-        //         padding: 12px;
-        //     }
-
-        //     .shift-header {
-        //         display: flex;
-        //         align-items: center;
-        //         gap: 8px;
-        //         margin-bottom: 10px;
-        //     }
-
-        //     .shift-icon {
-        //         font-size: 16px;
-        //     }
-
-        //     .shift-name {
-        //         font-weight: 600;
-        //         flex-grow: 1;
-        //         color: #4C51BF;
-        //     }
-
-        //     .shift-date {
-        //         font-size: 12px;
-        //         color: #718096;
-        //     }
-
-        //     .shift-schedule {
-        //         display: flex;
-        //         justify-content: space-between;
-        //         align-items: center;
-        //         padding: 8px 0;
-        //         margin-bottom: 8px;
-        //         border-bottom: 1px dashed #E2E8F0;
-        //     }
-
-        //     .shift-duration {
-        //         background: #EDF2F7;
-        //         color: #4C51BF;
-        //         padding: 2px 8px;
-        //         border-radius: 12px;
-        //         font-size: 11px;
-        //         font-weight: 600;
-        //     }
-
-        //     .attendance-record {
-        //         margin: 8px 0;
-        //     }
-
-        //     .attendance-row {
-        //         display: flex;
-        //         justify-content: space-between;
-        //         align-items: center;
-        //         padding: 6px 0;
-        //     }
-
-        //     .attendance-time {
-        //         font-weight: 500;
-        //     }
-
-        //     .attendance-badge {
-        //         font-size: 11px;
-        //         font-weight: 600;
-        //         padding: 2px 8px;
-        //         border-radius: 12px;
-        //         margin-left: 8px;
-        //     }
-
-        //     .late {
-        //         color: #E53E3E;
-        //     }
-
-        //     .attendance-badge.late {
-        //         background-color: #FED7D7;
-        //         color: #E53E3E;
-        //     }
-
-        //     .early {
-        //         color: #DD6B20;
-        //     }
-
-        //     .attendance-badge.early {
-        //         background-color: #FEEBC8;
-        //         color: #DD6B20;
-        //     }
-
-        //     .working {
-        //         color: #D69E2E;
-        //     }
-
-        //     .attendance-badge.overtime {
-        //         background-color: #EBF4FF;
-        //         color: #4C51BF;
-        //     }
-
-        //     .attendance-badge.lateleave {
-        //         background-color: #FEFCBF;
-        //         color: #B7791F;
-        //     }
-
-        //     .overtime-info {
-        //         font-size: 12px;
-        //         padding: 8px;
-        //         background: #F8FAFC;
-        //         border-radius: 6px;
-        //         margin-top: 8px;
-        //         display: flex;
-        //         align-items: center;
-        //         gap: 6px;
-        //     }
-
-        //     .no-data {
-        //         text-align: center;
-        //         padding: 16px;
-        //         background: #F8FAFC;
-        //     }
-        // </style>
-        //     `;
-        //         }
-
-        //         // Regular shift case
-        //         const isLate =
-        //             mainShift.Jam_Masuk &&
-        //             mainShift.CheckIn &&
-        //             new Date(`1970-01-01T${formatTime(mainShift.CheckIn)}`) >
-        //                 new Date(`1970-01-01T${mainShift.Jam_Masuk}`);
-
-        //         const isEarlyOut =
-        //             mainShift.Jam_Keluar &&
-        //             mainShift.CheckOut &&
-        //             new Date(`1970-01-01T${formatTime(mainShift.CheckOut)}`) <
-        //                 new Date(`1970-01-01T${mainShift.Jam_Keluar}`);
-
-        //         const isWorking =
-        //             mainShift.CheckIn &&
-        //             !mainShift.CheckOut &&
-        //             shiftDate.getTime() === today.getTime();
-
-        //         // Check for overtime
-        //         const hasOvertime = mainShift.Lembur_No_Transaksi;
-        //         const isLateLeave = mainShift.PulangTerlambat_No_Transaksi;
-
-        //         return `
-        // <div class="dashboard-tooltip shift-card ${isWorking ? "working" : ""}">
-        //     <div class="shift-header">
-        //         <span class="shift-icon">${isWorking ? "🔄" : "🕒"}</span>
-        //         <span class="shift-name">${mainShift.Nama_Shift}</span>
-        //         <span class="shift-date">${formatDate(mainShift.Tanggal)}</span>
-        //     </div>
-
-        //     <div class="shift-schedule">
-        //         <span>${mainShift.Jam_Masuk} - ${mainShift.Jam_Keluar}</span>
-        //         <span class="shift-duration">${this.calculateWorkHours(
-        //             mainShift.Jam_Masuk,
-        //             mainShift.Jam_Keluar
-        //         )} jam</span>
-        //     </div>
-
-        //     <div class="attendance-record">
-        //         <div class="attendance-row ${isLate ? "late" : ""}">
-        //             <span>Masuk:</span>
-        //             <span class="attendance-time">${
-        //                 mainShift.CheckIn ? formatTime(mainShift.CheckIn) : "-"
-        //             }</span>
-        //             ${
-        //                 isLate
-        //                     ? '<span class="attendance-badge late">Telat</span>'
-        //                     : ""
-        //             }
-        //         </div>
-
-        //         ${
-        //             mainShift.CheckOut
-        //                 ? `
-        //         <div class="attendance-row ${isEarlyOut ? "early" : ""}">
-        //             <span>Pulang:</span>
-        //             <span class="attendance-time">${formatTime(
-        //                 mainShift.CheckOut
-        //             )}</span>
-        //             ${
-        //                 isEarlyOut
-        //                     ? '<span class="attendance-badge early">Awal</span>'
-        //                     : ""
-        //             }
-        //             ${
-        //                 hasOvertime
-        //                     ? '<span class="attendance-badge overtime">Lembur</span>'
-        //                     : ""
-        //             }
-        //             ${
-        //                 isLateLeave
-        //                     ? '<span class="attendance-badge lateleave">Telat</span>'
-        //                     : ""
-        //             }
-        //         </div>
-        //         `
-        //                 : `
-        //         <div class="attendance-row working">
-        //             <span>Pulang:</span>
-        //             <span class="attendance-time">${
-        //                 isFutureDate ? "Belum Dilakukan" : "Belum Check Out"
-        //             }</span>
-        //         </div>
-        //         `
-        //         }
-        //     </div>
-
-        //     ${
-        //         hasOvertime
-        //             ? `
-        //     <div class="overtime-info">
-        //         <span>⏰ Lembur: ${formatTime(
-        //             mainShift.Lembur_Mulai
-        //         )} - ${formatTime(mainShift.Lembur_Selesai)}</span>
-        //     </div>
-        //     `
-        //             : ""
-        //     }
-        // </div>
-
-        // <style>
-        //     .dashboard-tooltip {
-        //         font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        //         max-width: 240px;
-        //         padding: 12px;
-        //         border-radius: 10px;
-        //         background: #FFFFFF;
-        //         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        //         font-size: 13px;
-        //         color: #2D3748;
-        //         border: 1px solid #E2E8F0;
-        //     }
-
-        //     /* Status Card Styling */
-        //     .status-card {
-        //         text-align: center;
-        //         padding: 12px 16px;
-        //     }
-
-        //     .status-header {
-        //         display: flex;
-        //         align-items: center;
-        //         justify-content: center;
-        //         gap: 8px;
-        //         margin-bottom: 6px;
-        //     }
-
-        //     .status-icon {
-        //         font-size: 18px;
-        //     }
-
-        //     .status-title {
-        //         font-weight: 600;
-        //         font-size: 14px;
-        //         color: #2D3748;
-        //     }
-
-        //     .status-dates {
-        //         font-size: 12px;
-        //         color: #718096;
-        //         margin-bottom: 6px;
-        //     }
-
-        //     .status-footer {
-        //         font-size: 11px;
-        //         color: #718096;
-        //         padding-top: 4px;
-        //         border-top: 1px dashed #E2E8F0;
-        //     }
-
-        //     .absent {
-        //         background-color: #FFF5F5;
-        //         border-color: #FED7D7;
-        //     }
-
-        //     /* Shift Card Styling */
-        //     .shift-card {
-        //         padding: 12px;
-        //     }
-
-        //     .shift-header {
-        //         display: flex;
-        //         align-items: center;
-        //         gap: 8px;
-        //         margin-bottom: 10px;
-        //     }
-
-        //     .shift-icon {
-        //         font-size: 16px;
-        //     }
-
-        //     .shift-name {
-        //         font-weight: 600;
-        //         flex-grow: 1;
-        //         color: #4C51BF;
-        //     }
-
-        //     .shift-date {
-        //         font-size: 12px;
-        //         color: #718096;
-        //     }
-
-        //     .shift-schedule {
-        //         display: flex;
-        //         justify-content: space-between;
-        //         align-items: center;
-        //         padding: 8px 0;
-        //         margin-bottom: 8px;
-        //         border-bottom: 1px dashed #E2E8F0;
-        //     }
-
-        //     .shift-duration {
-        //         background: #EDF2F7;
-        //         color: #4C51BF;
-        //         padding: 2px 8px;
-        //         border-radius: 12px;
-        //         font-size: 11px;
-        //         font-weight: 600;
-        //     }
-
-        //     .attendance-record {
-        //         margin: 8px 0;
-        //     }
-
-        //     .attendance-row {
-        //         display: flex;
-        //         justify-content: space-between;
-        //         align-items: center;
-        //         padding: 6px 0;
-        //     }
-
-        //     .attendance-time {
-        //         font-weight: 500;
-        //     }
-
-        //     .attendance-badge {
-        //         font-size: 11px;
-        //         font-weight: 600;
-        //         padding: 2px 8px;
-        //         border-radius: 12px;
-        //         margin-left: 8px;
-        //     }
-
-        //     .late {
-        //         color: #E53E3E;
-        //     }
-
-        //     .attendance-badge.late {
-        //         background-color: #FED7D7;
-        //         color: #E53E3E;
-        //     }
-
-        //     .early {
-        //         color: #DD6B20;
-        //     }
-
-        //     .attendance-badge.early {
-        //         background-color: #FEEBC8;
-        //         color: #DD6B20;
-        //     }
-
-        //     .working {
-        //         color: #D69E2E;
-        //     }
-
-        //     .attendance-badge.overtime {
-        //         background-color: #EBF4FF;
-        //         color: #4C51BF;
-        //     }
-
-        //     .attendance-badge.lateleave {
-        //         background-color: #FEFCBF;
-        //         color: #B7791F;
-        //     }
-
-        //     .overtime-info {
-        //         font-size: 12px;
-        //         padding: 8px;
-        //         background: #F8FAFC;
-        //         border-radius: 6px;
-        //         margin-top: 8px;
-        //         display: flex;
-        //         align-items: center;
-        //         gap: 6px;
-        //     }
-
-        //     .no-data {
-        //         text-align: center;
-        //         padding: 16px;
-        //         background: #F8FAFC;
-        //     }
-        // </style>
-        // `;
-        //     },
-
         calculateWorkHours(jamMasuk, jamKeluar) {
             if (!jamMasuk || !jamKeluar) return 0;
 
@@ -4388,7 +5215,7 @@ export default {
                 const response = await axios.get("/uDash/getDateAbsen");
                 if (response.status == 200) {
                     this.dataDateAbsen = response.data.data;
-                    console.log(this.dataDateAbsen);
+                    // console.log(this.dataDateAbsen);
                 }
             } catch (error) {
                 console.log(error);
@@ -4406,8 +5233,16 @@ export default {
                     day.Nama_Shift == "OG-K2" || day.Nama_Shift == "OG-K1",
                 "bg-primary": day.Nama_Shift === "EMI*",
                 "bg-secondary": day.Nama_Shift === "Day Off",
+                "bg-primary": !(
+                    day.Nama_Shift == "NO SHIFT" ||
+                    day.Nama_Shift == "OG-K2" ||
+                    day.Nama_Shift == "OG-K1" ||
+                    day.Nama_Shift == "EMI*" ||
+                    day.Nama_Shift == "Day Off"
+                ),
             };
         },
+
         nextMonth() {
             const nextDate = new Date(
                 this.currentDate.getFullYear(),
@@ -4430,26 +5265,33 @@ export default {
                 : text;
         },
         formatTanggal_Lembur(start, end) {
-            const tanggalMulai = start.split(" ")[0]; // "2025-07-19"
-            const waktuMulai = start.split(" ")[1].substring(0, 5); // "14:30"
+            const [tanggalMulaiRaw] = start.split(" ");
+            const [tanggalSelesaiRaw] = end.split(" ");
 
-            const tanggalSelesai = end.split(" ")[0]; // "2025-07-19"
-            const waktuSelesai = end.split(" ")[1].substring(0, 5); // "21:00"
+            const mulai = new Date(tanggalMulaiRaw);
+            const selesai = new Date(tanggalSelesaiRaw);
 
-            // Jika tanggalnya sama, kembalikan hanya tanggal dan rentang waktu
-            if (tanggalMulai === tanggalSelesai) {
-                return `${tanggalMulai}`;
-            } else {
-                const date = new Date(tanggalSelesai);
-                console.log(date);
-                const finalSelesai = date?.toLocaleDateString("id-ID", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                });
-                // Jika tanggalnya berbeda, kembalikan rentang tanggal dan waktu
-                return `${tanggalMulai.split("-")[2]} - ${tanggalSelesai}`;
+            // Ambil komponen tanggal
+            const dMulai = mulai.getDate();
+            const mMulai = mulai.toLocaleString("id-ID", { month: "long" });
+            const yMulai = mulai.getFullYear();
+
+            const dSelesai = selesai.getDate();
+            const mSelesai = selesai.toLocaleString("id-ID", { month: "long" });
+            const ySelesai = selesai.getFullYear();
+
+            // Kalau sama persis → tampilkan satu tanggal
+            if (tanggalMulaiRaw === tanggalSelesaiRaw) {
+                return `${dMulai} ${mMulai} ${yMulai}`;
             }
+
+            // Kalau bulan & tahun sama → "28 - 29 Juni 2025"
+            if (mMulai === mSelesai && yMulai === ySelesai) {
+                return `${dMulai} - ${dSelesai} ${mMulai} ${yMulai}`;
+            }
+
+            // Kalau beda bulan/tahun → "28 Juni 2025 - 2 Juli 2025"
+            return `${dMulai} ${mMulai} ${yMulai} - ${dSelesai} ${mSelesai} ${ySelesai}`;
         },
         parseIzin(tipe) {
             if (tipe == "izinFull") {
@@ -4571,9 +5413,55 @@ export default {
                 this.loadingLembur = false;
             }
         },
+        async getAllIzin(url) {
+            try {
+                this.loadingIzin = true;
+
+                const response = await axios
+                    .get(url)
+                    .then((response) => {
+                        this.allDataIzin = response.data.data;
+                        this.paginationIzin = response.data;
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                    });
+            } catch (error) {
+                console.log(error);
+            } finally {
+                this.loadingIzin = false;
+            }
+        },
+        async getRiwayatAbsen(url) {
+            try {
+                this.loadingRiwayatAbsen = true;
+
+                const response = await axios.get(url, {
+                    params: {
+                        // page: this.currentPageAbsensi,
+                        search: this.searchKeywordAbsensi,
+                        tanggal: this.selectedDateAbsensi,
+                    },
+                });
+
+                this.allDataRiwayatAbsen = response.data.data.data;
+                this.peginationRiwayatAbsen = response.data.data;
+            } catch (error) {
+                console.error(error);
+            } finally {
+                this.loadingRiwayatAbsen = false;
+            }
+        },
+        changePage(page) {
+            this.currentPageAbsensi = page;
+            this.getRiwayatAbsen("/uDash/getRiwayatAbsen");
+        },
     },
     mounted() {
-        console.log(this.isiBerita);
+        this.getRingkasanTeam();
+        this.getDataChartLembur();
+        this.initLemburChart();
+        // console.log(this.isiBerita);
         this.convertAndSanitize(this.isiBerita);
 
         this.showModalBuletin = true;
@@ -4585,16 +5473,294 @@ export default {
         // this.getData();
         this.getAllLembur("/uDash/getAllLembur");
         this.getAllIzin("/uDash/getAllIzin");
+        this.getRiwayatAbsen("/uDash/getRiwayatAbsen");
 
         // Update time every minute
         this.timeInterval = setInterval(this.updateDateTime, 60000);
+        window.addEventListener("resize", () => {
+            this.windowWidth = window.innerWidth;
+        });
     },
     beforeUnmount() {
         clearInterval(this.timeInterval);
+        window.removeEventListener("resize", () => {
+            this.windowWidth = window.innerWidth;
+        });
     },
 };
 </script>
 <style>
+*,
+*::before,
+*::after {
+    --primary-color: #6366f1;
+    --secondary-color: #64748b;
+    --accent-color: #e74c3c;
+    --light-color: #ecf0f1;
+    --dark-color: #1e293b;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --danger-color: #ef4444;
+    --border-radius: 20px;
+    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.search-container {
+    position: relative;
+    margin: 0px 0;
+    width: 100%;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    z-index: 2;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 16px 12px 40px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    /* box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); */
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+/* Styling untuk Ringkasan Tim */
+.summary-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: none;
+    margin-bottom: 20px;
+}
+
+.summary-card .card-header {
+    background: #fff;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eaeaea;
+    font-weight: 600;
+}
+
+.summary-card .card-header h5 {
+    font-size: 18px;
+    color: #333;
+    font-weight: 600;
+}
+
+.btn-pagination {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ddd;
+    background: #fff;
+    color: #666;
+    font-size: 12px;
+}
+
+.btn-pagination:not(:disabled):hover {
+    background: #f5f5f5;
+}
+
+.pagination-text {
+    font-size: 13px;
+    color: #666;
+}
+
+.team-member {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    position: relative;
+}
+
+.team-member:last-child {
+    border-bottom: none;
+}
+
+.member-rank {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #6366f1;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 12px;
+    flex-shrink: 0;
+    font-size: 12px;
+}
+
+.member-details {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.member-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+    margin-right: 10px;
+}
+
+.shift-badge {
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.member-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.stat-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #f8f9fa;
+    padding: 5px 6px;
+    border-radius: 6px;
+    min-width: 45px;
+    border: 1px solid #eaeaea;
+}
+
+.badge-value {
+    font-weight: 600;
+    font-size: 12px;
+    color: #333;
+    line-height: 1.2;
+}
+
+.badge-label {
+    font-size: 9px;
+    color: #666;
+    margin-top: 2px;
+    line-height: 1.1;
+    text-align: center;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 10px;
+    white-space: nowrap;
+}
+
+.present {
+    background-color: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.absence {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+    .team-member {
+        flex-wrap: wrap;
+        padding: 12px 15px;
+    }
+
+    .member-stats {
+        order: 3;
+        width: 100%;
+        margin-top: 8px;
+        justify-content: space-between;
+    }
+
+    .stat-badge {
+        flex: 1;
+        min-width: calc(33.333% - 6px);
+        margin-bottom: 4px;
+        padding: 4px 5px;
+    }
+
+    .status-badge {
+        margin-left: auto;
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+
+    .member-name {
+        font-size: 13px;
+    }
+
+    .shift-badge {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+}
+
+@media (max-width: 576px) {
+    .member-stats {
+        gap: 4px;
+    }
+
+    .stat-badge {
+        min-width: calc(50% - 4px);
+        padding: 4px 4px;
+    }
+
+    .badge-value {
+        font-size: 11px;
+    }
+
+    .badge-label {
+        font-size: 8px;
+    }
+
+    .status-badge {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+
+    .team-member {
+        padding: 10px 12px;
+    }
+
+    .member-rank {
+        width: 26px;
+        height: 26px;
+        font-size: 11px;
+        margin-right: 10px;
+    }
+}
 /* Tooltip container adjustment */
 .el-popper {
     border: none !important;
@@ -4613,6 +5779,467 @@ export default {
     display: none !important;
 }
 
+.absensi-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.absensi-modal-container {
+    width: 100%;
+    max-width: 500px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    animation: absensiModalAppear 0.3s ease-out;
+}
+
+@keyframes absensiModalAppear {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Header Styles */
+.absensi-modal-head {
+    padding: 1.25rem 1.5rem;
+    background: var(--gradient-primary);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.absensi-header-content {
+    flex: 1;
+}
+
+.absensi-modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.absensi-shift-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.35rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+}
+
+.absensi-close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.absensi-close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+/* Body Styles */
+.absensi-modal-body {
+    padding: 1.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.absensi-info-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.absensi-info-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    color: #4a6fa5;
+}
+
+.absensi-info-header h6 {
+    font-weight: 600;
+    margin: 0;
+}
+
+.absensi-info-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+.absensi-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.absensi-info-item:last-child {
+    border-bottom: none;
+}
+
+.absensi-info-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.absensi-info-value {
+    font-weight: 600;
+    color: #212529;
+}
+
+.absensi-ideal-time {
+    color: #28a745 !important;
+}
+
+/* Attendance Timeline */
+.absensi-history-section {
+    margin-top: 1.5rem;
+}
+
+.absensi-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    color: #4a6fa5;
+}
+
+.absensi-section-header h6 {
+    font-weight: 600;
+    margin: 0;
+}
+
+.absensi-timeline {
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.absensi-timeline::before {
+    content: "";
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.absensi-timeline-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.absensi-timeline-marker {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    z-index: 1;
+    flex-shrink: 0;
+}
+
+.absensi-check-in .absensi-timeline-marker {
+    background: #28a745;
+    color: white;
+}
+
+.absensi-check-out .absensi-timeline-marker {
+    background: #dc3545;
+    color: white;
+}
+
+.absensi-absen-1 .absensi-timeline-marker,
+.absensi-absen-2 .absensi-timeline-marker,
+.absensi-absen-3 .absensi-timeline-marker {
+    background: #6c757d;
+    color: white;
+}
+
+.absensi-timeline-content {
+    background: white;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.absensi-timeline-type {
+    font-weight: 500;
+}
+
+.absensi-timeline-time {
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Footer Styles */
+.absensi-modal-footer {
+    padding: 1.25rem 1.5rem;
+    background: #f8f9fa;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.absensi-primary-btn {
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.absensi-primary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 576px) {
+    .absensi-modal-container {
+        margin: 0.5rem;
+    }
+
+    .absensi-modal-body {
+        padding: 1rem;
+    }
+
+    .absensi-info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+
+    .absensi-timeline-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+}
+
+.profile-section {
+    background: white;
+    border-radius: var(--border-radius);
+    --box-shadow: var(--shadow);
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+.section-content.leader {
+    height: 15.2rem;
+    overflow: auto;
+}
+.section-content {
+    height: 18.3rem;
+    overflow: auto;
+}
+
+.section-header {
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+    color: var(--dark-color);
+    font-weight: 600;
+    margin: 0;
+}
+
+.request-item {
+    background: white;
+    border-radius: 12px;
+    border: 0.5px solid #e2e8f0;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-left: 4px solid var(--primary-color);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.request-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid var(--success-color);
+}
+
+.request-date {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+}
+
+.request-status {
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 50px;
+}
+
+.bg-secondary {
+    background: linear-gradient(
+        135deg,
+        var(--secondary-color),
+        #475569
+    ) !important;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 3px solid rgba(99, 102, 241, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--primary-color);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--secondary-color);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #cbd5e1;
+}
+
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+.btn-pagination {
+    border-radius: 50px;
+    padding: 0.4rem 1rem;
+    margin: 0 0.25rem;
+    font-weight: 500;
+    border: 1px solid #e2e8f0;
+}
+
+.btn-pagination:hover:not(:disabled) {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.page-info {
+    display: flex;
+    align-items: center;
+    margin: 0 1rem;
+    color: var(--secondary-color);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+
+    .section-header h2 {
+        margin-bottom: 1rem;
+    }
+
+    .filter-container {
+        width: 100%;
+    }
+
+    .filter-container input {
+        width: 100%;
+    }
+
+    .request-item {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+
+    .request-status {
+        margin-top: 0.5rem;
+    }
+
+    /* .pagination-container {
+        flex-wrap: wrap;
+    } */
+
+    .page-info {
+        width: 100%;
+        justify-content: center;
+        margin: 0.5rem 0;
+    }
+}
 .el-tooltip__popper.is-dark {
     background: transparent !important;
     border: none !important;
@@ -4691,7 +6318,341 @@ export default {
     -ms-user-select: none; /* For Internet Explorer/Edge */
     user-select: none;
 }
+.recharts-tooltip-wrapper {
+    z-index: 9999 !important;
+}
 
+/* CSS untuk Card Riwayat Lembur */
+.lembur-history-card {
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border: none;
+    overflow: hidden;
+}
+
+/* CSS untuk Card Riwayat Lembur */
+.lembur-history-card {
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border: none;
+    overflow: hidden;
+}
+
+.lembur-history-card .card-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+}
+
+.lembur-history-card .card-body {
+    padding: 0;
+    max-height: 19.5rem;
+    overflow-y: auto;
+}
+
+.lembur-item {
+    display: flex;
+    align-items: center;
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+}
+
+.lembur-item:hover {
+    background-color: var(--surface-soft);
+}
+
+.lembur-date {
+    flex: 1;
+    font-size: 0.9rem;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.lembur-duration {
+    margin: 0 1rem;
+    padding: 0.25rem 0.75rem;
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    border-radius: 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.lembur-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-selesai {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+.status-menunggu {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+}
+
+.status-ditolak {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+.lembur-pagination {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lembur-pagination-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary);
+    color: white;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.lembur-pagination-btn:hover:not(:disabled) {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.lembur-pagination-btn:disabled {
+    background: var(--gray-light);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+/* Modal Styles */
+.detail-item {
+    display: flex;
+    margin-bottom: 1rem;
+}
+
+.detail-label {
+    flex: 0 0 30%;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.detail-value {
+    flex: 1;
+    color: var(--text);
+}
+
+/* Skeleton Loading */
+.lembur-skeleton {
+    display: flex;
+    align-items: center;
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.lembur-skeleton-date {
+    flex: 1;
+    height: 16px;
+    background: var(--surface-soft);
+    border-radius: 4px;
+}
+
+.lembur-skeleton-duration {
+    width: 60px;
+    height: 24px;
+    margin: 0 1rem;
+    background: var(--surface-soft);
+    border-radius: 16px;
+}
+
+.lembur-skeleton-status {
+    width: 70px;
+    height: 24px;
+    background: var(--surface-soft);
+    border-radius: 16px;
+}
+
+/* Empty State */
+.lembur-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.lembur-empty i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--primary-light);
+}
+
+.lembur-history-card .card-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+}
+
+.lembur-history-card .card-body {
+    padding: 0;
+    max-height: 19.5rem;
+    overflow-y: auto;
+}
+
+.lembur-item {
+    display: flex;
+    align-items: center;
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+}
+
+.lembur-item:hover {
+    background-color: var(--surface-soft);
+}
+
+.lembur-date {
+    flex: 1;
+    font-size: 0.9rem;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.lembur-duration {
+    margin: 0 1rem;
+    padding: 0.25rem 0.75rem;
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    border-radius: 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.lembur-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-selesai {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+.status-menunggu {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+}
+
+.status-ditolak {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+.lembur-pagination {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lembur-pagination-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary);
+    color: white;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.lembur-pagination-btn:hover:not(:disabled) {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.lembur-pagination-btn:disabled {
+    background: var(--gray-light);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+/* Modal Styles */
+.detail-item {
+    display: flex;
+    margin-bottom: 1rem;
+}
+
+.detail-label {
+    flex: 0 0 30%;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.detail-value {
+    flex: 1;
+    color: var(--text);
+}
+
+/* Skeleton Loading */
+.lembur-skeleton {
+    display: flex;
+    align-items: center;
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.lembur-skeleton-date {
+    flex: 1;
+    height: 16px;
+    background: var(--surface-soft);
+    border-radius: 4px;
+}
+
+.lembur-skeleton-duration {
+    width: 60px;
+    height: 24px;
+    margin: 0 1rem;
+    background: var(--surface-soft);
+    border-radius: 16px;
+}
+
+.lembur-skeleton-status {
+    width: 70px;
+    height: 24px;
+    background: var(--surface-soft);
+    border-radius: 16px;
+}
+
+/* Empty State */
+.lembur-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.lembur-empty i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--primary-light);
+}
 /* buletin */
 .modal-backdrop {
     position: fixed;
@@ -4699,7 +6660,7 @@ export default {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(5px);
     display: flex;
     justify-content: center;
@@ -4719,6 +6680,19 @@ export default {
     animation: fadeIn 0.3s ease-out;
 }
 
+.glass-modal.detail {
+    /* From https://css.glass */
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    width: 100%;
+    max-width: 500px;
+    animation: fadeIn 0.3s ease-out;
+}
+
 .glass-modal-content {
     padding: 20px;
     color: #fff;
@@ -4728,6 +6702,7 @@ export default {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    color: black !important;
     margin-bottom: 15px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     padding-bottom: 10px;
@@ -4760,7 +6735,6 @@ export default {
     margin-bottom: 20px;
 }
 .modal-body * {
-    color: white !important;
 }
 
 .modal-footer {
@@ -5032,7 +7006,7 @@ export default {
     display: flex;
     padding: 0 10px;
     overflow-x: auto;
-    scrollbar-width: none; /* Firefox */
+    /* scrollbar-width: none; Firefox */
 }
 
 .timeline-days::-webkit-scrollbar {
@@ -5086,6 +7060,8 @@ export default {
     border-radius: 12px;
     font-size: 0.7rem;
     font-weight: 600;
+    background: var(--primary);
+    color: white !important;
     margin-bottom: 5px;
 }
 
@@ -5151,7 +7127,7 @@ export default {
 }
 .legend-manual {
     margin-left: 20px;
-    font-family: "Arial", sans-serif;
+    /* font-family: "Arial", sans-serif; */
     font-size: 14px;
 }
 .legend-item {
@@ -5234,7 +7210,7 @@ export default {
     background: var(--secondary);
 }
 .dateCard.holiday {
-    background: var(--warning);
+    background-color: var(--warning);
 }
 
 /* akhir calendar */
@@ -5407,6 +7383,11 @@ export default {
     background: var(--surface-soft);
     color: var(--text);
 }
+
+.card-body {
+    overflow: auto;
+    padding: 0.5rem 1rem;
+}
 /* Akhir button */
 .card-wrap {
     background: var(--surface);
@@ -5528,6 +7509,10 @@ export default {
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     padding: 15px 20px;
     border-radius: 12px 10px 0 0 !important;
+}
+
+.card-header.leader {
+    padding: 15px 20px;
 }
 
 /* Attendance Summary Styles */
@@ -5684,7 +7669,7 @@ export default {
     border-bottom: none;
 }
 
-.request-type {
+.request-type i {
     font-size: 0.7rem;
     padding: 3px 8px;
     border-radius: 20px;
@@ -5706,7 +7691,7 @@ export default {
     background-color: #f39c12;
 }
 
-.request-dates {
+.request-date {
     flex: 1;
     font-size: 0.9rem;
 }

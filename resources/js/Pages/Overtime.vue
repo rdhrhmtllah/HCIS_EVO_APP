@@ -345,7 +345,10 @@
                                         >
                                             <i class="bi bi-pen"></i>
                                         </div> -->
-                                        <div
+                                        <button
+                                            :disabled="
+                                                !disabledButton2(item.Tanggal)
+                                            "
                                             @click.stop="
                                                 deleteAlertButton(
                                                     item.No_Transaksi
@@ -354,7 +357,7 @@
                                             class="btn btn-sm btn-secondary shiningEffect text-white border-white bg-danger"
                                         >
                                             <i class="bi bi-trash"></i>
-                                        </div>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -477,7 +480,7 @@
                             <i
                                 class="bi bi-calendar me-2 d-flex justify-content-center align-items-center"
                             ></i>
-                            Pilih Tanggal Lembur
+                            Pilih tanggal hari kerja
                         </h4>
                         <div class="date-selection mb-5 px-md-3">
                             <div class="form-group">
@@ -850,7 +853,10 @@
                                     :class="
                                         employee.JamComparison == 'TRUE' &&
                                         employee.lemburPernah == 'FALSE' &&
-                                        isTimeAfter(employee.Jam_Keluar)
+                                        isTimeAfter(
+                                            employee.Jam_Keluar,
+                                            employee.Nama_Shift
+                                        )
                                             ? ' '
                                             : 'disabled-card'
                                     "
@@ -981,7 +987,10 @@
                                         v-if="
                                             employee.JamComparison == 'TRUE' &&
                                             employee.lemburPernah == 'FALSE' &&
-                                            isTimeAfter(employee.Jam_Keluar)
+                                            isTimeAfter(
+                                                employee.Jam_Keluar,
+                                                employee.Nama_Shift
+                                            )
                                         "
                                         class="col-6 px-0 col-md-7 d-flex flex-column flex-md-row gap-2"
                                     >
@@ -1187,7 +1196,8 @@
                                                     employee.JamComparison,
                                                     employee.lemburPernah,
                                                     isTimeAfter(
-                                                        employee.Jam_Keluar
+                                                        employee.Jam_Keluar,
+                                                        employee.Nama_Shift
                                                     )
                                                 )
                                             }}
@@ -1676,9 +1686,14 @@
                                             "
                                             class="btn btn-sm btn-secondary shiningEffect text-white border-white btn-success"
                                         >
-                                            <i class="bi bi-pen"></i>
+                                        <i class="bi bi-pen"></i>
                                         </div> -->
-                                            <div
+                                            <button
+                                                :disabled="
+                                                    !disabledButton2(
+                                                        item.end_time
+                                                    )
+                                                "
                                                 @click="
                                                     deleteUserButton(
                                                         item.Urut_Oto
@@ -1687,7 +1702,7 @@
                                                 class="btn btn-sm btn-secondary shiningEffect text-white border-white bg-danger"
                                             >
                                                 <i class="bi bi-trash"></i>
-                                            </div>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -1864,6 +1879,8 @@ export default {
     },
     data() {
         return {
+            serverTime: null,
+
             timeInputRefs: {},
             shiftList: [],
             startTimeShift: null,
@@ -2058,9 +2075,38 @@ export default {
             return filtered;
         },
         filteredAssignEmployees() {
-            let filtered = this.userChoose;
+            let filtered = this.userChoose.map((emp) => {
+                const isActive =
+                    emp.JamComparison === "TRUE" &&
+                    emp.lemburPernah === "FALSE" &&
+                    this.isTimeAfter(emp.Jam_Keluar, emp.Nama_Shift);
 
-            // Filter berdasarkan pencarian nama (search query)
+                // cek apakah karyawan ini ada di selectedAssignEmployees
+                const alreadySelected = this.selectedAssignEmployees.some(
+                    (sel) => sel.id === emp.userId
+                );
+
+                return {
+                    ...emp,
+                    isActive, // true = bisa dipilih
+                    isSelected: alreadySelected, // true = sudah dicentang
+                    isOpen: false,
+                    isValid: true,
+                };
+            });
+
+            // Urutkan: selected > active > disabled
+            filtered.sort((a, b) => {
+                if (a.isSelected && !b.isSelected) return -1; // selected duluan
+                if (!a.isSelected && b.isSelected) return 1;
+
+                if (a.isActive && !b.isActive) return -1; // active sebelum disabled
+                if (!a.isActive && b.isActive) return 1;
+
+                return 0;
+            });
+
+            // Filter berdasarkan pencarian nama
             if (this.assignSearchQuery) {
                 filtered = filtered.filter((employee) =>
                     employee.name
@@ -2069,35 +2115,6 @@ export default {
                 );
                 this.currentPage = 1;
             }
-
-            // Jika ada filter lain yang dipilih, terapkan filter tambahan
-            // Filter berdasarkan Divisi (Department)
-            // if (this.selectedDepartment) {
-            //     filtered = filtered.filter(
-            //         (employee) => employee.Divisi === this.selectedDepartment
-            //     );
-            // }
-
-            // Filter berdasarkan ID_Shift
-            // if (this.selectedShift) {
-            //     filtered = filtered.filter(
-            //         (employee) => employee.ID_Shift === this.selectedShift
-            //     );
-            // }
-
-            // Filter berdasarkan JamComparison (TRUE/FALSE)
-
-            // this.filtered.sort((a, b) => {
-            //     if (a.isActive === b.isActive) return 0;
-            //     return a.isActive ? -1 : 1; // TRUE (true) lebih dulu
-            // });
-
-            // Filter berdasarkan Nama_Shift
-            // if (this.selectedShiftName) {
-            //     filtered = filtered.filter(
-            //         (employee) => employee.Nama_Shift === this.selectedShiftName
-            //     );
-            // }
 
             return filtered;
         },
@@ -2160,6 +2177,17 @@ export default {
         window.removeEventListener("resize", this.checkScreenSize);
     },
     methods: {
+        async getTimeServer() {
+            const res = await axios.get("/getTime");
+            if (res.status == 200) {
+                this.serverTime = new Date(
+                    new Date(res.data.time).toLocaleString("en-US", {
+                        timeZone: "Asia/Jakarta",
+                    })
+                );
+                console.log(this.serverTime);
+            }
+        },
         // isTimeAfter(timeString) {
         //     const today = new Date();
         //     const selectedDate = new Date(this.selectedAssignDates);
@@ -2172,6 +2200,27 @@ export default {
 
         //     return true;
         // },
+
+        disabledButton(date) {
+            const tanggalSekarang = new Date(this.TanggalSekarang);
+            const tanggalCek = new Date(date);
+
+            tanggalSekarang.setHours(0, 0, 0, 0);
+            tanggalCek.setHours(0, 0, 0, 0);
+            console.log(tanggalSekarang, tanggalCek);
+
+            return tanggalSekarang.getTime() === tanggalCek.getTime();
+        },
+        disabledButton2(date) {
+            const tanggalSekarang = new Date(this.TanggalSekarang);
+            const tanggalCek = new Date(date);
+
+            tanggalSekarang.setHours(0, 0, 0, 0);
+            tanggalCek.setHours(0, 0, 0, 0);
+            console.log(tanggalSekarang, tanggalCek);
+
+            return tanggalSekarang.getTime() <= tanggalCek.getTime();
+        },
         penyebabDisabled(JamComparison, lemburPernah, BatasInput) {
             if (lemburPernah == "TRUE") {
                 return "Karyawan sudah ditugaskan lembur hari ini.";
@@ -2188,46 +2237,116 @@ export default {
                 ? text.substring(0, length) + "..."
                 : text;
         },
-        isTimeAfter(timeString) {
-            const today = new Date();
+        // async isTimeAfter(timeString) {
+        //     const today = new Date();
+        //     const selectedDate = new Date(this.selectedAssignDates);
+        //     const res = await axios.get("/getTime");
+        //     if (res.status == 200) {
+        //         const serverTime = res.data.time; // now()->toDateTimeString()
+        //     }
+
+        //     if (selectedDate.toDateString() > serverTime.toDateString()) {
+        //         const now = new Date(
+        //             new Date().toLocaleString("en-US", {
+        //                 timeZone: "Asia/Jakarta",
+        //             })
+        //         );
+
+        //         const [h, m = "0", s = "0"] = timeString.split(":");
+        //         let assignTime = new Date(selectedDate);
+        //         assignTime.setHours(parseInt(h), parseInt(m), parseInt(s), 0);
+
+        //         // 🔑 Jika jam keluar lebih kecil dari jam masuk → geser ke hari berikutnya
+        //         if (parseInt(h) < 6) {
+        //             // asumsi lembur biasanya lewat tengah malam tapi gak lebih dari pagi hari
+        //             assignTime.setDate(assignTime.getDate() + 4);
+        //         }
+
+        //         // Tambahkan 4 jam
+        //         assignTime.setHours(assignTime.getHours() + 4);
+
+        //         // console.log("Jam keluar:", timeString);
+        //         // console.log("AssignTime +4 (final):", assignTime.toString());
+        //         // console.log("Now:", now.toString());
+
+        //         return assignTime > now;
+        //     }
+
+        //     return true;
+        // },
+        isTimeAfter(timeString, shiftType) {
             const selectedDate = new Date(this.selectedAssignDates);
 
-            // Cek apakah selectedAssignDates adalah hari ini
-            if (selectedDate.toDateString() === today.toDateString()) {
-                // Dapatkan waktu sekarang di zona waktu Indonesia (UTC+7)
-                const currentTimeString = today
-                    .toLocaleTimeString("id-ID", {
-                        hour12: false,
-                        timeZone: "Asia/Jakarta",
-                    })
-                    .slice(0, 8); // HH:MM:SS
+            const serverTime = this.serverTime; // jam server
+            // console.log(serverTime);
+            const now = serverTime;
 
-                // Parse timeString (support HH:MM:SS atau HH:MM)
-                const timeParts = timeString.split(":");
-                let hours = parseInt(timeParts[0]) || 0;
-                let minutes = parseInt(timeParts[1]) || 0;
-                let seconds = parseInt(timeParts[2]) || 0;
+            // Buat cutoff dari timeString
+            const [h, m = "0", s = "0"] = timeString.split(":");
+            let cutoffTime = new Date(selectedDate);
+            cutoffTime.setHours(parseInt(h), parseInt(m), parseInt(s), 0);
 
-                // Tambahkan 4 jam
-                hours += 4;
-
-                // Handle overflow jika melebihi 24 jam
-                if (hours >= 24) {
-                    return true;
+            if (
+                shiftType === "EMI-S3" ||
+                shiftType === "EMI-S2" ||
+                shiftType === "EMI-LS2" ||
+                shiftType === "EMI-B2" ||
+                shiftType === "SEC-M" ||
+                shiftType === "SEC-SORE" ||
+                shiftType === "SEC-MINGGU-MALAM"
+            ) {
+                // Khusus shift ini → boleh lewat tengah malam
+                if (parseInt(h) < 11) {
+                    cutoffTime.setDate(cutoffTime.getDate() + 1); // geser ke besok
                 }
 
-                // Format ulang waktu yang sudah disesuaikan
-                const adjustedTimeString =
-                    String(hours).padStart(2, "0") +
-                    ":" +
-                    String(minutes).padStart(2, "0") +
-                    ":" +
-                    String(seconds).padStart(2, "0");
-                console.log(adjustedTimeString, currentTimeString);
-                return adjustedTimeString > currentTimeString;
-            }
+                if (selectedDate.toDateString() === now.toDateString()) {
+                    const [h, m = "0", s = "0"] = timeString.split(":");
+                    let assignTime = new Date(selectedDate);
+                    assignTime.setHours(
+                        parseInt(h),
+                        parseInt(m),
+                        parseInt(s),
+                        0
+                    );
 
-            return true;
+                    // Tambahkan 4 jam
+                    assignTime.setHours(assignTime.getHours() + 4);
+
+                    // console.log("Jam keluar:", timeString);
+                    // console.log("AssignTime +4 (final):", assignTime.toString());
+                    // console.log("Now:", now.toString());
+
+                    return assignTime > now;
+                }
+                // +4 jam grace period
+                cutoffTime.setHours(cutoffTime.getHours() + 4);
+                console.log(cutoffTime, shiftType);
+
+                return now <= cutoffTime;
+            } else {
+                if (selectedDate.toDateString() === now.toDateString()) {
+                    const [h, m = "0", s = "0"] = timeString.split(":");
+                    let assignTime = new Date(selectedDate);
+                    assignTime.setHours(
+                        parseInt(h),
+                        parseInt(m),
+                        parseInt(s),
+                        0
+                    );
+
+                    // Tambahkan 4 jam
+                    assignTime.setHours(assignTime.getHours() + 4);
+
+                    // console.log("Jam keluar:", timeString);
+                    // console.log("AssignTime +4 (final):", assignTime.toString());
+                    // console.log("Now:", now.toString());
+
+                    return assignTime > now;
+                }
+                // Regular → cutoff = timeString pada hari itu
+                return now <= cutoffTime;
+            }
         },
         getCurrentTime() {
             return new Date();
@@ -2954,7 +3073,7 @@ export default {
                 (user) =>
                     user.JamComparison === "TRUE" &&
                     user.lemburPernah === "FALSE" &&
-                    this.isTimeAfter(user.Jam_Keluar)
+                    this.isTimeAfter(user.Jam_Keluar, user.Nama_Shift)
             );
 
             validUsersToAdd.forEach((user) => {
@@ -3030,7 +3149,7 @@ export default {
                 if (
                     userData.JamComparison == "TRUE" &&
                     userData.lemburPernah == "FALSE" &&
-                    this.isTimeAfter(userData.Jam_Keluar)
+                    this.isTimeAfter(userData.Jam_Keluar, userData.Nama_Shift)
                 ) {
                     // console.log(userData.Jam_Keluar);
                     // Jika tidak ditemukan, tambahkan
@@ -3339,7 +3458,9 @@ export default {
 
         async getUser() {
             this.loading = true;
+
             try {
+                this.getTimeServer(); // Memanggil fungsi untuk mendapatkan waktu server
                 const params = {
                     date: this.selectedAssignDates,
                     time: this.assignTime,

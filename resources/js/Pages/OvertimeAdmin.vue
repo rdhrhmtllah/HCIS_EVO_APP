@@ -345,7 +345,10 @@
                                         >
                                             <i class="bi bi-pen"></i>
                                         </div> -->
-                                        <div
+                                        <button
+                                            :disabled="
+                                                disabledButton('item.Tanggal')
+                                            "
                                             @click.stop="
                                                 deleteAlertButton(
                                                     item.No_Transaksi
@@ -354,7 +357,7 @@
                                             class="btn btn-sm btn-secondary shiningEffect text-white border-white bg-danger"
                                         >
                                             <i class="bi bi-trash"></i>
-                                        </div>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -1703,7 +1706,10 @@
                                         >
                                             <i class="bi bi-pen"></i>
                                         </div> -->
-                                            <div
+                                            <button
+                                                :disabled="
+                                                    disabledButton(item.Tanggal)
+                                                "
                                                 @click="
                                                     deleteUserButton(
                                                         item.Urut_Oto
@@ -1712,7 +1718,7 @@
                                                 class="btn btn-sm btn-secondary shiningEffect text-white border-white bg-danger"
                                             >
                                                 <i class="bi bi-trash"></i>
-                                            </div>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -2196,6 +2202,15 @@ export default {
 
         //     return true;
         // },
+        disabledButton(date) {
+            const tanggalSekarang = new Date(this.TanggalSekarang);
+            const tanggalCek = new Date(date);
+
+            tanggalSekarang.setHours(0, 0, 0, 0);
+            tanggalCek.setHours(0, 0, 0, 0);
+
+            return tanggalSekarang.getTime() === tanggalCek.getTime();
+        },
         penyebabDisabled(JamComparison, lemburPernah, BatasInput) {
             if (lemburPernah == "TRUE") {
                 return "Karyawan sudah ditugaskan lembur hari ini.";
@@ -2216,43 +2231,35 @@ export default {
             const today = new Date();
             const selectedDate = new Date(this.selectedAssignDates);
 
-            // Cek apakah selectedAssignDates adalah hari ini
             if (selectedDate.toDateString() === today.toDateString()) {
-                // Dapatkan waktu sekarang di zona waktu Indonesia (UTC+7)
-                const currentTimeString = today
-                    .toLocaleTimeString("en-US", {
-                        hour12: false,
+                const now = new Date(
+                    new Date().toLocaleString("en-US", {
                         timeZone: "Asia/Jakarta",
                     })
-                    .slice(0, 8); // HH:MM:SS
+                );
 
-                // Parse timeString (support HH:MM:SS atau HH:MM)
-                const timeParts = timeString.split(":");
-                let hours = parseInt(timeParts[0]) || 0;
-                let minutes = parseInt(timeParts[1]) || 0;
-                let seconds = parseInt(timeParts[2]) || 0;
+                const [h, m = "0", s = "0"] = timeString.split(":");
+                let assignTime = new Date(selectedDate);
+                assignTime.setHours(parseInt(h), parseInt(m), parseInt(s), 0);
 
-                // Tambahkan 4 jam
-                hours += 4;
-
-                // Handle overflow jika melebihi 24 jam
-                if (hours >= 24) {
-                    return true;
+                // 🔑 Jika jam keluar lebih kecil dari jam masuk → geser ke hari berikutnya
+                if (parseInt(h) < 6) {
+                    // asumsi lembur biasanya lewat tengah malam tapi gak lebih dari pagi hari
+                    assignTime.setDate(assignTime.getDate() + 1);
                 }
 
-                // Format ulang waktu yang sudah disesuaikan
-                const adjustedTimeString =
-                    String(hours).padStart(2, "0") +
-                    ":" +
-                    String(minutes).padStart(2, "0") +
-                    ":" +
-                    String(seconds).padStart(2, "0");
-                return adjustedTimeString > currentTimeString;
+                // Tambahkan 4 jam
+                assignTime.setHours(assignTime.getHours() + 4);
+
+                // console.log("Jam keluar:", timeString);
+                // console.log("AssignTime +4 (final):", assignTime.toString());
+                // console.log("Now:", now.toString());
+
+                return assignTime > now;
             }
 
             return true;
         },
-
         getCurrentTime() {
             return new Date();
         },
@@ -3441,7 +3448,7 @@ export default {
             if (this.selectedAssignEmployees.length > 0) {
                 this.loading = true;
                 try {
-                    const response = await axios.post("/overtime/submit", {
+                    const response = await axios.post("/overtime/submitAdmin", {
                         params: {
                             Kode_Perusahaan: "001",
                             dataUsers: this.selectedAssignEmployees,

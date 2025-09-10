@@ -21,8 +21,7 @@
                                         Manajemen Penugasan Shift
                                     </h2>
                                     <p class="subtitle">
-                                        Kelola pergantian shift divisi
-                                        {{ divisi.toLowerCase() }}
+                                        Kelola pergantian shift tim
                                     </p>
                                 </div>
                             </div>
@@ -261,7 +260,11 @@
                                                     {{ employee.name }}
                                                 </div>
                                                 <div class="employee-id">
-                                                    {{ divisi }}
+                                                    {{
+                                                        getData(
+                                                            employee.Kode_Karyawan
+                                                        ).nama_divisi
+                                                    }}
                                                 </div>
                                             </div>
                                         </div>
@@ -598,11 +601,7 @@
     </div>
 
     <!--  Assign Shift Modal -->
-    <div
-        class="modal-overlay"
-        :class="{ show: showAssignModal }"
-        @click="closeAssignModal"
-    >
+    <div class="modal-overlay" :class="{ show: showAssignModal }">
         <div class="modal-container assign-modal" @click.stop>
             <div class="modal-header">
                 <div class="header-title-section">
@@ -858,7 +857,7 @@
                                 v-if="assignShiftType === 'temporary'"
                             >
                                 <label class="form-label">Pilih Tanggal:</label>
-                                <div class="date-picker-grid">
+                                <!-- <div class="date-picker-grid">
                                     <div
                                         v-for="(day, idx) in tanggalLoop"
                                         :key="idx"
@@ -891,7 +890,16 @@
                                             ></i>
                                         </div>
                                     </div>
-                                </div>
+                                </div> -->
+                                <el-date-picker
+                                    v-model="selectedAssignDates"
+                                    class="w-100"
+                                    type="dates"
+                                    format="YYYY-MM-DD"
+                                    value-format="YYYY-MM-DD"
+                                    :disabled-date="disabledDate"
+                                    placeholder="Pilih satu tanggal atau lebih"
+                                />
                             </div>
 
                             <div
@@ -901,11 +909,21 @@
                                 <label class="form-label">Periode Shift:</label>
                                 <div class="date-range-inputs">
                                     <div class="date-input-group">
-                                        <input
+                                        <!-- <input
                                             type="date"
                                             class="form-control date-input"
                                             v-model="assignStartDate"
                                             :min="minDate"
+                                        /> -->
+
+                                        <el-date-picker
+                                            v-model="assignStartDate"
+                                            class="w-100"
+                                            type="date"
+                                            format="YYYY-MM-DD"
+                                            value-format="YYYY-MM-DD"
+                                            :disabled-date="disabledDate"
+                                            placeholder="Pilih satu tanggal"
                                         />
                                     </div>
                                     <!-- <div class="date-separator">—</div> -->
@@ -1129,7 +1147,11 @@
                 >
                     Batal
                 </button>
-                <button class="btn-modern btn-success" @click="yesModal">
+                <button
+                    class="btn-modern btn-success"
+                    :disabled="loading"
+                    @click="yesModal"
+                >
                     <div
                         v-if="loading"
                         class="d-flex justify-content-center align-items-center"
@@ -1217,10 +1239,12 @@ export default {
     props: {
         semuaShift: Array,
         divisi: String,
+        // dataAll: Array,
         tanggalLoop: Array,
     },
     data() {
         return {
+            dataFinal: [],
             isLemburData: [],
             jenisShift: [],
             tanggalHariIni: new Date(),
@@ -1369,6 +1393,7 @@ export default {
     mounted() {
         this.setMinimumDate();
         this.fetchWeekDates();
+        this.getTime();
         document.addEventListener("click", this.closeDropdowns);
 
         this.checkScreenSize();
@@ -1379,6 +1404,10 @@ export default {
         window.removeEventListener("resize", this.checkScreenSize);
     },
     methods: {
+        getData(usr) {
+            // console.log(this.dataFinal);
+            return this.dataFinal.find((emp) => emp.Kode_Karyawan === usr);
+        },
         dayNight() {
             const sekarang = new Date();
             const jam = sekarang.getHours();
@@ -1474,7 +1503,7 @@ export default {
             const today = new Date();
 
             // Logika inti: tambahkan 2 hari dari tanggal hari ini
-            today.setDate(today.getDate() + 2);
+            today.setDate(today.getDate());
 
             // Format tanggal ke format 'YYYY-MM-DD' yang dibutuhkan oleh atribut 'min'
             const year = today.getFullYear();
@@ -1500,52 +1529,77 @@ export default {
                 );
             }
         },
-        async saveShift() {
+        async getTime() {
             this.loading = true;
-            if (this.selectedEmployee && this.selectedDayIndex !== null) {
-                try {
-                    const response = await axios.post("/swapShift/update", {
-                        params: {
-                            employee: this.selectedEmployee,
-                            date: this.selectedDate,
-                            shift: this.assignSelectedShift,
-                            shift_lama: this.shiftLama,
-                        },
-                    });
+            try {
+                const response = await axios.get("/getTime");
 
-                    if (response.status === 200) {
-                        ElMessage({
-                            showClose: true,
-                            message:
-                                "Congrats, Berhasil Menambahkan Data Lembur.",
-                            type: "success",
-                            customStyle: {
-                                "z-index": "1050",
-                            },
-                        });
-                        this.closeAlertModal();
-                        this.closeShiftModal();
-                        location.reload();
-                    }
-                } catch (error) {
-                    console.error("Error Fetching Time :", error);
+                if (response.status === 200) {
+                    // misal response.data.data = "2025-09-05"
+                    this.minDate = new Date(response.data.time);
+                } else {
                     ElMessage({
                         showClose: true,
-                        message:
-                            "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
+                        message: "Terjadi kesalahan response dari server",
                         type: "error",
-                        customStyle: {
-                            "z-index": "1050",
-                        },
+                        customStyle: { "z-index": "1050" },
                     });
-                    this.closeAlertModal();
-                } finally {
-                    this.loading = false;
-                    this.closeShiftModal();
+                    this.minDate = null;
                 }
+            } catch (error) {
+                ElMessage({
+                    showClose: true,
+                    message:
+                        "Terjadi kesalahan, silakan coba lagi beberapa saat",
+                    type: "error",
+                    customStyle: { "z-index": "1050" },
+                });
+                this.minDate = null;
+            } finally {
+                this.loading = false;
             }
+        },
 
-            // this.showNotification("success", "Shift berhasil diperbarui");
+        disabledDate(time) {
+            if (!this.minDate) return false;
+
+            // Buat minDate di-normalisasi ke jam 00:00:00
+            const min = new Date(this.minDate);
+            min.setHours(0, 0, 0, 0);
+
+            // Bandingkan juga time yang dipilih di-normalisasi
+            const current = new Date(time);
+            current.setHours(0, 0, 0, 0);
+
+            // Disable hanya kalau tanggal < minDate
+            return current.getTime() < min.getTime();
+        },
+        async saveShift() {
+            this.loading = true;
+
+            // langsung tutup modal begitu klik save
+            this.closeAlertModal();
+
+            try {
+                const response = await axios.post("/swapShift/update", {
+                    params: {
+                        employee: this.selectedEmployee,
+                        date: this.selectedDate,
+                        shift: this.assignSelectedShift,
+                        shift_lama: this.shiftLama,
+                    },
+                });
+
+                if (response.status === 200) {
+                    ElMessage.success("Berhasil menyimpan shift!");
+                    this.closeShiftModal(); // kalau ada modal lain khusus shift
+                    this.fetchWeekDates(); // refresh data di background
+                }
+            } catch (error) {
+                ElMessage.error("Terjadi kesalahan, silakan coba lagi!");
+            } finally {
+                this.loading = false;
+            }
         },
         async isLembur(type) {
             this.loading = true;
@@ -1987,6 +2041,7 @@ export default {
 
                 this.weekDates = Object.values(response.data.week_dates);
                 this.Tanggal = response.data.Tanggal;
+                this.dataFinal = response.data.dataAll;
                 // console.log(response.data.Tanggal);
                 this.startOfWeek = this.formatDate(response.data.start_of_week);
                 this.endOfWeek = this.formatDate(response.data.end_of_week);
@@ -2228,7 +2283,7 @@ export default {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            const sementara = new Date("2025-07-21");
+            const sementara = new Date(this.tanggalLoop[0]);
             sementara.setHours(0, 0, 0, 0);
 
             // Calculate the H+2 date (lusa)
@@ -2265,9 +2320,7 @@ export default {
             } else {
                 ElMessage({
                     showClose: true,
-                    // message: "Tidak Bisa megubah shift di hari sebelum nya.",
-                    message:
-                        "Tidak Bisa megubah shift dibawah tanggal 21 Jul 2025.",
+                    message: "Tidak Bisa megubah shift di hari sebelum nya.",
                     type: "error",
                     customStyle: {
                         "z-index": "1050",
@@ -2347,6 +2400,7 @@ export default {
 
         async saveAssignShift() {
             this.loading = true;
+
             const assignmentData = {
                 employees: this.selectedAssignEmployees,
                 shiftType: this.assignShiftType,
@@ -2361,26 +2415,27 @@ export default {
                 replaceExisting: this.replaceExistingShifts,
                 sendNotification: this.sendNotification,
             };
+
+            // Tutup modal duluan biar user gak bisa klik tombol lagi
+            this.closeAlertModal();
+            this.closeAssignModal();
+
             try {
                 const response = await axios.post("/swapShift/submit", {
                     params: { AssignShift: assignmentData },
                 });
+
                 if (response.status === 200) {
                     ElMessage({
                         showClose: true,
-                        message: "Congrats, Berhasil Menambahkan Data Lembur.",
+                        message: "Congrats, Berhasil mengupdate shift.",
                         type: "success",
-                        customStyle: {
-                            "z-index": "1050",
-                        },
+                        customStyle: { "z-index": "1050" },
                     });
-                    this.closeAlertModal();
-                    this.closeAssignModal();
 
-                    location.reload();
+                    // fetch jalan di background, tidak ditunggu
+                    this.fetchWeekDates();
                 }
-
-                // console.log(assignmentData);
             } catch (error) {
                 console.error("Error Fetching Time :", error);
                 ElMessage({
@@ -2388,16 +2443,12 @@ export default {
                     message:
                         "Terjadi Kesalahan, Silahkan Coba lagi beberapa saat",
                     type: "error",
-                    customStyle: {
-                        "z-index": "1050",
-                    },
+                    customStyle: { "z-index": "1050" },
                 });
-                this.closeAlertModal();
             } finally {
                 this.loading = false;
             }
         },
-
         showNotification(type, message) {
             console.log(`${type}: ${message}`);
         },
@@ -2505,7 +2556,12 @@ export default {
 * {
     box-sizing: border-box;
 }
-
+.modal-overlay {
+    display: none;
+}
+.modal-overlay.show {
+    display: flex; /* atau block, sesuai desain */
+}
 body {
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,

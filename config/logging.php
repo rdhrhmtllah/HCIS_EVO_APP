@@ -101,6 +101,24 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 30,
         ],
+        'FlagCheckinout' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/FlagCheckinout.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 30,
+        ],
+        'waAddTeam' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/waAddTeam.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 30,
+        ],
+        'addTeam' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/addTeam.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 30,
+        ],
         'WaCreateUserLog' => [
             'driver' => 'daily',
             'path' => storage_path('logs/WaCreateUserLog.log'),

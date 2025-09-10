@@ -27,7 +27,7 @@ class CheckJabatan
     }
 
 
-    return redirect()->back();
-    // abort(403, 'Akses Ditolak.');
+    // return redirect()->back();
+    abort(403, 'Akses Ditolak.');
 }
 }

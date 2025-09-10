@@ -14,7 +14,7 @@ use App\Models\LemburDetail;
 use App\Helpers\Whatsapp;
 use Vinkla\Hashids\Facades\Hashids;
 use Illuminate\Support\Facades\Crypt;
-// use Carbon;
+use Carbon\Carbon;
 
 
 
@@ -30,26 +30,72 @@ class OvertimeController extends Controller
             // $karyawanID = Auth()->user()->Id_Users;
             $karyawanID = Auth()->user()->karyawan->Kode_Karyawan;
 
-            // $date = date('Y-m-d');
-            // dd($date);
+            // Ini jika jam ny cutouff nya hanya 1 tanpa melihat hari
+                // $cutoffHour = 4;
+
+                // $now = now();
+
+                // if ((int)$now->format('H') < $cutoffHour) {
+                //     $startDate = $now->subDay()->format('Y-m-d');
+                // } else {
+                //     $startDate = $now->format('Y-m-d');
+                // }
+
+                // $week = [];
+                // $date = $startDate;
+                // for ($i = 0; $i <= 2; $i++) {
+                //     $week[] = $date;
+                //     $date = date('Y-m-d', strtotime('+1 day', strtotime($date)));
+                // }
+            // ini jika jam cutoff ny lbih dari satu dan melihat hari
+                $now = now();
+                // $now = now()->setTime(2, 0); // untuk testing
+
+                // $now = Carbon::createFromFormat('Y-m-d H:i:s', '2025-08-31 02:30:00');
+
+
+                $dayName = $now->format('l'); // Monday, Tuesday, ..., Saturday, Sunday
+
+                // Tentukan cutoff jam berdasarkan hari
+                if (in_array($dayName, ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])) {
+                    $cutoffHour = 11; // jam 3 pagi
+                } elseif ($dayName === 'Saturday') {
+                    $cutoffHour = 11; // jam 3 pagi
+                } else {
+                    $cutoffHour = 11; // jam 5 pagi
+                }
+
+                // Logika tentukan start date
+                if ((int)$now->format('H') < $cutoffHour) {
+                    $startDate = $now->subDay()->format('Y-m-d');
+                } else {
+                    $startDate = $now->format('Y-m-d');
+                }
+
+                // Generate list tanggal
+                $week = [];
+                $date = $startDate;
+                for ($i = 0; $i <= 2; $i++) {
+                    $week[] = $date;
+                    $date = date('Y-m-d', strtotime('+1 day', strtotime($date)));
+                }
+
+
+                // dd($week);
+                // dd($dayName, $cutoffHour, $now->format('Y-m-d H:i:s'), $week);
+
+
+
+            // $currentDate = '2025-07-21';
+            // $today = date('Y-m-d');
             // $week = [];
-            // for($i = 0; $i <=2; $i++){
-            //     $week[] = $date;
 
-            //     $date = date('Y-m-d', strtotime('+1 day', strtotime($date)));
-            // };
+            // // Perulangan akan terus berjalan selama $currentDate kurang dari atau sama dengan $today
+            // while (strtotime($currentDate) <= strtotime($today)) {
+            //     $week[] = $currentDate;
+            //     $currentDate = date('Y-m-d', strtotime("+1 day", strtotime($currentDate)));
+            // }
 
-            $currentDate = '2025-07-21';
-            $today = date('Y-m-d');
-            $week = [];
-
-            // Perulangan akan terus berjalan selama $currentDate kurang dari atau sama dengan $today
-            while (strtotime($currentDate) <= strtotime($today)) {
-                $week[] = $currentDate;
-                $currentDate = date('Y-m-d', strtotime("+1 day", strtotime($currentDate)));
-            }
-
-            // dd($week);
 
             $queryShift = "
             select
@@ -544,7 +590,7 @@ class OvertimeController extends Controller
     public function userActive(Request $request){
         // param
         try{
-
+            // dd($request->all());
             $Kode_Perusahaan = '001';
             // $ID_shift = $request->input('shift');
             $Hari = date('N',strtotime($request->input('date')));
@@ -614,38 +660,52 @@ class OvertimeController extends Controller
                     FROM KaryawanShiftPermanen
                     WHERE rn_periode = 1
                 ),
-                ShiftSementara AS (
-                    SELECT
-                    top 1
-                        e.Kode_Karyawan,
-                        f.nama_divisi,
-                        f.nama_sub_divisi,
-                        e.UserID_Absen,
-                        e.Nama,
-                        c.Jam_Masuk,
-                        c.Jam_Keluar,
-                        a.ID_Shift,
-                        a.Nama as Nama_Shift,
-                        'Sementara' as Jenis_Shift,
-                        d.Tanggal as Periode,
-                        COALESCE(NULLIF(c.Jam_Selesai_Lintas_Hari, ''), NULLIF(c.Jam_Selesai_Absen_Keluar, '')) AS Jam_selesai_absen
-                    FROM HRIS_Shift_Kerja a
-                    INNER JOIN HRIS_Shift_Kerja_Detail b ON a.ID_Shift = b.ID_Shift
-                    INNER JOIN HRIS_Waktu_Kerja c ON b.ID_Waktu_Kerja = c.ID_Waktu_Kerja
-                    INNER JOIN HRIS_Shift_Sementara d ON a.ID_Shift = d.ID_Shift
-                    INNER JOIN Karyawan e ON d.Kode_Perusahaan = e.Kode_Perusahaan
-                                        AND d.Kode_Karyawan = e.Kode_Karyawan
-                    INNER JOIN HRIS_Karyawan_Team h ON h.Kode_Karyawan = e.Kode_Karyawan
-                    INNER JOIN View_Divisi_Sub_Divisi f ON e.ID_Divisi_Sub_Divisi = f.ID_DIVISI_SUB_DIVISI
-                    INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan g ON e.ID_Level_Jabatan = g.ID_Level_Jabatan
-                    WHERE e.Kode_Perusahaan = ?
-                    AND g.ID_Level  IN (1,2,3)
-                    AND b.Hari = ?
-                    AND h.Kode_Karyawan_Team = ?
-                    AND d.Tanggal = ?
+               ShiftSementaraRaw AS (
+                SELECT
+                    e.Kode_Karyawan,
+                    f.nama_divisi,
+                    f.nama_sub_divisi,
+                    e.UserID_Absen,
+                    e.Nama,
+                    c.Jam_Masuk,
+                    c.Jam_Keluar,
+                    a.ID_Shift,
+                    a.Nama as Nama_Shift,
+                    'Sementara' as Jenis_Shift,
+                    d.Tanggal as Periode,
+                    COALESCE(NULLIF(c.Jam_Selesai_Lintas_Hari, ''), NULLIF(c.Jam_Selesai_Absen_Keluar, '')) AS Jam_selesai_absen,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY e.Kode_Karyawan
+                        ORDER BY d.Urut DESC, d.Tanggal DESC
+                    ) AS rn
+                FROM HRIS_Shift_Kerja a
+                INNER JOIN HRIS_Shift_Kerja_Detail b
+                    ON a.ID_Shift = b.ID_Shift
+                INNER JOIN HRIS_Waktu_Kerja c
+                    ON b.ID_Waktu_Kerja = c.ID_Waktu_Kerja
+                INNER JOIN HRIS_Shift_Sementara d
+                    ON a.ID_Shift = d.ID_Shift
+                INNER JOIN Karyawan e
+                    ON d.Kode_Perusahaan = e.Kode_Perusahaan
+                AND d.Kode_Karyawan = e.Kode_Karyawan
+                INNER JOIN HRIS_Karyawan_Team h
+                    ON h.Kode_Karyawan = e.Kode_Karyawan
+                INNER JOIN View_Divisi_Sub_Divisi f
+                    ON e.ID_Divisi_Sub_Divisi = f.ID_DIVISI_SUB_DIVISI
+                INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan g
+                    ON e.ID_Level_Jabatan = g.ID_Level_Jabatan
+                WHERE e.Kode_Perusahaan = ?
+                AND g.ID_Level IN (1,2,3)
+                AND b.Hari = ?
+                AND h.Kode_Karyawan_Team = ?
+                AND d.Tanggal = ?
+            ),
+            ShiftSementara AS (
+                SELECT *
+                FROM ShiftSementaraRaw
+                WHERE rn = 1
+            )
 
-                    ORDER BY d.Urut DESC, d.Tanggal DESC
-                )
                 SELECT
                     CASE
                         -- Kondisi untuk Shift Lintas Hari (Jam Keluar > Jam Selesai Absen)
@@ -938,38 +998,53 @@ class OvertimeController extends Controller
                     FROM KaryawanShiftPermanen
                     WHERE rn_periode = 1
                 ),
-                ShiftSementara AS (
-                    SELECT
-                    top 1
-                        e.Kode_Karyawan,
-                        f.nama_divisi,
-                        f.nama_sub_divisi,
-                        e.UserID_Absen,
-                        e.Nama,
-                        c.Jam_Masuk,
-                        c.Jam_Keluar,
-                        a.ID_Shift,
-                        a.Nama as Nama_Shift,
-                        'Sementara' as Jenis_Shift,
-                        d.Tanggal as Periode,
-                        COALESCE(NULLIF(c.Jam_Selesai_Lintas_Hari, ''), NULLIF(c.Jam_Selesai_Absen_Keluar, '')) AS Jam_selesai_absen
-                    FROM HRIS_Shift_Kerja a
-                    INNER JOIN HRIS_Shift_Kerja_Detail b ON a.ID_Shift = b.ID_Shift
-                    INNER JOIN HRIS_Waktu_Kerja c ON b.ID_Waktu_Kerja = c.ID_Waktu_Kerja
-                    INNER JOIN HRIS_Shift_Sementara d ON a.ID_Shift = d.ID_Shift
-                    INNER JOIN Karyawan e ON d.Kode_Perusahaan = e.Kode_Perusahaan
-                                        AND d.Kode_Karyawan = e.Kode_Karyawan
-
-                    INNER JOIN View_Divisi_Sub_Divisi f ON e.ID_Divisi_Sub_Divisi = f.ID_DIVISI_SUB_DIVISI
-                    INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan g ON e.ID_Level_Jabatan = g.ID_Level_Jabatan
-                    WHERE e.Kode_Perusahaan = ?
-                    AND g.ID_Level  IN (1,2,3)
-                    AND b.Hari = ?
-
-                    AND d.Tanggal = ?
-
-                    ORDER BY d.Urut DESC, d.Tanggal DESC
-                )
+               ShiftSementaraRaw AS (
+                SELECT
+                e.Kode_Karyawan,
+                f.nama_divisi,
+                f.nama_sub_divisi,
+                e.UserID_Absen,
+                e.Nama,
+                c.Jam_Masuk,
+                c.Jam_Keluar,
+                a.ID_Shift,
+                a.Nama as Nama_Shift,
+                'Sementara' as Jenis_Shift,
+                d.Tanggal as Periode,
+                COALESCE(
+                    NULLIF(c.Jam_Selesai_Lintas_Hari, ''),
+                    NULLIF(c.Jam_Selesai_Absen_Keluar, '')
+                ) AS Jam_selesai_absen,
+                ROW_NUMBER() OVER (
+                    PARTITION BY
+                    e.Kode_Karyawan
+                    ORDER BY
+                    d.Urut DESC,
+                    d.Tanggal DESC
+                ) AS rn
+                FROM
+                HRIS_Shift_Kerja a
+                INNER JOIN HRIS_Shift_Kerja_Detail b ON a.ID_Shift = b.ID_Shift
+                INNER JOIN HRIS_Waktu_Kerja c ON b.ID_Waktu_Kerja = c.ID_Waktu_Kerja
+                INNER JOIN HRIS_Shift_Sementara d ON a.ID_Shift = d.ID_Shift
+                INNER JOIN Karyawan e ON d.Kode_Perusahaan = e.Kode_Perusahaan
+                AND d.Kode_Karyawan = e.Kode_Karyawan
+                INNER JOIN View_Divisi_Sub_Divisi f ON e.ID_Divisi_Sub_Divisi = f.ID_DIVISI_SUB_DIVISI
+                INNER JOIN View_Golongan_Sub_Golongan_Level_Jabatan g ON e.ID_Level_Jabatan = g.ID_Level_Jabatan
+                WHERE
+                e.Kode_Perusahaan = ?
+                AND g.ID_Level IN (1, 2, 3)
+                AND b.Hari = ?
+                AND d.Tanggal = ?
+            ),
+            ShiftSementara AS (
+                SELECT
+                *
+                FROM
+                ShiftSementaraRaw
+                WHERE
+                rn = 1
+            )
                 SELECT
                     CASE
                         -- Kondisi untuk Shift Lintas Hari (Jam Keluar > Jam Selesai Absen)
@@ -1188,8 +1263,119 @@ class OvertimeController extends Controller
 
     }
 
-    public function submit(Request $request){
+    public function submitAdmin(Request $request){
         // dd($request->params['dataUsers']);
+        $format_tanggal_sekarang = date('m') . '-' . date('y');
+        // dd($format_tanggal_sekarang);
+
+
+        try{
+            if($request->params['dataUsers']){
+                $userData = $request->params['dataUsers'];
+
+                // dd($no_faktur);
+                    DB::beginTransaction();
+
+                    $userSPV= Auth()->user()->karyawan->Kode_Karyawan;
+                    $namaSPV = Auth()->user()->karyawan->Nama;
+                    // dd($userSPV);
+                    $Kode_Perusahaan = '001';
+                    $Tanggal_Sekarang = date('Y-m-d');
+                    $Jam_Sekarang = date('H:i:s');
+
+                    // no Transaksi
+                    $string = "SELECT TOP 1 ";
+                    $string .= "RIGHT(No_Transaksi, 4) AS angka ";
+                    $string .= "FROM Transaksi_Lembur ";
+                    $string .= "WHERE LEFT(No_Transaksi, 8) = 'LM" . $format_tanggal_sekarang . "-' ";
+                    $string .= "ORDER BY RIGHT(No_Transaksi, 4) DESC";
+
+                    $check_last_faktur = DB::select($string);
+                    if (count($check_last_faktur) == 0) {
+                        $angka_terakhir = 1;
+                    } else {
+                        $angka_terakhir = (int)$check_last_faktur[0]->angka + 1;
+                    }
+                    $init = "LM". date('m-y');
+                    $no_faktur = $init . '-' . sprintf('%04d', $angka_terakhir);
+
+                    Lembur::insert([
+                        'Kode_Perusahaan' => $Kode_Perusahaan,
+                        'No_Transaksi' => $no_faktur,
+                        'Tanggal' => $Tanggal_Sekarang,
+                        'Jam' => $Jam_Sekarang,
+                        'UserID' => $userSPV
+                    ]);
+
+                    foreach($userData as $user){
+                        //
+                        $jenis = 'LEMBUR';
+                        $Tanggal_lembur_saja = date('Y-m-d H:i:s',strtotime($user['tanggal']));
+                        $Kode_Karyawan = Crypt::decryptString($user['id']);
+                        // dd($Kode_Karyawan);
+
+                        if(strtotime($user['waktu']) <= strtotime($user['Jam_MasukShift'])){
+                            $tanggalKeluarLembur = date('Y-m-d H:i:s', strtotime('+1 day', strtotime($user['tanggal'] . ' ' . $user['waktu'])));
+                        }else{
+                            $tanggalKeluarLembur = date('Y-m-d H:i:s', strtotime($user['tanggal'] . ' ' . $user['waktu']));
+                        }
+
+                        if(strtotime($user['masuk']) <= strtotime($user['Jam_MasukShift'])){
+                            $tanggalMasukLembur = date('Y-m-d H:i:s', strtotime('+1 day', strtotime($user['tanggal'] . ' ' . $user['masuk'])));
+                        }else{
+                            $tanggalMasukLembur = date('Y-m-d H:i:s', strtotime($user['tanggal'] . ' ' . $user['masuk']));
+                        }
+                        // dd($tanggalMasukLembur.' - ' .$tanggalKeluarLembur);
+                        $alasan = str_replace(["\n", "\t"], ' ', $user['reason']);
+                        $userInsert = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first() ?? null;
+                        // dd($userInsert->No_Hp);
+                        $dataDet =  LemburDetail::insertGetId([
+                            'Kode_Perusahaan' => $Kode_Perusahaan,
+                            'No_Transaksi' => $no_faktur,
+                            'Kode_Karyawan' => $Kode_Karyawan,
+                            'Jenis' => $jenis,
+                            'Tanggal_Lembur_Dari' => $tanggalMasukLembur,
+                            'Tanggal_Lembur_Sampai' => $tanggalKeluarLembur,
+                            'Alasan' => $alasan
+                        ]);
+
+                        // dd($dataDet);
+                        $urutDetail = $dataDet;
+
+                        $finalInsert = LemburDet::create([
+                            'Kode_Perusahaan' => $Kode_Perusahaan,
+                            'No_Transaksi' => $no_faktur,
+                            'Kode_Karyawan' => $Kode_Karyawan,
+                            'Urut_Detail' => $urutDetail,
+                            'Tanggal_Lembur' => $Tanggal_lembur_saja,
+                        ]);
+
+                        $userInsertNoHp = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first()->HP ?? null;
+
+
+
+
+                    }
+                DB::commit();
+                Alert::success('Success', 'Lembur Berhasil Disimpan!');
+                return response()->json([
+                    'status' => 200,
+                    'message' => 'Berhasil Menambahkan lembur!',
+                ]);
+            }
+        }catch (\Throwable $e) {
+            DB::rollBack();
+            Log::channel('lemburLog')->error('Gagal simpan lembur: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to Save Lembur',
+                'error' => 'An error occurred while saving the cross review, Please Try Again' . $e->getMessage(),
+            ], 500);
+        }
+
+    }
+
+    public function submit(Request $request){
+        // dd($request->all());
         $format_tanggal_sekarang = date('m') . '-' . date('y');
         // dd($format_tanggal_sekarang);
 
@@ -1346,81 +1532,176 @@ class OvertimeController extends Controller
 
     }
 
-    public function destroy(Request $request){
-
-        $Authen = User::where('Id_Users' , Auth()->user()->Id_Users)->exists(); //true
-        if(!$Authen){
-        return response()->json([
-                            'message' => 'Failed Destroy Item',
-                            'error' => 'Pls Try again' .$e->getMessage()
-                        ],500);
-        }
-
-        try{
-            DB::BeginTransaction();
-            Lembur::where('No_Transaksi', $request['params']['No_Transaksi'])->update(['Status' => 'Y']);
-            //  LemburDet::where('No_Transaksi', $request['params']['No_Transaksi'])->update(['Status' => 'Y']);
-            //  LemburDetail::where('No_Transaksi', $request['params']['No_Transaksi'])->update(['Status' => 'Y']);
-
-            DB::commit();
-            Alert::success('Success', 'Lembur Berhasil Dihapus!');
-
+    public function destroy(Request $request)
+    {
+        $Authen = User::where('Id_Users', Auth()->user()->Id_Users)->exists(); //true
+        if (!$Authen) {
             return response()->json([
-                'status' => 200,
-                'message' => "Berhasi Mengahpus data!"
-            ]);
-        }catch(\throwable $e){
-            DB::rollBack();
-            Log::channel('lemburLog')->error('Gagal menghapus Item destroy'. $e->getMessage());
-            return response()->json([
-                'message' => 'Terjadi kesalahan menghapus data destroy',
-                'error' => 'Pls Try again'
-            ],500);
-        }
-
-    }
-    public function destroyUser(Request $request){
-        // dd($request['params']['urut_Oto']);
-        try{
-            DB::BeginTransaction();
-            $detail = LemburDetail::where('Urut_Oto', $request['params']['urut_Oto'])->first();
-            if(!$detail){
-                DB::rollBack();
-                return response()->json([
                 'message' => 'Failed Destroy Item',
-                'error' => 'Data tidak ditemukan'
-                ],404);
+                'error'   => 'Pls Try again'
+            ], 500);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // ✅ Ambil data transaksi
+            $lembur = Lembur::where('No_Transaksi', $request['params']['No_Transaksi'])->first();
+
+            if (!$lembur) {
+                return response()->json([
+                    'status'  => 404,
+                    'message' => 'Data tidak ditemukan'
+                ], 404);
             }
 
+            $lemburDetail = LemburDetail::where("No_Transaksi", $lembur->No_Transaksi)->first();
+            // dd($lemburDetail);
+            // ✅ Cek tanggal transaksi
+            if ($lemburDetail->Tanggal_Lembur_Sampai < now()) {
+                DB::rollBack();
+                return response()->json([
+                    'status'  => 400,
+                    'message' => 'Transaksi sudah lewat dari hari ini, tidak bisa dihapus!'
+                ], 400);
+            }
+
+            // ✅ Update status
+            Lembur::where('No_Transaksi', $request['params']['No_Transaksi'])
+                ->update(['Status' => 'Y']);
+
+            DB::commit();
+
+            return response()->json([
+                'status'  => 200,
+                'message' => 'Berhasil menghapus data!'
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::channel('lemburLog')->error('Gagal menghapus Item destroy ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Terjadi kesalahan menghapus data destroy',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // public function destroyUser(Request $request){
+    //     // dd($request['params']['urut_Oto']);
+    //     try{
+    //         DB::BeginTransaction();
+    //         $detail = LemburDetail::where('Urut_Oto', $request['params']['urut_Oto'])->first();
+    //         if(!$detail){
+    //             DB::rollBack();
+    //             return response()->json([
+    //             'message' => 'Failed Destroy Item',
+    //             'error' => 'Data tidak ditemukan'
+    //             ],404);
+    //         }
+
+    //         $detail->delete();
+    //         LemburDet::where('Urut_Detail', $request['params']['urut_Oto'])->delete();
+
+    //         $cekIsiLemburDetail = LemburDetail::where('No_Transaksi', $detail->No_Transaksi)->count();
+    //         $cekIsiLemburDet = LemburDet::where('No_Transaksi', $detail->No_Transaksi)->count();
+    //         if($cekIsiLemburDetail == 0 || $cekIsiLemburDet == 0){
+    //             Lembur::where('No_Transaksi', $detail->No_Transaksi)->update(['Status' => 'Y']);
+    //         }
+
+    //         //  LemburDet::where('No_Transaksi', $request['params']['No_Transaksi'])->update(['Status' => 'Y']);
+    //         //  LemburDetail::where('No_Transaksi', $request['params']['No_Transaksi'])->update(['Status' => 'Y']);
+    //         DB::commit();
+    //         Alert::success('Success', 'User Berhasil DiHapus dari Transaksi!');
+    //         return response()->json([
+    //             'status' => 200,
+    //             'message' => "Berhasi Menghapus data!"
+    //         ]);
+
+    //     }catch(\throwable $e){
+    //         DB::rollBack();
+    //         Log::channel('lemburLog')->error('Gagal menghapus Item destroy'. $e->getMessage());
+    //         return response()->json([
+    //             'message' => 'Terjadi kesalahan menghapus data destroy',
+    //             'error' => 'Pls Try again'
+    //         ],500);
+    //     }
+
+    //     // $item =  $re
+    // }
+
+    public function destroyUser(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            $detail = LemburDetail::where('Urut_Oto', $request['params']['urut_Oto'])->first();
+
+            if (!$detail) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'Failed Destroy Item',
+                    'error'   => 'Data tidak ditemukan'
+                ], 404);
+            }
+
+            // ✅ Ambil transaksi induk dari tabel Lembur
+            // $lembur = Lembur::where('No_Transaksi', $detail->No_Transaksi)->first();
+
+            // if (!$lembur) {
+            //     DB::rollBack();
+            //     return response()->json([
+            //         'status'  => 404,
+            //         'message' => 'Data lembur induk tidak ditemukan'
+            //     ], 404);
+            // }
+
+            if ($detail->Tanggal_Lembur_Sampai < now()) {
+                DB::rollBack();
+                return response()->json([
+                    'status'  => 400,
+                    'message' => 'Transaksi sudah lewat dari waktu lembur, tidak bisa dihapus!'
+                ], 400);
+            }
+
+            // // ✅ Cek tanggal lembur (berpaku pada tabel Lembur)
+            // if ($lembur->Tanggal < now()->startOfDay()) {
+            //     DB::rollBack();
+            //     return response()->json([
+            //         'status'  => 400,
+            //         'message' => 'Transaksi sudah lewat dari hari ini, tidak bisa dihapus!'
+            //     ], 400);
+            // }
+
+            // ✅ Hapus detail & det (langsung delete, tidak update status)
             $detail->delete();
             LemburDet::where('Urut_Detail', $request['params']['urut_Oto'])->delete();
 
+            // ✅ Kalau detail/det habis, update status Lembur
             $cekIsiLemburDetail = LemburDetail::where('No_Transaksi', $detail->No_Transaksi)->count();
-            $cekIsiLemburDet = LemburDet::where('No_Transaksi', $detail->No_Transaksi)->count();
-            if($cekIsiLemburDetail == 0 || $cekIsiLemburDet == 0){
-                Lembur::where('No_Transaksi', $detail->No_Transaksi)->update(['Status' => 'Y']);
+            $cekIsiLemburDet    = LemburDet::where('No_Transaksi', $detail->No_Transaksi)->count();
+
+            if ($cekIsiLemburDetail == 0 || $cekIsiLemburDet == 0) {
+                Lembur::where('No_Transaksi', $detail->No_Transaksi)
+                    ->update(['Status' => 'Y']);
             }
 
-            //  LemburDet::where('No_Transaksi', $request['params']['No_Transaksi'])->update(['Status' => 'Y']);
-            //  LemburDetail::where('No_Transaksi', $request['params']['No_Transaksi'])->update(['Status' => 'Y']);
             DB::commit();
-            Alert::success('Success', 'User Berhasil DiHapus dari Transaksi!');
+            Alert::success('Success', 'User Berhasil Dihapus dari Transaksi!');
             return response()->json([
-                'status' => 200,
-                'message' => "Berhasi Menghapus data!"
+                'status'  => 200,
+                'message' => 'Berhasil Menghapus data!'
             ]);
-
-        }catch(\throwable $e){
+        } catch (\Throwable $e) {
             DB::rollBack();
-            Log::channel('lemburLog')->error('Gagal menghapus Item destroy'. $e->getMessage());
+            Log::channel('lemburLog')->error('Gagal menghapus Item destroy ' . $e->getMessage());
             return response()->json([
                 'message' => 'Terjadi kesalahan menghapus data destroy',
-                'error' => 'Pls Try again'
-            ],500);
+                'error'   => $e->getMessage()
+            ], 500);
         }
-
-        // $item =  $re
     }
+
 
 
     public function getDetails(Request $request){

@@ -792,7 +792,10 @@
             @click="closeAttendanceModal"
         ></div>
         <div v-if="isAttendanceModalOpen" class="attendance-modal zoom-in">
-            <div class="attendance-modal-content px-4 py-3">
+            <div
+                class="attendance-modal-content overflow-auto px-4 py-3"
+                style="max-height: 85vh"
+            >
                 <h3 class="mb-md-4">Formulir Absensi</h3>
                 <form @submit.prevent="submitAttendance">
                     <div class="row">
@@ -800,6 +803,7 @@
                             <label class="form-label"
                                 >Foto Bukti Kehadiran</label
                             >
+
                             <div class="photo-preview-container">
                                 <img
                                     v-if="capturedImage"
@@ -823,9 +827,6 @@
                             <button
                                 type="button"
                                 @click="openCamera"
-                                :disabled="
-                                    DataDayNow?.CheckIn && DataDayNow?.CheckOut
-                                "
                                 class="btn btn-primary btn-modern w-100"
                             >
                                 <i
@@ -839,17 +840,82 @@
                                 <label for="reason" class="form-label"
                                     >Deskripsi Absen</label
                                 ><textarea
-                                    :disabled="
-                                        DataDayNow?.CheckIn &&
-                                        DataDayNow?.CheckOut
-                                    "
                                     class="form-control"
                                     id="reason"
-                                    rows="4"
+                                    rows="2"
                                     v-model="form.reason"
                                 ></textarea>
                             </div>
                             <div
+                                v-if="showValidationSection"
+                                class="validation-section"
+                            >
+                                <div class="validation-status">
+                                    <div
+                                        class="status-item"
+                                        :class="cameraStatus"
+                                    >
+                                        <i
+                                            class="bi bi-camera me-2 d-flex justify-content-center align-items-center"
+                                        ></i>
+                                        <span
+                                            >Kamera:
+                                            {{ cameraStatusText }}</span
+                                        >
+                                    </div>
+                                    <div
+                                        class="status-item"
+                                        :class="locationStatus"
+                                    >
+                                        <i
+                                            class="bi d-flex justify-content-center align-items-center"
+                                            :class="{
+                                                'bi-geo-alt':
+                                                    locationStatus ===
+                                                    'pending',
+                                                'bi-arrow-repeat':
+                                                    locationStatus ===
+                                                    'checking',
+                                                'bi-geo-alt-fill':
+                                                    locationStatus ===
+                                                    'success',
+                                                'bi-geo-alt':
+                                                    locationStatus === 'error',
+                                            }"
+                                        ></i>
+                                        <span
+                                            >Lokasi:
+                                            {{ locationStatusText }}</span
+                                        >
+                                    </div>
+                                </div>
+
+                                <div
+                                    v-if="
+                                        validationChecked &&
+                                        (!cameraActive || !locationActive)
+                                    "
+                                    class="validation-alert"
+                                >
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    <div>
+                                        <p>
+                                            Pastikan kamera dan lokasi telah
+                                            diaktifkan sebelum mengambil foto
+                                        </p>
+                                        <button
+                                            @click="retryValidation"
+                                            class="btn btn-sm btn-outline-primary mt-1"
+                                        >
+                                            <i
+                                                class="bi bi-arrow-repeat me-1 d-flex justify-content-center align-items-center"
+                                            ></i
+                                            >Coba Lagi
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- <div
                                 class="mb-md-3 form-control row m-0 d-flex w-100 align-items-center justify-content-between p-md-1 p-2"
                             >
                                 <label for="reason" class="col-6"
@@ -885,9 +951,76 @@
                                         >Selesai</span
                                     >
                                 </span>
+                            </div> -->
+                            <div class="validation-section mt-2 py-1">
+                                <ul class="validation-list">
+                                    <li :class="{ completed: !!capturedImage }">
+                                        <i
+                                            class="bi"
+                                            :class="
+                                                !!capturedImage
+                                                    ? 'bi-check-circle-fill'
+                                                    : 'bi-circle'
+                                            "
+                                        ></i>
+                                        Ambil foto dengan kamera
+                                    </li>
+                                    <li
+                                        :class="{
+                                            completed:
+                                                (latitude !== null &&
+                                                    longitude !== null) ||
+                                                locationError !== null,
+                                        }"
+                                    >
+                                        <i
+                                            class="bi"
+                                            :class="
+                                                (latitude !== null &&
+                                                    longitude !== null) ||
+                                                locationError !== null
+                                                    ? 'bi-check-circle-fill'
+                                                    : 'bi-circle'
+                                            "
+                                        ></i>
+                                        Dapatkan informasi lokasi
+                                    </li>
+                                    <li
+                                        :class="{
+                                            completed:
+                                                form.reason &&
+                                                form.reason.trim().length > 0,
+                                        }"
+                                    >
+                                        <!-- <i
+                                            class="bi"
+                                            :class="
+                                                form.reason &&
+                                                form.reason.trim().length > 0
+                                                    ? 'bi-check-circle-fill'
+                                                    : 'bi-circle'
+                                            "
+                                        ></i>
+                                        Isi deskripsi absen
+                                    </li> -->
+                                    </li>
+
+                                    <li :class="{ completed: !isSubmitting }">
+                                        <i
+                                            class="bi"
+                                            :class="
+                                                !isSubmitting
+                                                    ? 'bi-check-circle-fill'
+                                                    : 'bi-bi-arrow-repeat'
+                                            "
+                                        ></i>
+                                        Tidak dalam proses pengiriman
+                                    </li>
+                                </ul>
                             </div>
                         </div>
                     </div>
+
                     <div class="mt-md-4 d-flex justify-content-end gap-2">
                         <button
                             type="button"
@@ -965,6 +1098,15 @@ export default {
     },
     data() {
         return {
+            cameraActive: false,
+            locationActive: false,
+            cameraStatus: "pending", // pending, checking, success, error
+            locationStatus: "pending", // pending, checking, success, error
+            cameraStatusText: "Belum diperiksa",
+            locationStatusText: "Belum diperiksa",
+            showValidationSection: false,
+            validationChecked: false,
+
             isPictureOpen: false,
             fullPicture: null,
             closePicture: false,
@@ -1049,23 +1191,35 @@ export default {
                 (this.latitude !== null && this.longitude !== null) ||
                 this.locationError !== null;
             const hasCapturedImage = !!this.capturedImage;
+            // const hasReason = this.reason !== null;
+            const isSubmitting = this.isSubmitting;
+
+            return hasCapturedImage && hasLocation && !isSubmitting;
+        },
+        notif() {
+            const hasLocation =
+                (this.latitude !== null && this.longitude !== null) ||
+                this.locationError !== null;
+            const hasCapturedImage = !!this.capturedImage;
             const hasReason = this.reason !== null;
             const isSubmitting = this.isSubmitting;
 
-            const checkIn = this.DataDayNow?.CheckIn;
-            const checkOut = this.DataDayNow?.CheckOut;
-
-            if (checkIn !== null && checkOut !== null) {
-                return false;
+            if (!hasLocation) {
+                return "Lokasi belum didapatkan";
             }
-
-            return (
-                hasCapturedImage && hasLocation && !isSubmitting && hasReason
-            );
+            if (!hasCapturedImage) {
+                return "Foto bukti kehadiran belum diambil";
+            }
+            if (!hasReason) {
+                return "Deskripsi absen tidak boleh kosong";
+            }
         },
     },
 
     methods: {
+        // isAbsenMasukKeluar(){
+
+        // },
         openFullPicture(url) {
             if (!url) return;
             this.fullPicture = url;
@@ -1249,7 +1403,36 @@ export default {
             );
         },
 
+        // async openCamera() {
+        //     this.isCameraModalOpen = true;
+        //     this.capturedImage = null;
+        //     await this.$nextTick();
+        //     try {
+        //         this.stream = await navigator.mediaDevices.getUserMedia({
+        //             video: { facingMode: "user" },
+        //         });
+        //         if (this.$refs.cameraFeed)
+        //             this.$refs.cameraFeed.srcObject = this.stream;
+        //     } catch (e) {
+        //         alert("Kamera tidak dapat diakses.");
+        //         this.isCameraModalOpen = false;
+        //     }
+        // },
         async openCamera() {
+            // Tampilkan section validasi
+            this.showValidationSection = true;
+
+            // Lakukan validasi
+            await this.validateCameraAndLocation();
+
+            // Jika validasi gagal, berhenti di sini
+            if (!this.cameraActive || !this.locationActive) {
+                // Tampilkan notifikasi error
+                this.showValidationError();
+                return;
+            }
+
+            // Lanjutkan dengan kode openCamera yang sudah ada
             this.isCameraModalOpen = true;
             this.capturedImage = null;
             await this.$nextTick();
@@ -1264,6 +1447,146 @@ export default {
                 this.isCameraModalOpen = false;
             }
         },
+        async validateCameraAndLocation() {
+            // Reset status
+            this.cameraStatus = "checking";
+            this.locationStatus = "checking";
+            this.cameraStatusText = "Memeriksa...";
+            this.locationStatusText = "Memeriksa...";
+
+            // Jalankan validasi kamera dan lokasi secara paralel
+            await Promise.allSettled([
+                this.validateCamera(),
+                this.validateLocation(),
+            ]);
+
+            this.validationChecked = true;
+        },
+        async validateCamera() {
+            try {
+                // Cek apakah browser mendukung getUserMedia
+                if (
+                    !navigator.mediaDevices ||
+                    !navigator.mediaDevices.getUserMedia
+                ) {
+                    throw new Error("Browser tidak mendukung akses kamera");
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                });
+                this.cameraActive = true;
+                this.cameraStatus = "success";
+                this.cameraStatusText = "Aktif";
+
+                // Hentikan stream yang tidak digunakan
+                stream.getTracks().forEach((track) => track.stop());
+            } catch (error) {
+                console.error("Kamera tidak dapat diakses:", error);
+                this.cameraActive = false;
+                this.cameraStatus = "error";
+
+                if (error.name === "NotAllowedError") {
+                    this.cameraStatusText = "Izin ditolak";
+                } else if (
+                    error.name === "NotFoundError" ||
+                    error.name === "OverconstrainedError"
+                ) {
+                    this.cameraStatusText = "Kamera tidak ditemukan";
+                } else {
+                    this.cameraStatusText = "Tidak dapat diakses";
+                }
+            }
+        },
+        validateLocation() {
+            return new Promise((resolve) => {
+                if (!navigator.geolocation) {
+                    this.locationActive = false;
+                    this.locationStatus = "error";
+                    this.locationStatusText = "Tidak didukung";
+                    resolve();
+                    return;
+                }
+
+                const options = {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0,
+                };
+
+                // Timeout tambahan untuk handle browser yang tidak memanggil error callback
+                const timeoutId = setTimeout(() => {
+                    this.locationActive = false;
+                    this.locationStatus = "error";
+                    this.locationStatusText = "Timeout";
+                    resolve();
+                }, 6000);
+
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        clearTimeout(timeoutId);
+                        this.locationActive = true;
+                        this.locationStatus = "success";
+                        this.locationStatusText = "Aktif";
+                        resolve();
+                    },
+                    (error) => {
+                        clearTimeout(timeoutId);
+                        console.error("Lokasi tidak dapat diakses:", error);
+                        this.locationActive = false;
+                        this.locationStatus = "error";
+
+                        switch (error.code) {
+                            case error.PERMISSION_DENIED:
+                                this.locationStatusText = "Izin ditolak";
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                this.locationStatusText = "Tidak tersedia";
+                                break;
+                            case error.TIMEOUT:
+                                this.locationStatusText = "Timeout";
+                                break;
+                            default:
+                                this.locationStatusText = "Tidak dapat diakses";
+                        }
+
+                        resolve();
+                    },
+                    options
+                );
+            });
+        },
+        showValidationError() {
+            let errorMessage = "Perlu mengaktifkan:";
+
+            if (!this.cameraActive) {
+                errorMessage += "\n- Kamera";
+            }
+
+            if (!this.locationActive) {
+                errorMessage += "\n- Lokasi";
+            }
+
+            errorMessage +=
+                "\n\nSilakan berikan izin yang diperlukan dan coba lagi.";
+
+            ElMessage({
+                showClose: true,
+                message: errorMessage,
+                type: "error",
+                customStyle: {
+                    "z-index": "1050",
+                },
+            });
+        },
+        retryValidation() {
+            this.cameraStatus = "pending";
+            this.locationStatus = "pending";
+            this.cameraStatusText = "Belum diperiksa";
+            this.locationStatusText = "Belum diperiksa";
+            this.validateCameraAndLocation();
+        },
+
         closeCamera() {
             if (this.stream) this.stream.getTracks().forEach((t) => t.stop());
             this.isCameraModalOpen = false;
@@ -1429,6 +1752,16 @@ export default {
             this.locationError = null;
             this.loadingLocation = false;
             this.isSubmitting = false;
+
+            // Reset status validasi
+            this.showValidationSection = false;
+            this.validationChecked = false;
+            this.cameraActive = false;
+            this.locationActive = false;
+            this.cameraStatus = "pending";
+            this.locationStatus = "pending";
+            this.cameraStatusText = "Belum diperiksa";
+            this.locationStatusText = "Belum diperiksa";
         },
         async getDataToday() {
             try {
@@ -1717,6 +2050,47 @@ export default {
     border-radius: 4px;
 }
 
+/* Styles untuk informasi validasi form */
+.validation-info {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    border-left: 4px solid #6c757d;
+}
+
+.validation-title {
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.validation-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.validation-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.validation-list li.completed {
+    color: #198754;
+}
+
+.validation-list li i {
+    font-size: 0.9rem;
+}
+
+.validation-list li.completed i {
+    color: #198754;
+}
 @keyframes shimmer {
     0% {
         transform: translateX(-100%);
@@ -1762,6 +2136,82 @@ export default {
     color: var(--text-muted);
 }
 
+/* Styles untuk validasi section */
+.validation-section {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #f8f9fa;
+}
+
+.validation-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 0px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.status-item.pending {
+    background-color: #e9ecef;
+    color: #6c757d;
+}
+
+.status-item.checking {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-item.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-item.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.validation-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+    border-radius: 4px;
+    color: #856404;
+}
+
+.validation-alert i {
+    font-size: 18px;
+}
+
+.validation-alert p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Responsive design */
+@media (max-width: 576px) {
+    .validation-status {
+        gap: 10px;
+    }
+
+    .status-item {
+        width: 100%;
+    }
+}
 .time-display {
     background-color: rgba(99, 102, 241, 0.1);
     color: var(--primary-dark);
@@ -3754,7 +4204,7 @@ body {
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     transform: scaleX(-1);
 }
 .camera-modal-controls {
