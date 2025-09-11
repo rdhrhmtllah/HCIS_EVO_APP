@@ -1436,7 +1436,7 @@ class OvertimeController extends Controller
                         }else{
                             $tanggalMasukLembur = date('Y-m-d H:i:s', strtotime($user['tanggal'] . ' ' . $user['masuk']));
                         }
-                        dd($tanggalMasukLembur.' - ' .$tanggalKeluarLembur);
+                        // dd($tanggalMasukLembur.' - ' .$tanggalKeluarLembur);
                         $alasan = str_replace(["\n", "\t"], ' ', $user['reason']);
                         $userInsert = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first() ?? null;
                         // dd($userInsert->No_Hp);
@@ -1492,7 +1492,7 @@ class OvertimeController extends Controller
                                                         ],
                                                         [
                                                             "type" => "text",
-                                                            "text" => $tangalMasukUser.' s.d '.$tangalKeluarUser
+                                                            "text" => $this->formatTanggalWaktu($tangalMasukUser, $tangalKeluarUser)
                                                         ],
                                                         [
                                                             "type" => "text",
@@ -1530,6 +1530,21 @@ class OvertimeController extends Controller
             ], 500);
         }
 
+    }
+
+    function formatTanggalWaktu($startDateTime, $endDateTime) {
+        Carbon::setLocale('id');
+
+        $start = Carbon::parse($startDateTime);
+        $end   = Carbon::parse($endDateTime);
+
+        if ($start->isSameDay($end)) {
+            // Kalau masih di hari yang sama
+            return $start->translatedFormat('d M Y') . ' ' . $start->format('H:i') . ' - ' . $end->format('H:i');
+        } else {
+            // Kalau beda hari
+            return $start->translatedFormat('d M Y H:i') . ' - ' . $end->translatedFormat('d M Y H:i');
+        }
     }
 
     public function destroy(Request $request)

@@ -202,7 +202,7 @@ class AbsensiController extends Controller
                                                             ],
                                                             [
                                                                 "type" => "text",
-                                                                "text" => $No_Transaksi
+                                                                "text" => $No_Transaksi. ' Pengajuan ' .$this->parseIzin($spekIzin->Jenis)
                                                             ],
                                                             [
                                                                 "type" => "text",
@@ -349,7 +349,6 @@ class AbsensiController extends Controller
                                     ->where('b.No_Transaksi', $No_Transaksi)->first();
                                     $userInsertNoHp = $user->HP;
                                 }
-                                // dd($user, $userInsertNoHp);
 
                                 if($user != null && $userInsertNoHp != '-' && $userInsertNoHp != ' '){
                                     // dd($user);
@@ -375,7 +374,7 @@ class AbsensiController extends Controller
                                                                     ],
                                                                     [
                                                                         "type" => "text",
-                                                                        "text" => $No_Transaksi
+                                                                        "text" => $this->parseIzin($Izin->first()->Jenis).' anda No. '.$No_Transaksi
                                                                     ]
                                                                 ]
                                                             ]
@@ -399,7 +398,7 @@ class AbsensiController extends Controller
                                 if($prefix == 'IS'){
 
 
-                                    $spekIzin = DB::table('Transaksi_Sakit_Izin_Detail')->select("Kode_Karyawan","Jenis", "Tanggal_Sakit_Izin_Dari as dari", "Tanggal_Sakit_Izin_Sampai as sampai")->where('No_Transaksi', $No_Transaksi)->first();
+                                    $spekIzin = DB::table('Transaksi_Sakit_Izin_Detail')->select("Kode_Karyawan","Jenis", "Tanggal_Sakit_Izin_Dari as dari",DB::raw('null as Jam') ,"Tanggal_Sakit_Izin_Sampai as sampai")->where('No_Transaksi', $No_Transaksi)->first();
 
                                     $user = DB::table('Karyawan as a')
                                     ->join('Transaksi_Sakit_Izin_Detail as b', 'a.Kode_Karyawan', '=', 'b.Kode_Karyawan')
@@ -408,7 +407,7 @@ class AbsensiController extends Controller
                                 }else if($prefix == 'TP'){
 
 
-                                    $spekIzin = DB::table('Transaksi_Terlambat_Pulang_Cepat_Detail')->select("Kode_Karyawan","Jenis", "Tanggal_Masuk_Pulang as dari", DB::raw('null as sampai') )->where('No_Transaksi', $No_Transaksi)->first();
+                                    $spekIzin = DB::table('Transaksi_Terlambat_Pulang_Cepat_Detail')->select("Kode_Karyawan","Jenis", "Tanggal_Masuk_Pulang as dari", "Jam", DB::raw('null as sampai') )->where('No_Transaksi', $No_Transaksi)->first();
 
                                     $user = DB::table('Karyawan as a')
                                     ->join('Transaksi_Terlambat_Pulang_Cepat_Detail as b', 'a.Kode_Karyawan', '=', 'b.Kode_Karyawan')
@@ -417,7 +416,7 @@ class AbsensiController extends Controller
                                 }else if($prefix == 'CT'){
 
 
-                                    $spekIzin = DB::table('Transaksi_Cuti_Detail')->select("Kode_Karyawan","Jenis", "Tanggal_Cuti_Dari as dari", "Tanggal_Cuti_Sampai as sampai")->where('No_Transaksi', $No_Transaksi)->first();
+                                    $spekIzin = DB::table('Transaksi_Cuti_Detail')->select("Kode_Karyawan","Jenis", "Tanggal_Cuti_Dari as dari", DB::raw('null as Jam'),"Tanggal_Cuti_Sampai as sampai")->where('No_Transaksi', $No_Transaksi)->first();
 
                                     $user = DB::table('Karyawan as a')
                                     ->join('Transaksi_Cuti_Detail as b', 'a.Kode_Karyawan', '=', 'b.Kode_Karyawan')
@@ -443,7 +442,7 @@ class AbsensiController extends Controller
                                             "pesan" => "Karyawan {$nextApprover->Nama} Tidak ada Nomor Hp untuk noitifikasi Transaksi {$No_Transaksi}"
                                         ]);
                                     }else{
-                                    $TanggalWa = $spekIzin->sampai == null ? $spekIzin->dari : $spekIzin->dari."s.d".$spekIzin->sampai;
+                                    $TanggalWa = $spekIzin->Jam != null ? $this->formatTanggal($spekIzin->dari, null, $spekIzin->Jam) : $this->formatTanggal($spekIzin->dari, $spekIzin->sampai);
                                     $namaRequest = DB::table('Karyawan')->where("Kode_Karyawan", $spekIzin->Kode_Karyawan)->first();
                                     // dd($nextApprover);
                                     // whatsapp message to user
@@ -3798,7 +3797,8 @@ $result = DB::select($query, $params);
                                                             ],
                                                             [
                                                                 "type" => "text",
-                                                                "text" => $validatedData['tanggal'][0].' s.d '.$validatedData['tanggal'][1]
+                                                                "text" => $this->formatTanggal($validatedData['tanggal'][0], $validatedData['tanggal'][1])
+
                                                             ],
                                                             [
                                                                 "type" => "text",
@@ -3981,7 +3981,7 @@ $result = DB::select($query, $params);
                                                             ],
                                                             [
                                                                 "type" => "text",
-                                                                "text" => $validatedData['tanggal'][0].' s.d '.$validatedData['tanggal'][1]
+                                                                "text" => $this->formatTanggal($validatedData['tanggal'][0], $validatedData['tanggal'][1])
                                                             ],
                                                             [
                                                                 "type" => "text",
@@ -4201,7 +4201,7 @@ $result = DB::select($query, $params);
                                                             ],
                                                             [
                                                                 "type" => "text",
-                                                                "text" => $tanggalSakitIzinDari . ' ' . $validatedData['waktu']
+                                                                "text" => $this->formatTanggal($tanggalSakitIzinDari, null, $validatedData['waktu'])
                                                             ],
                                                             [
                                                                 "type" => "text",
@@ -4253,6 +4253,39 @@ $result = DB::select($query, $params);
             ], 500);
         }
     }
+
+
+    function formatTanggal($start, $end, $waktu = null) {
+        Carbon::setLocale('id');
+
+        // Kalau ada waktu, berarti single date + time
+        if (!empty($waktu)) {
+            return Carbon::parse($start)->translatedFormat('d M Y') . ' ' . $waktu;
+        }
+
+        // Kalau tidak ada waktu → berarti range
+        if (!empty($start) && !empty($end)) {
+            $startDate = Carbon::parse($start);
+            $endDate   = Carbon::parse($end);
+
+            if ($startDate->equalTo($endDate)) {
+                // Hanya satu hari
+                return $startDate->translatedFormat('d M Y');
+            } elseif ($startDate->month === $endDate->month && $startDate->year === $endDate->year) {
+                // Range dalam bulan & tahun yang sama
+                return $startDate->format('d') . '-' . $endDate->format('d') . ' ' . $endDate->translatedFormat('M Y');
+            } elseif ($startDate->year === $endDate->year) {
+                // Range beda bulan tapi masih di tahun yang sama
+                return $startDate->translatedFormat('d M') . ' - ' . $endDate->translatedFormat('d M Y');
+            } else {
+                // Range beda tahun
+                return $startDate->translatedFormat('d M Y') . ' - ' . $endDate->translatedFormat('d M Y');
+            }
+        }
+
+        return null;
+    }
+
 
     public function getUserShift(Request $request)
     {
