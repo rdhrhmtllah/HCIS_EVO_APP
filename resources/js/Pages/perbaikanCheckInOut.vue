@@ -390,13 +390,13 @@
                                     <td>{{ item.Nama_Shift }}</td>
                                     <td>
                                         <span v-if="item.CheckIn">{{
-                                            formatTime(item.CheckIn)
+                                            formatDateString(item.CheckIn)
                                         }}</span>
                                         <span v-else class="text-muted">-</span>
                                     </td>
                                     <td>
                                         <span v-if="item.CheckOut">{{
-                                            formatTime(item.CheckOut)
+                                            formatDateString(item.CheckOut)
                                         }}</span>
                                         <span v-else class="text-muted">-</span>
                                     </td>
@@ -427,6 +427,42 @@
                             </tbody>
                         </table>
                     </div>
+                    <div
+                        class="pagination-container"
+                        v-if="totalAbsensiPages > 1"
+                    >
+                        <button
+                            class="page-btn"
+                            @click="prevPage"
+                            :disabled="dataAbsensiCurrentPage === 1"
+                        >
+                            <i
+                                class="bi bi-chevron-left d-flex justify-content-center align-items-center"
+                            ></i>
+                        </button>
+                        <!-- <div class="page-numbers">
+                            <button
+                                v-for="page in visiblePages"
+                                :key="page"
+                                class="page-number"
+                                :class="{ active: page === dataAbsensiCurrentPage }"
+                                @click="goToPage(page)"
+                            >
+                                {{ page }}
+                            </button>
+                        </div> -->
+                        <button
+                            class="page-btn"
+                            @click="nextPage"
+                            :disabled="
+                                dataAbsensiCurrentPage === totalAbsensiPages
+                            "
+                        >
+                            <i
+                                class="bi bi-chevron-right d-flex justify-content-center align-items-center"
+                            ></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -435,30 +471,84 @@
     <!-- Modal Edit Absensi -->
     <el-dialog
         v-model="showEditModal"
-        :title="`Edit Absensi - ${selectedItem ? selectedItem.date : ''}`"
+        :title="`Edit Absensi - ${
+            selectedItem ? formatDate(selectedItem.date) : ''
+        }`"
         width="500px"
         center
+        :close-on-click-modal="false"
     >
         <div v-if="selectedItem" class="edit-modal-content">
-            <div class="form-group mb-3">
-                <label class="form-label">Check-In</label>
-                <el-time-picker
-                    v-model="editCheckIn"
-                    format="HH:mm"
-                    value-format="HH:mm"
-                    placeholder="Pilih Waktu Check-In"
-                />
+            <!-- Check-in Section -->
+            <div class="time-section">
+                <div class="section-header">
+                    <span class="section-icon">🟢</span>
+                    <h4>Check-In</h4>
+                </div>
+                <div class="form-group">
+                    <el-time-picker
+                        v-model="editCheckIn"
+                        format="HH:mm"
+                        value-format="HH:mm"
+                        placeholder="Pilih Waktu Check-In"
+                        :editable="false"
+                        @focus="showRecentCheckins('in')"
+                    />
+                    <div
+                        v-if="recentCheckins.in.length && showRecent.in"
+                        class="recent-times"
+                    >
+                        <p class="recent-label">Absensi Terbaru:</p>
+                        <div
+                            v-for="(time, index) in recentCheckins.in"
+                            :key="'in-' + index"
+                            class="recent-time-item"
+                            @click="selectRecentTime(time, 'in')"
+                        >
+                            {{ time }}
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="form-group mb-3">
-                <label class="form-label">Check-Out</label>
-                <el-time-picker
-                    v-model="editCheckOut"
-                    format="HH:mm"
-                    value-format="HH:mm"
-                    placeholder="Pilih Waktu Check-Out"
-                />
+
+            <!-- Check-out Section -->
+            <div class="time-section">
+                <div class="section-header">
+                    <span class="section-icon">🔴</span>
+                    <h4>Check-Out</h4>
+                </div>
+                <div class="form-group">
+                    <el-time-picker
+                        v-model="editCheckOut"
+                        format="HH:mm"
+                        value-format="HH:mm"
+                        placeholder="Pilih Waktu Check-Out"
+                        :editable="false"
+                        @focus="showRecentCheckouts('out')"
+                    />
+                    <div
+                        v-if="recentCheckouts.out.length && showRecent.out"
+                        class="recent-times"
+                    >
+                        <p class="recent-label">Absensi Terbaru:</p>
+                        <div
+                            v-for="(time, index) in recentCheckouts.out"
+                            :key="'out-' + index"
+                            class="recent-time-item"
+                            @click="selectRecentTime(time, 'out')"
+                        >
+                            {{ time }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Indicator -->
+            <div class="status-indicator" :class="attendanceStatus">
+                Status: {{ statusText }}
             </div>
         </div>
+
         <template #footer>
             <div class="edit-modal-footer">
                 <button
@@ -467,8 +557,12 @@
                 >
                     Batal
                 </button>
-                <button class="btn-modern btn-primary" @click="saveAttendance">
-                    Simpan
+                <button
+                    class="btn-modern btn-primary"
+                    @click="saveAttendance"
+                    :disabled="!isFormValid"
+                >
+                    Simpan Perubahan
                 </button>
             </div>
         </template>
@@ -500,6 +594,20 @@ export default {
     },
     data() {
         return {
+            showEditModal: false,
+            selectedItem: null,
+            editCheckIn: null,
+            editCheckOut: null,
+            showRecent: {
+                in: false,
+                out: false,
+            },
+            recentCheckins: {
+                in: [], // Isi dengan data check-in terbaru dari store/API
+            },
+            recentCheckouts: {
+                out: [], // Isi dengan data check-out terbaru dari store/API
+            },
             dataAbsensiSearchQuery: "", // pencarian teks
             dataAbsensiFilterDropdown: "", // filter dropdown (shift/status)
             dataAbsensiSelectedDateFilter: "", // filter tanggal tertentu
@@ -543,6 +651,22 @@ export default {
             .split("T")[0];
     },
     computed: {
+        isFormValid() {
+            return this.editCheckIn !== null || this.editCheckOut !== null;
+        },
+        attendanceStatus() {
+            if (!this.editCheckIn && !this.editCheckOut) return "absent";
+            if (this.editCheckIn && !this.editCheckOut) return "half";
+            return "complete";
+        },
+        statusText() {
+            const statusMap = {
+                absent: "Tidak Hadir",
+                half: "Setengah Hari",
+                complete: "Lengkap",
+            };
+            return statusMap[this.attendanceStatus];
+        },
         filteredAbsensi() {
             let filtered = this.attendanceData.map((row) => ({ ...row }));
 
@@ -633,7 +757,82 @@ export default {
         log() {
             console.log(this.dataKaryawan);
         },
+        showRecentCheckins(type) {
+            this.showRecent[type] = true;
+            // Di sini Anda bisa mengambil data dari store atau API
+            // Contoh:
+            // this.recentCheckins.in = this.$store.getters.getRecentCheckins;
+        },
 
+        // Method untuk memilih waktu dari daftar terbaru
+        selectRecentTime(time, type) {
+            if (type === "in") {
+                this.editCheckIn = time;
+            } else {
+                this.editCheckOut = time;
+            }
+            this.showRecent[type] = false;
+        },
+
+        // Format tanggal untuk judul modal
+        formatDate(dateString) {
+            const options = {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            };
+            return new Date(dateString).toLocaleDateString("id-ID", options);
+        },
+
+        // Validasi form sebelum menyimpan
+        validateForm() {
+            if (this.editCheckIn && this.editCheckOut) {
+                return this.editCheckIn < this.editCheckOut;
+            }
+            return true;
+        },
+
+        // Simpan perubahan
+        saveAttendance() {
+            if (!this.validateForm()) {
+                this.$message.error("Waktu check-out harus setelah check-in");
+                return;
+            }
+
+            // Logika penyimpanan data
+            // ...
+
+            this.showEditModal = false;
+        },
+        prevPage() {
+            if (this.dataAbsensiCurrentPage > 1) {
+                this.dataAbsensiCurrentPage--;
+            }
+        },
+        nextPage() {
+            if (this.dataAbsensiCurrentPage < this.totalAbsensiPages) {
+                this.dataAbsensiCurrentPage++;
+            }
+        },
+        formatDateString(dateString) {
+            if (!dateString) return "";
+            try {
+                const date = new Date(dateString);
+                const options = {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                };
+                return new Intl.DateTimeFormat("id-ID", options).format(date);
+            } catch (error) {
+                console.error("Error formatting date:", error);
+                return dateString; // fallback
+            }
+        },
         filteredDivisi(queryString, cb) {
             let results = [];
 
@@ -800,6 +999,84 @@ export default {
     color: var(--text);
     font-size: 0.95rem;
     transition: all 0.3s ease;
+}
+
+.time-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: var(--surface-soft);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.section-icon {
+    margin-right: 10px;
+    font-size: 1.2em;
+}
+
+.section-header h4 {
+    margin: 0;
+    color: var(--text);
+}
+
+.recent-times {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: white;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.recent-label {
+    margin: 0 0 8px 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.recent-time-item {
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.recent-time-item:hover {
+    background-color: var(--primary-light);
+    color: white;
+}
+
+.status-indicator {
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: bold;
+    margin-top: 15px;
+}
+
+.status-indicator.absent {
+    background-color: var(--danger-light);
+    color: var(--danger);
+}
+
+.status-indicator.half {
+    background-color: var(--warning-light);
+    color: var(--warning);
+}
+
+.status-indicator.complete {
+    background-color: var(--success-light);
+    color: var(--success);
+}
+
+/* Untuk menutup daftar recent times ketika klik di luar */
+.form-group {
+    position: relative;
 }
 
 .el-input__wrapper {

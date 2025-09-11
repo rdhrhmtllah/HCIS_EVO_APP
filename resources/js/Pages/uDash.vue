@@ -1391,7 +1391,7 @@
                                         }}
                                     </div>
                                     <div class="lembur-duration">
-                                        {{ data.durasi.toFixed(2) }} jam
+                                        {{ data.durasi }} jam
                                     </div>
                                     <div
                                         class="lembur-status"
@@ -3914,6 +3914,10 @@ export default {
                 return "dateCard holiday";
             }
 
+            if (data.hariLibur) {
+                return "dateCard holiday";
+            }
+
             // 2. Prioritaskan kondisi sakit atau izin
             if (
                 (data.Sakit_No_Transaksi &&
@@ -4454,8 +4458,223 @@ export default {
                 return `
         <div class="dashboard-tooltip status-card libur">
             <div class="status-header">
+                <span class="status-icon">📅</span>
+                <span class="status-title">Tidak ada Shift</span>
+            </div>
+            <div class="status-dates">${formatDate(mainShift.Tanggal)}</div>
+        </div>
+         <style>
+        .dashboard-tooltip {
+            // font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            max-width: 240px;
+            padding: 12px;
+            border-radius: 10px;
+            background: #FFFFFF;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            font-size: 13px;
+            color: #2D3748;
+            border: 1px solid #E2E8F0;
+        }
+
+        /* Status Card Styling */
+        .status-card {
+            text-align: center;
+            padding: 12px 16px;
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .status-icon {
+            font-size: 18px;
+        }
+
+        .status-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #2D3748;
+        }
+
+        .status-dates {
+            font-size: 12px;
+            color: #718096;
+            margin-bottom: 6px;
+        }
+
+        .status-footer {
+            font-size: 11px;
+            color: #718096;
+            padding-top: 4px;
+            border-top: 1px dashed #E2E8F0;
+        }
+
+        /* Status-specific colors */
+        .cuti {
+            background-color: #EBF8FF;
+            border-color: #BEE3F8;
+        }
+
+        .sakit {
+            background-color: #FFF5F5;
+            border-color: #FED7D7;
+        }
+
+        .izin {
+            background-color: #FFFAF0;
+            border-color: #FEEBC8;
+        }
+
+        .cutihutang {
+            background-color: #F0FFF4;
+            border-color: #C6F6D5;
+        }
+
+        .libur {
+            background-color: #F8FAFC;
+            border-color: #E2E8F0;
+        }
+
+        .absent {
+            background-color: #FFF5F5;
+            border-color: #FED7D7;
+        }
+
+        /* Shift Card Styling */
+        .shift-card {
+            padding: 12px;
+        }
+
+        .shift-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .shift-icon {
+            font-size: 16px;
+        }
+
+        .shift-name {
+            font-weight: 600;
+            flex-grow: 1;
+            color: #4C51BF;
+        }
+
+        .shift-date {
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .shift-schedule {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            margin-bottom: 8px;
+            border-bottom: 1px dashed #E2E8F0;
+        }
+
+        .shift-duration {
+            background: #EDF2F7;
+            color: #4C51BF;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .attendance-record {
+            margin: 8px 0;
+        }
+
+        .attendance-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+        }
+
+        .attendance-time {
+            font-weight: 500;
+        }
+
+        .attendance-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+        }
+
+        /* Status colors */
+        .late, .attendance-badge.late {
+            color: #E53E3E;
+            background-color: #FED7D7;
+        }
+
+        .early, .attendance-badge.early {
+            color: #DD6B20;
+            background-color: #FEEBC8;
+        }
+
+        .working {
+            color: #D69E2E;
+        }
+
+        .attendance-badge.overtime {
+            background-color: #EBF4FF;
+            color: #4C51BF;
+        }
+
+        .lateleave, .attendance-badge.lateleave {
+            background-color: #FEFCBF;
+            color: #B7791F;
+        }
+
+        .attendance-badge.terlambat {
+            background-color: #FED7D7;
+            color: #E53E3E;
+        }
+
+        .overtime-info {
+            font-size: 12px;
+            padding: 8px;
+            background: #F8FAFC;
+            border-radius: 6px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 16px;
+            background: #F8FAFC;
+        }
+
+        .working {
+            background-color: #FFFAF0;
+            border-color: #FEEBC8;
+        }
+    </style>`;
+            }
+
+            // libur
+            if (!mainShift.CheckIn || mainShift.hariLibur) {
+                return `
+        <div class="dashboard-tooltip status-card libur">
+            <div class="status-header">
                 <span class="status-icon">🌴</span>
-                <span class="status-title">Hari Libur</span>
+                <span class="status-title">${
+                    mainShift.hariLibur ? mainShift.hariLibur : "Hari Libur"
+                } </span>
             </div>
             <div class="status-dates">${formatDate(mainShift.Tanggal)}</div>
         </div>

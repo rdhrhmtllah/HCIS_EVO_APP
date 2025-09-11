@@ -1463,11 +1463,7 @@
     ></div> -->
 
     <!-- Modal Assign -->
-    <div
-        class="modal-overlay"
-        :class="{ show: showAssignModal }"
-        @click="closeAssignModal"
-    >
+    <div class="modal-overlay" :class="{ show: showAssignModal }">
         <div class="modal-container assign-modal" @click.stop>
             <!-- Header with progress indicator -->
             <div class="modal-header">

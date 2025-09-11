@@ -275,7 +275,14 @@ class uDashController extends Controller
                 $total_lembur_menit = $filtered_data_lembur->sum('Overtime_Real');
 
                 // Konversi ke jam desimal
-                $total_lembur_jam = floor($total_lembur_menit / 60);
+                // $total_lembur_jam = floor($total_lembur_menit / 60);
+                $total_lembur_jam = $filtered_data_lembur
+                ->map(function ($item) {
+                    // Ubah menit ke jam desimal lalu floor per transaksi
+                    $jam = $item->Overtime_Real / 60;
+                    return floor($jam);
+                })
+                ->sum();
                 // dd($filtered_data_lembur);
                 $today = Carbon::today()->toDateString();
                 $tomorrow = Carbon::tomorrow()->toDateString();
@@ -351,9 +358,9 @@ class uDashController extends Controller
 
 
             $LeaderTeam = DB::table('HRIS_Karyawan_Team')->where('Kode_Karyawan_Team', $Kode_KaryawanReal)->exists();
-            if($Kode_KaryawanReal == 'RIDHO RAHMAT' || $Kode_KaryawanReal == 'H45'){
-                $LeaderTeam = false;
-            }
+            // if($Kode_KaryawanReal == 'RIDHO RAHMAT' || $Kode_KaryawanReal == 'H45'){
+            //     $LeaderTeam = false;
+            // }
             // dd($LeaderTeam);
             if($LeaderTeam){
                 $datasPending = DB::table('HRIS_Approval_Request as a')
@@ -470,6 +477,8 @@ class uDashController extends Controller
                 ->groupBy('k.UserID_Absen', 'k.Kode_Karyawan')
                 ->get();
 
+
+
             $kode_anggota = $nama_anggota->pluck('Kode_Karyawan')->toArray();
             $IDAbsen_anggota = $nama_anggota->pluck('UserID_Absen')->toArray();
             // dd($IDAbsen_anggota);
@@ -524,7 +533,7 @@ class uDashController extends Controller
                 ->whereIn(DB::raw("CAST(b.Tanggal_Masuk_Pulang AS DATE)"), $tanggal_absens) // pastikan array
                 ->get();
             $lembur_data = DB::table('Transaksi_Lembur_Detail as b')
-                ->select('a.No_Transaksi', 'b.Tanggal_Lembur_dari as mulai', 'b.Tanggal_Lembur_Sampai as selesai')
+                ->select('b.Kode_Karyawan','a.No_Transaksi', 'b.Tanggal_Lembur_dari as mulai', 'b.Tanggal_Lembur_Sampai as selesai')
             ->join('Transaksi_Lembur as a', 'a.No_Transaksi', '=', 'b.No_Transaksi')
             ->whereIn('b.Kode_Karyawan', $kode_anggota)
             ->where(function($query) use ($tanggal_absens) {
@@ -589,6 +598,9 @@ class uDashController extends Controller
             // kemudian saat membuat $rekap, tambahkan use $endDateForCalculation
             // $today = Carbon::today();
             $today = Carbon::now();
+            $hariLibur = DB::table('HRIS_Hari_Libur')
+            ->whereBetween('Tanggal', [$startWeek, $endWeek])
+            ->count();
             // dd($today);
             $rekap = collect($resultData)
                 ->groupBy('Kode_Karyawan')
@@ -596,11 +608,14 @@ class uDashController extends Controller
                     $terlambat_data, $pulang_data, $lembur_data,
                     $sakit_data, $izin_data, $cuti_data,
                     $endDateForCalculation, $excludedShifts,
+                    $hariLibur,
                     $today
                 ) {
                     $total_keterlambatan_menit = 0;
                     $total_pulang_cepat_menit = 0;
                     $total_lembur_menit = 0;
+                    $total_lembur_jam = 0;
+
 
                     foreach ($records as $record) {
                         $tanggal = Carbon::parse($record->Tanggal)->toDateString();
@@ -646,9 +661,13 @@ class uDashController extends Controller
                         //     }
                         // }
 
-                        $pengajuan_terlambat = collect($terlambat_data)->firstWhere('Tanggal', $record->Tanggal);
-
+                        $pengajuan_terlambat = collect($terlambat_data)
+                        ->where('Kode_Karyawan', $record->Kode_Karyawan)
+                        ->firstWhere('Tanggal', $record->Tanggal);
+                        // dd($pengajuan_terlambat);
+                        // dd($records);
                         $keterlambatan_hari_ini = 0; // simpan sementara per hari
+                        $test= [];
 
                         if ($pengajuan_terlambat && !empty($pengajuan_terlambat?->Jam)) {
                             $format_jam = strlen($pengajuan_terlambat->Jam) === 5 ? 'H:i' : 'H:i:s';
@@ -656,6 +675,8 @@ class uDashController extends Controller
                                 'Y-m-d ' . $format_jam,
                                 $check_in_carbon->format('Y-m-d') . ' ' . $pengajuan_terlambat->Jam
                             );
+
+                            // $test[] = $check_in_carbon .','. $jam_toleransi_carbon. ',' . $pengajuan_terlambat->Kode_Karyawan. ','. $pengajuan_terlambat->Tanggal . ' '. $pengajuan_terlambat->Jam ;
 
                             if ($check_in_carbon > $jam_toleransi_carbon) {
                                 $keterlambatan_hari_ini = $check_in_carbon->copy()->seconds(0)
@@ -677,7 +698,7 @@ class uDashController extends Controller
 
                         // batasi max 50 menit per hari
                         $total_keterlambatan_menit += min($keterlambatan_hari_ini, 50);
-
+                        // dd($test);
 
                         // 2. pulang cepat
                         if (!is_null($record->CheckOut) && !empty($record->Jam_Keluar)) {
@@ -697,24 +718,54 @@ class uDashController extends Controller
                         }
 
                         // 3. lembur
-                        $lembur_for_date = $lembur_data->filter(function ($lembur) use ($record) {
-                            return Carbon::parse($record->Tanggal)->between(
-                                Carbon::parse($lembur->mulai)->toDateString(),
-                                Carbon::parse($lembur->selesai)->toDateString()
-                            );
-                        });
-                        $total_lembur_menit += $lembur_for_date->sum('Overtime_Real');
+                            // dd($lembur_data);
+                                // --- cari apakah ada pengajuan lembur baru ---
+                            $pengajuan_lembur = collect($lembur_data)->first(function ($item) use ($record) {
+                                $tanggalPengajuan = Carbon::parse($item->mulai)->toDateString();
+                                $tanggalRecord    = Carbon::parse($record->Tanggal)->toDateString();
+                                // dd($item->Kode_Karyawan .' '. $record->Kode_Karyawan);
+
+                                return $item->Kode_Karyawan === $record->Kode_Karyawan
+                                    && $tanggalPengajuan === $tanggalRecord;
+                            });
+
+                                if ($pengajuan_lembur) {
+                                    // Kalau ada pengajuan → langsung pakai Overtime_Real (dalam jam, floor)
+                                    $total_lembur_jam += floor($record->Overtime_Real / 60);
+                                }
+
                     }
 
                     // --- hitung hari & hadir sampai endDateForCalculation ---
                     $recordsUpToNow = $records->filter(fn($r) => Carbon::parse($r->Tanggal)->lte($endDateForCalculation));
 
-                    $total_hari = $recordsUpToNow->reject(function ($r) use ($excludedShifts) {
-                        $shift = strtoupper(trim((string) ($r->Nama_Shift ?? '')));
-                        return in_array($shift, $excludedShifts, true);
-                    })->count();
+                    // $total_hari = $recordsUpToNow->reject(function ($r) use ($excludedShifts) {
+                    //     $shift = strtoupper(trim((string) ($r->Nama_Shift ?? '')));
+                    //     return in_array($shift, $excludedShifts, true);
+                    // })->count();
 
-                    $total_hadir = $recordsUpToNow->filter(fn($r) => !is_null($r->CheckIn) && $r->CheckIn !== '')->count();
+                    // $total_hadir = min($total_hari, $recordsUpToNow->filter(fn($r) => !is_null($r->CheckIn) && $r->CheckIn !== '')->count() +  $hariLibur);
+
+                    // Total hari kerja (tidak termasuk shift yang dikecualikan)
+                    $total_hari = $recordsUpToNow
+                        ->reject(function ($r) use ($excludedShifts) {
+                            $shift = strtoupper(trim((string) ($r->Nama_Shift ?? '')));
+                            return in_array($shift, $excludedShifts, true);
+                        })
+                        ->count();
+
+                    // Total hadir (hanya record dengan CheckIn, juga ikut filter shift yang sama)
+                    $total_hadir = $recordsUpToNow
+                        ->reject(function ($r) use ($excludedShifts) {
+                            $shift = strtoupper(trim((string) ($r->Nama_Shift ?? '')));
+                            return in_array($shift, $excludedShifts, true);
+                        })
+                        ->filter(fn($r) => !is_null($r->CheckIn) && $r->CheckIn !== '')
+                        ->count();
+
+                    // Jika mau tambahkan hari libur
+                    $total_hadir = min($total_hari, $total_hadir + $hariLibur);
+
 
                     // ==============================
                     // Ambil shift & status hari ini
@@ -747,8 +798,8 @@ class uDashController extends Controller
                         'nama' => $records->first()->Nama ?? null,
                         'total_keterlambatan_menit' => $total_keterlambatan_menit,
                         'total_pulang_cepat_menit' => $total_pulang_cepat_menit,
-                        'total_lembur_menit' => $total_lembur_menit,
-                        'total_lembur_jam' => floor($total_lembur_menit / 60),
+
+                        'total_lembur_jam' => $total_lembur_jam,
                         'total_sakit' => $sakit_data[$kodeKaryawan] ?? 0,
                         'total_izin' => $izin_data[$kodeKaryawan] ?? 0,
                         'total_cuti' => $cuti_data[$kodeKaryawan] ?? 0,
@@ -813,7 +864,9 @@ class uDashController extends Controller
             // Ambil semua tanggal unik dari data absen untuk dijadikan filter
             $tanggal_absens = $absen_data->pluck('Tanggal')->map(fn($date) => Carbon::parse($date)->format('Y-m-d'));
 
-
+             $hariLibur = DB::table('HRIS_Hari_Libur')
+            ->whereBetween('Tanggal', [$startWeek, $endWeek])
+            ->get();
             // --- Pre-load Semua Data Transaksi dalam Beberapa Query ---
 
             // 1. Pre-load data lembur
@@ -903,7 +956,7 @@ class uDashController extends Controller
 
                 // --- Proses Data Absen dengan Data yang Sudah Di-preload ---
 
-                $result = $absen_data->map(function ($item) use ($lembur_data, $sakit_data,$izin_data, $cuti_data,$cutiHutang_data, $pulang_data, $terlambat_data) {
+                $result = $absen_data->map(function ($item) use ($hariLibur,$lembur_data, $sakit_data,$izin_data, $cuti_data,$cutiHutang_data, $pulang_data, $terlambat_data) {
                 $tanggal_formatted = Carbon::parse($item->Tanggal)->format('Y-m-d');
 
                 // Cari data di dalam Collection yang sudah di-load di awal
@@ -954,6 +1007,10 @@ class uDashController extends Controller
                     ->first(function ($row) use ($tanggal_formatted) {
                         return Carbon::parse($row->Tanggal)->format('Y-m-d') === $tanggal_formatted;
                     });
+                $Libur = $hariLibur
+                    ->first(function ($row) use ($tanggal_formatted) {
+                        return Carbon::parse($row->Tanggal)->format('Y-m-d') === $tanggal_formatted;
+                    });
                 // dd($sakit);
 
 
@@ -983,6 +1040,7 @@ class uDashController extends Controller
                     'Pulang_Tanggal' => $pulang->Tanggal ?? null,
                     'Terlambat_No_Transaksi' => $terlambat->No_Transaksi ?? null,
                     'Terlambat_Tanggal' => $terlambat->Tanggal ?? null,
+                    'hariLibur' => $Libur->Nama_Hari_Libur ?? null
                 ];
             });
 
@@ -1733,7 +1791,7 @@ class uDashController extends Controller
                 ->get();
 
             $tanggal_Lembur = $data->pluck('Tanggal_Lembur_Dari');
-            // dd($tanggal_Lembur);
+            // dd($data);
             // Handle case where no overtime data is found
             if ($tanggal_Lembur->isEmpty()) {
                 // Log::channel('uDashLog')->error('Gagal Mengambil data lembur getAllLembur'. $e->getMessage());
@@ -1777,7 +1835,7 @@ class uDashController extends Controller
                     })
                     ->first()?->CheckOut ?? Carbon::parse($lembur->Tanggal_Lembur_Sampai);
 
-                $durasi = Carbon::parse($lembur->Tanggal_Lembur_Dari)->diffInMinutes(Carbon::parse($jamAktual)) / 60;
+                $durasi = floor(Carbon::parse($lembur->Tanggal_Lembur_Dari)->diffInMinutes(Carbon::parse($jamAktual)) / 60);
 
                 return [
                     'Tanggal_Lembur_Dari' => $lembur->Tanggal_Lembur_Dari,
@@ -1849,6 +1907,10 @@ class uDashController extends Controller
             $UserID_Absen = Auth::user()->karyawan->UserID_Absen;
             $Kode_Karyawan = Auth::user()->karyawan->Kode_Karyawan;
 
+            $hariLibur = DB::table('HRIS_Hari_Libur')
+            ->whereBetween('Tanggal', [$startWeek, $endWeek])
+            ->count();
+            // dd($hariLibur);
             // Tentukan range berdasarkan jenis request
             // $startWeek = Carbon::create($tahun, $bulan, 21);
             // $endWeek   = Carbon::create($tahun, $bulan, 21)->addMonth()->subDay();
@@ -1935,7 +1997,7 @@ class uDashController extends Controller
             ->whereNotIn('Nama_Shift', ['LIBUR', 'NO SHIFT', 'HARI MINGGU']) // <-- SESUAIKAN INI
             ->count();
 
-            $totalKehadiran = $jumlah_checkin  + $izin_data + $sakit_data + $cuti_data;
+            $totalKehadiran = $jumlah_checkin  + $izin_data + $sakit_data + $cuti_data + $hariLibur;
 
             // dd($totalHariKerjaYangBerlalu, $jumlah_checkin);
 
@@ -1953,10 +2015,10 @@ class uDashController extends Controller
                     ],
                     'summary' => [
                         'total' => $jumlah_checkin + $Terlambat_data + $pulangCepat_data + $izin_data + $sakit_data + $cuti_data,
-                       'kehadiran_percent' => ($totalHariKerjaYangBerlalu > 0)
-                            // ? round(($totalKehadiran > $totalHariKerjaYangBerlalu ? $jumlah_checkin : $totalKehadiran / $totalHariKerjaYangBerlalu) * 100)
-                            ? round(($totalKehadiran / $totalHariKerjaYangBerlalu) * 100)
+                        'kehadiran_percent' => ($totalHariKerjaYangBerlalu > 0)
+                            ? min(100, round(($totalKehadiran / $totalHariKerjaYangBerlalu) * 100))
                             : 0,
+
                     ]
                 ]);
 

@@ -18,6 +18,8 @@ use RealRashid\SweetAlert\Facades\Alert;
 use Illuminate\Support\Facades\Validator;
 use App\Helpers\Whatsapp;
 
+use InvalidArgumentException;
+
 
 class AbsensiController extends Controller
 {
@@ -3575,6 +3577,18 @@ $result = DB::select($query, $params);
         }
     }
 
+    public function parseJam($time) {
+        $formats = ['H:i:s', 'H:i']; // coba dua-duanya
+        foreach ($formats as $format) {
+            try {
+                return Carbon::createFromFormat($format, $time);
+            } catch (InvalidArgumentException $e) {
+                // lanjut ke format berikutnya
+            }
+        }
+        throw new InvalidArgumentException("Format jam tidak dikenali: $time");
+    }
+
     public function submitIzin(Request $request)
     {
         // dd($request->all());
@@ -4058,9 +4072,12 @@ $result = DB::select($query, $params);
 
                 // }
 
-                $jamMasuk   = Carbon::createFromFormat('H:i', $Jam_Masuk_Real);
-                $jamKeluar  = Carbon::createFromFormat('H:i', $Jam_Keluar_Real);
-                $jamIzin    = Carbon::createFromFormat('H:i', $validatedData['waktu']);
+                // $jamMasuk   = Carbon::createFromFormat('H:i', $Jam_Masuk_Real);
+                // $jamKeluar  = Carbon::createFromFormat('H:i', $Jam_Keluar_Real);
+                // $jamIzin    = Carbon::createFromFormat('H:i', $validatedData['waktu']);
+                $jamMasuk  = $this->parseJam($Jam_Masuk_Real);
+                $jamKeluar = $this->parseJam($Jam_Keluar_Real);
+                $jamIzin   = $this->parseJam($validatedData['waktu']);
 
 
                 $tanggal = Carbon::parse($validatedData['tanggal'][0]);

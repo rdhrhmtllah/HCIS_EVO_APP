@@ -80,7 +80,7 @@ class flagCheckinout extends Command
                         ->orderBy('CHECKTIME', 'asc')
                         ->update([
                             'Alasan' => 'TERLAMBAT',
-                            'Hasil' => 'Masuk',
+                            'Hasil' => 'In',
                             'Untuk_Tanggal' => $Untuk_Tanggal
                         ]);
 
@@ -124,7 +124,7 @@ class flagCheckinout extends Command
                         ->orderBy('CHECKTIME', 'asc')
                         ->update([
                             'Alasan' => 'PULANG CEPAT',
-                            'Hasil' => 'Keluar',
+                            'Hasil' => 'Out',
                             'Untuk_Tanggal' => $Untuk_Tanggal
                         ]);
                     if($insertChecktime){

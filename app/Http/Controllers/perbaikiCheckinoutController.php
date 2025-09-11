@@ -68,7 +68,7 @@ class perbaikiCheckinoutController extends Controller
                     'Status_Kehadiran' => $row->Status_Kehadiran,
                 ];
             });
-            dd($data);
+            // dd($data);
             return response()->json([
                 'status' => 200,
                 'data' => $data,

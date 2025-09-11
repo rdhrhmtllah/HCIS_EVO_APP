@@ -1436,7 +1436,7 @@ class OvertimeController extends Controller
                         }else{
                             $tanggalMasukLembur = date('Y-m-d H:i:s', strtotime($user['tanggal'] . ' ' . $user['masuk']));
                         }
-                        // dd($tanggalMasukLembur.' - ' .$tanggalKeluarLembur);
+                        dd($tanggalMasukLembur.' - ' .$tanggalKeluarLembur);
                         $alasan = str_replace(["\n", "\t"], ' ', $user['reason']);
                         $userInsert = Karyawan::where('Kode_Karyawan', $Kode_Karyawan)->first() ?? null;
                         // dd($userInsert->No_Hp);
