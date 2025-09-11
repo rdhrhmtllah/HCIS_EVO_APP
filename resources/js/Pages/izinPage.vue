@@ -7142,7 +7142,7 @@ export default {
     padding-bottom: 10px;
 }
 .el-calendar-table .el-calendar-day {
-    padding: 2px;
+    padding: 2px !important;
     height: 50px;
 }
 .cell-date-wrapper {
