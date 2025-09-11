@@ -5549,6 +5549,7 @@ export default {
     --danger-light: #f8d7da; /* Merah muda, lebih terang untuk latar belakang atau efek disabled */
     --gray-light: #e9ecef;
     --el-slider-main-bg-color: #6366f1;
+    --el-calendar-cell-width: 50px !important;
 }
 
 /* info bar */
@@ -7143,7 +7144,7 @@ export default {
 }
 .el-calendar-table .el-calendar-day {
     padding: 2px !important;
-    height: 50px;
+    height: 50px !important;
 }
 .cell-date-wrapper {
     width: 100%;
