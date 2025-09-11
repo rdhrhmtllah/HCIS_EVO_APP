@@ -5024,7 +5024,7 @@ $result = DB::select($query, $params);
                     'message' => 'Tidak ada Data User'
                     ], 400);
                 }
-                $tanggal_absen = $request->frontend_timestamp;
+               $tanggal_absen = now()->format('Y-m-d H:i:s');
                 DB::table('Transaksi_Absensi')->insert([
                     'Kode_Perusahaan' => '001',
                     'No_Transaksi' => $no_faktur,
